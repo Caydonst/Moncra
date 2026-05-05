@@ -1,0 +1,95 @@
+import styles from "./page.module.css"
+import { Inventory } from "../inventory/inventory"
+import {Ammunition, Item, Weapon} from "../items/ItemTypes";
+import React from "react";
+import type { GameScene } from "../scenes/GameScene";
+import {XMarkIcon} from "@heroicons/react/24/solid"
+
+type Props = {
+    inventoryOpen: boolean;
+    inventory: Inventory | null;
+    itemPanelOpen: boolean;
+    setItemPanelOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    selectedItem: Item | Weapon | Ammunition| null;
+    setSelectedItem: React.Dispatch<React.SetStateAction<Item | Weapon | Ammunition | null>>;
+    scene: GameScene | null;
+}
+
+export default function InventoryUI({ inventoryOpen, inventory, itemPanelOpen, setItemPanelOpen, selectedItem, setSelectedItem, scene }: Props) {
+
+    function openItemPanel(slot: any) {
+        setSelectedItem(slot);
+        if (slot) {
+            setItemPanelOpen(true);
+        }
+    }
+
+    return (
+        <div id="inventory-wrapper" className={inventoryOpen ? `${styles.inventoryWrapper} ${styles.open}` : styles.inventoryWrapper} onClick={(e) => e.stopPropagation()}>
+            <div id="inventory" className={styles.inventory}>
+                <h3>Inventory</h3>
+                <div className={styles.inventoryInner}>
+                    <div className={styles.gearContainer}>
+                        <div className={styles.weaponSlotWrapper}>
+                            <div id="weapon-slot" className={styles.weaponSlot} onClick={() => openItemPanel(inventory?.weapon)}>
+                                {inventory?.weapon && (
+                                    <img src={inventory.weapon.icon} className={inventory.weapon.type === "pistol" && "stats" in inventory.weapon ? styles.pistolImg : styles.otherImg} />
+                                )}
+                            </div>
+                        </div>
+                        <div id="armor-slots" className={styles.armorSlots}>
+                            <div id="armor-slot-0" className={styles.slot}></div>
+                            <div id="armor-slot-1" className={styles.slot}></div>
+                            <div id="armor-slot-2" className={styles.slot}></div>
+                        </div>
+                    </div>
+                    <div id="misc-grid" className={styles.miscGrid}>
+                        {inventory?.misc.map((slot, i) => (
+                            <div key={i} id={`misc-slot-${i}`}  className={styles.slot} onClick={() => openItemPanel(slot)}>
+                                {slot && <img src={slot.icon} className={slot.type === "pistol" && "stats" in slot ? styles.pistolImg : styles.otherImg} />}
+                                {slot && "amount" in slot && (
+                                    <p className={slot.amount <= 0 ? styles.magEmpty : styles.magNotEmpty}>{slot.amount}/{slot.maxAmount}</p>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+            <div id="item-info-panel" className={itemPanelOpen ? `${styles.itemInfoPanel} ${styles.open}` : styles.itemInfoPanel}>
+                <button id="item-info-close" className={styles.closeBtn} onClick={() => setItemPanelOpen(false)}>
+                    <XMarkIcon className={styles.closeIcon} />
+                </button>
+                <div className={styles.itemIconContainer}>
+                    {selectedItem && (
+                        <>
+                            <img src={selectedItem.icon} className={selectedItem.type === "pistol" && "stats" in selectedItem ? styles.selectedPistolImg : styles.selectedOtherImg} />
+                            <div className={`${styles.bgLight} ${styles[`${selectedItem.rarity}`]}`}></div>
+                        </>
+                    )}
+                </div>
+                {selectedItem && (
+                    <div className={styles.nameContainer}>
+                        <p>{selectedItem.name}</p>
+                        <p className={styles[`${selectedItem.rarity}`]}>{selectedItem.rarity.toUpperCase()}</p>
+                    </div>
+                )}
+                <div className={styles.itemDescContainer}>
+                    <div id="item-info-text">
+                        <h1 id="item-info-name"></h1>
+                        <p id="item-info-type"></p>
+                    </div>
+                    <p id="item-info-description"></p>
+                    <div id="item-info-stats"></div>
+                    {selectedItem && "magazine" in selectedItem && (
+                        <div id="button-container" className={styles.equipBtnContainer}>
+                            <button id="equip-btn" className={styles.equipBtn} onClick={() => {
+                                inventory?.equipWeapon(selectedItem, scene)
+                                setItemPanelOpen(false);
+                            }}>Equip</button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    )
+}
