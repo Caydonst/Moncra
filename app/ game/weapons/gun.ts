@@ -8,6 +8,8 @@ import { Bullet } from './bullet';
 import { Shadow } from '../utils/shadow';
 import {spawnParticles, wallParticles} from "../utils/ParticleHelper";
 import {Inventory} from "@/app/ game/inventory/inventory";
+import {Demon} from "@/app/ game/enemies/demon";
+import {GameScene} from "@/app/ game/scenes/GameScene";
 
 export class Gun extends ex.Actor {
     public player: Player;
@@ -22,7 +24,7 @@ export class Gun extends ex.Actor {
     protected isReloading = false;
 
     protected getSpread() {
-        return 0.05;
+        return 0;
     }
 
     protected getBulletSpeed() {
@@ -73,8 +75,8 @@ export class Gun extends ex.Actor {
         super({
             pos: player.pos.clone(),
             anchor: ex.vec(0.5, 0.5),
-            width: weaponImg.width / 4,
-            height: weaponImg.height / 4,
+            width: weaponImg.width / 2.5,
+            height: weaponImg.height / 2.5,
             collisionType: ex.CollisionType.PreventCollision,
             z: 3
         });
@@ -152,28 +154,43 @@ export class Gun extends ex.Actor {
         const pointer = this.engine.input.pointers.primary;
         const target = this.engine.screenToWorldCoordinates(pointer.lastScreenPos);
 
-        let direction = target.sub(this.player.pos);
+        let direction = target.sub(this.player.pos).normalize();
 
-        const randomAngle = (Math.random() - 0.5) * this.getSpread();
+        const spread = this.getSpread();
+        const randomAngle = (Math.random() - 0.5) * spread;
         direction = direction.rotate(randomAngle).normalize();
 
         const spawnPos = this.pos.add(direction.scale(this.height / 2));
 
         spawnParticles(this.engine.currentScene, spawnPos, "enemy");
-        this.engine.currentScene.camera.shake(4, 4, 60);
+        /*
+        const scene = this.engine.currentScene as GameScene;
+        scene.particles.emitBurst(spawnPos, {
+            count: 200,
+            color: ex.Color.fromHex("#ffd500"),
+            minSpeed: 80,
+            maxSpeed: 140,
+            minLife: 500,
+            maxLife: 800,
+            size: 3,
+        });
 
-        this.playShootSound();
+         */
+
+        this.engine.currentScene.camera.shake(4, 4, 60);
 
         const bullet = new Bullet(
             this.height,
-            this.pos.clone(),
+            spawnPos.clone(),
             direction.scale(this.getBulletSpeed()),
             this.resources,
             this.collisionGroups,
-            this.weaponItem.stats.damage,
+            this.weaponItem.stats.damage
         );
 
-        this.engine.add(bullet);
+        this.engine.currentScene.add(bullet);
+
+        this.playShootSound();
 
         mag.amount--;
         window.dispatchEvent(new Event("inventory-updated"));

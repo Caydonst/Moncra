@@ -30,17 +30,19 @@ export default function InventoryUI({ inventoryOpen, inventory, itemPanelOpen, s
                 <h3>Inventory</h3>
                 <div className={styles.inventoryInner}>
                     <div className={styles.gearContainer}>
-                        <div className={styles.weaponSlotWrapper}>
+                        <div className={styles.weaponSlotsWrapper}>
                             <div id="weapon-slot" className={styles.weaponSlot} onClick={() => openItemPanel(inventory?.weapon)}>
+                                <p>Primary</p>
                                 {inventory?.weapon && (
                                     <img src={inventory.weapon.icon} className={inventory.weapon.type === "pistol" && "stats" in inventory.weapon ? styles.pistolImg : styles.otherImg} />
                                 )}
                             </div>
-                        </div>
-                        <div id="armor-slots" className={styles.armorSlots}>
-                            <div id="armor-slot-0" className={styles.slot}></div>
-                            <div id="armor-slot-1" className={styles.slot}></div>
-                            <div id="armor-slot-2" className={styles.slot}></div>
+                            <div id="weapon-slot" className={styles.weaponSlot} onClick={() => openItemPanel(inventory?.weapon)}>
+                                <p>Secondary</p>
+                                {inventory?.weapon && (
+                                    <img src={inventory.weapon.icon} className={inventory.weapon.type === "pistol" && "stats" in inventory.weapon ? styles.pistolImg : styles.otherImg} />
+                                )}
+                            </div>
                         </div>
                     </div>
                     <div id="misc-grid" className={styles.miscGrid}>

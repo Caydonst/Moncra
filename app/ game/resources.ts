@@ -42,10 +42,15 @@ import miscDead11 from "./assets/enemies/misc/dead11.png";
 // --- SPRITESHEET ---
 import Tilesheet from "./assets/map/spritesheet.png";
 // --- WEAPONS ---
-import reconImg from "./assets/weapons/bow/blaster5.png";
-import m9Img from "./assets/weapons/bow/pistol.png"
+import AUGImg from "./assets/weapons/bow/blaster4.png";
+import FALImg from "./assets/weapons/bow/blaster6.png";
+import AR15Img from "./assets/weapons/bow/blaster7.png";
+import AugImg from "./assets/weapons/bow/blaster4.png";
+import GlockImg from "./assets/weapons/bow/pistol1.png"
+import DeagleImg from "./assets/weapons/bow/pistol2.png"
+
 import arrowImage from './assets/projectiles/arrow.png';
-import bulletImage from './assets/projectiles/arrow2.png';
+import bulletImage from './assets/projectiles/arrow1.png';
 import warHammer from "./assets/weapons/war_hammer/anime_war_hammer.png";
 import greatSword from "./assets/weapons/great_sword/anime_sword.png";
 /// --- MISC ---
@@ -87,8 +92,11 @@ export async function createResources() {
         characterIdleSheetImage: new ex.ImageSource(characterIdleSheetImage.src),
         arrow: new ex.ImageSource(arrowImage.src),
         tileSheet: new ex.ImageSource(Tilesheet.src),
-        recon: new ex.ImageSource(reconImg.src),
-        m9: new ex.ImageSource(m9Img.src),
+        aug: new ex.ImageSource(AUGImg.src),
+        fal: new ex.ImageSource(FALImg.src),
+        ar15: new ex.ImageSource(AR15Img.src),
+        glock: new ex.ImageSource(GlockImg.src),
+        deagle: new ex.ImageSource(DeagleImg.src),
         warHammer: new ex.ImageSource(warHammer.src),
         greatSword: new ex.ImageSource(greatSword.src),
         coinSheetImage: new ex.ImageSource(coinSpritesheet.src),

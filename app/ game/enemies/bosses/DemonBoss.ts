@@ -38,6 +38,8 @@ export class DemonBoss extends ex.Actor {
     private attackCooldown: number = 150
     private lastAttackTime: number = 0
     private attacking: boolean = false;
+    private hurtSprite!: ex.Sprite;
+    private hurtTimer?: ex.Timer;
 
     constructor(engine: ex.Engine, pos: ex.Vector, worldWidth: number, worldHeight: number, target: ex.Actor, speed: number = 100, hp: number, maxHp: number, private resources: GameResources, private collisionGroups: any) {
         super({
@@ -65,6 +67,10 @@ export class DemonBoss extends ex.Actor {
         this.displayedHp = this.hp;
         this.body.collisionType = ex.CollisionType.Active;
 
+        this.hurtSprite = this.resources.Images.demonBossHurt.toSprite();
+        this.hurtSprite.width = this.width;
+        this.hurtSprite.height = this.height;
+
         const idleFrames = this.resources.demonBossIdleSpritesheet.sprites.map(sprite => {
             const s = sprite.clone();        // clone so you can modify safely
             s.width = this.width;                    // scale X
@@ -91,17 +97,15 @@ export class DemonBoss extends ex.Actor {
         this.walkAnim = new ex.Animation({
             frames: walkFrames
         });
-        /*
-        const deadFrames = Object.keys(DemonImages.dead).map(key => {
-            const sprite = DemonImages.dead[key].toSprite();
-            sprite.width *= 2.5;
-            sprite.height *= 2.5;
+
+        const deadFrames = Object.keys(this.resources.DemonImages.dead).map(key => {
+            const sprite = this.resources.DemonImages.dead[key].toSprite();
+            sprite.scale = ex.vec(2.5, 2.5);
             return sprite;
         });
-        const miscFrames = Object.keys(MiscImages).map(key => {
-            const sprite = MiscImages[key].toSprite();
-            sprite.width *= 2.5;
-            sprite.height *= 2.5;
+        const miscFrames = Object.keys(this.resources.MiscImages).map(key => {
+            const sprite = this.resources.MiscImages[key].toSprite();
+            sprite.scale = ex.vec(2.5, 2.5);
             return sprite;
         });
         this.deadAnim = new ex.Animation({
@@ -122,14 +126,11 @@ export class DemonBoss extends ex.Actor {
             strategy: ex.AnimationStrategy.End
         })
 
+        this.graphics.add("idle", this.idleAnim);
         this.graphics.add("walk", this.walkAnim);
         this.graphics.add("dead", this.deadAnim);
         this.graphics.add("misc", this.miscAnim);
-        this.graphics.use("walk");
-         */
 
-        this.graphics.add("idle", this.idleAnim);
-        this.graphics.add("walk", this.walkAnim);
         this.graphics.use("idle");
 
         this.hpBar = new HPBar(this, this.width, 5, this.maxHp, "enemy");
@@ -152,31 +153,16 @@ export class DemonBoss extends ex.Actor {
         if (this.playedDeath && !this.playedMisc && this.deadAnim.done) {
             this.graphics.use("misc");
             this.playedMisc = true;
-            this.spawnCoins(3);
             return;
         }
 
         // When misc finishes, clean up once
         if (this.playedMisc && this.miscAnim.done) {
-            this.kill();
-            this.hpBar.kill();
-            this.shadow.kill();
+            this.cleanup()
             return;
         }
 
         if (this.isDead) return;
-
-        if (this.knockbackTimer > 0) {
-            this.knockbackTimer -= delta;
-
-            // Apply knockback velocity
-            this.vel = this.knockbackVel;
-
-            // Gradually reduce knockback (friction)
-            this.knockbackVel = this.knockbackVel.scale(0.5);
-
-            return; // skip normal movement until knockback ends
-        }
 
         const direction = this.target.pos.sub(this.pos);
 
@@ -205,7 +191,9 @@ export class DemonBoss extends ex.Actor {
             } else {
                 const dir = direction.normalize();
                 this.vel = dir.scale(this.speed);
-                this.graphics.use("walk");
+                if (this.hurtTimer?.complete) {
+                    this.graphics.use("walk");
+                }
                 this.attack(_engine.currentScene, this.pos.clone());
             }
         }
@@ -218,6 +206,13 @@ export class DemonBoss extends ex.Actor {
             // Position slightly under demon feet (same offset you used before)
             this.shadow.pos = this.pos.add(ex.vec(0, 55));
         }
+
+        if (this.deadAnim.done) {
+            this.graphics.use("misc");
+        }
+        if (this.miscAnim.done) {
+            this.kill();
+        }
     }
     specialAttack(scene: ex.Scene, origin: ex.Vector) {
         const bulletCount = 20;
@@ -226,186 +221,120 @@ export class DemonBoss extends ex.Actor {
 
         for (let i = 0; i < bulletCount; i++) {
             const angle = i * angleStep;
-
             const dir = ex.vec(Math.cos(angle), Math.sin(angle));
 
-            const bullet = new Bullet(origin.clone(), dir, bulletSpeed, scene, this.collisionGroups);
-
-            scene.add(bullet);
+            scene.add(new BossBullet(
+                origin.clone(),
+                dir,
+                bulletSpeed,
+                this.collisionGroups
+            ));
         }
     }
     attack(scene: ex.Scene, origin: ex.Vector) {
         const now = performance.now();
-
         if (now - this.lastAttackTime < this.attackCooldown) return;
 
         this.lastAttackTime = now;
 
-        const bulletSpeed = 500;
-
-        // Get the player
         const player = scene.player;
         if (!player) return;
 
-        // Calculate direction from enemy → player
         const dir = player.pos.sub(origin).normalize();
 
-        // Create bullet
-        const bullet = new Bullet(origin.clone(), dir, bulletSpeed, scene, this.collisionGroups);
-
-        scene.add(bullet);
+        scene.add(new BossBullet(
+            origin.clone(),
+            dir,
+            500,
+            this.collisionGroups
+        ));
     }
     takeDamage(amount: number) {
+        if (this.isDead) return;
 
-        const knockDir = this.pos.sub(this.target.pos).normalize();
-
-        this.hp -= amount;
+        this.hp = Math.max(0, this.hp - amount);
         this.hpBar.setHP(this.hp);
-
-        const KB_STRENGTH = 500;
-        this.knockbackVel = knockDir.scale(KB_STRENGTH);
-        this.knockbackTimer = 150;
-
-        this.engine.currentScene.camera.shake(6, 6, 80);
 
         if (this.hp <= 0) {
             this.handleDeath();
             return;
         }
 
-        const hurtSprite = this.resources.Images.demonBossHurt.toSprite();
-        hurtSprite.width *= 3.5;
-        hurtSprite.height *= 3.5;
-        if (this.vel.x > 0) {
-            hurtSprite.flipHorizontal = true;
-        }
-        this.graphics.use(hurtSprite);
+        this.hurtSprite.flipHorizontal = this.vel.x > 0;
+        this.graphics.use(this.hurtSprite);
 
-        // Revert back to walk animation after 200ms
-        if (this.specialAttackPhase) {
-            const revertTimer = new ex.Timer({
-                interval: 200,
-                repeats: false,
-                action: () => {
-                    this.graphics.use("idle"); // revert back to normal animation
+        this.hurtTimer = new ex.Timer({
+            interval: 150,
+            repeats: false,
+            action: () => {
+                if (!this.isDead) {
+                    this.graphics.use(this.specialAttackPhase ? "idle" : "walk");
                 }
-            });
-            this.engine.currentScene.add(revertTimer);
-            revertTimer.start();
-        } else {
-            const revertTimer = new ex.Timer({
-                interval: 200,
-                repeats: false,
-                action: () => {
-                    this.graphics.use("walk"); // revert back to normal animation
-                }
-            });
-            this.engine.currentScene.add(revertTimer);
-            revertTimer.start();
-        }
+            }
+        });
 
-
+        this.engine.currentScene.add(this.hurtTimer);
+        this.hurtTimer.start();
     }
     handleDeath() {
-        this.kill();
-        this.shadow.kill();
-        this.hpBar.kill();
-        /*
-        this.body.collisionType = ex.CollisionType.Passive;
-        this.graphics.use("dead");
-        this.vel = ex.vec(0, 0);
-        this.isDead = true;
-        this.engine.currentScene.emit('enemy-died', this);
+        if (this.isDead) return;
 
-         */
+        this.isDead = true;
+        this.vel = ex.Vector.Zero;
+        this.body.collisionType = ex.CollisionType.PreventCollision;
+        this.collider.clear();
+        this.hpBar?.kill();
+
+        this.engine.currentScene.emit("enemy-died", this);
     }
-    spawnCoins(count: number = 2) {
-        for (let i = 0; i < count; i++) {
-            const coin = new Coin(this.pos.clone());
-            this.engine.currentScene.add(coin);
-        }
+    private cleanup() {
+        this.shadow?.kill();
+        this.kill();
     }
 }
 
-export class Bullet extends ex.Actor {
-    private scene: ex.Scene;
-    private shadow: Shadow;
+export class BossBullet extends ex.Actor {
+    private lifetime = 3000; // ms
+    private age = 0;
 
-    constructor(pos: ex.Vector, direction: ex.Vector, speed: number, scene: ex.Scene, private collisionGroups: any) {
+    constructor(
+        pos: ex.Vector,
+        direction: ex.Vector,
+        speed: number,
+        private collisionGroups: any
+    ) {
         super({
             pos,
             radius: 5,
             color: ex.Color.Orange,
             z: 2,
+            collisionType: ex.CollisionType.Passive,
             collisionGroup: collisionGroups.enemyProjectileGroup,
         });
-        this.scene = scene;
+
         this.vel = direction.normalize().scale(speed);
     }
 
-    onInitialize(engine: ex.Engine) {
-        this.shadow = new Shadow(this);
-        engine.currentScene.add(this.shadow);
-    }
-    onPostUpdate() {
-        if (this.shadow) {
-            // Position slightly under demon feet (same offset you used before)
-            this.shadow.pos = this.pos.add(ex.vec(0, 15));
+    onPostUpdate(_engine: ex.Engine, delta: number) {
+        this.age += delta;
+
+        if (this.age >= this.lifetime) {
+            this.kill();
         }
     }
+
     onCollisionStart(_self: ex.Collider, other: ex.Collider) {
         if (other.owner instanceof Player) {
             other.owner.takeDamage(20);
-            this.kill()
-            this.shadow.kill();
-        } else {
-            wallParticles(this.scene, this.pos, "wall");
-            this.kill()
-            this.shadow.kill();
-        }
-    }
-}
-/*if (this.deadAnim.done) {
-        this.graphics.use("misc");
-    }
-    if (this.miscAnim.done) {
-        this.kill();
-    }
-
-    const lerpSpeed = 0.01;
-    this.displayedHp += (this.hp - this.displayedHp) * lerpSpeed;
-
-    if (this.isDead) return;
-
-    this.repathTimer -= delta;
-    if (this.repathTimer <= 0 || this.path.length === 0) {
-        this.path = findPath(
-            this.pos,
-            this.target.pos,
-            90 // TILE_SIZE
-        );
-        this.pathIndex = 0;
-        this.repathTimer = 400; // recalc path every 0.4s
-    }
-
-    if (this.path.length > 0 && this.pathIndex < this.path.length) {
-        const next = this.path[this.pathIndex];
-        const direction = next.sub(this.pos);
-
-        // close enough to next tile? advance
-        if (direction.magnitude < 100) {
-            this.pathIndex++;
+            this.kill();
             return;
         }
 
-        // move along path
-        this.vel = direction.normalize().scale(this.speed);
+        wallParticles(this.scene, this.pos, "wall");
+        this.kill();
+    }
+}
 
-        // flip based on motion
-        const flip = this.vel.x > 0;
-        this.walkAnim.flipHorizontal = flip;
-        this.deadAnim.flipHorizontal = flip;
-    }/*
-*/
+
 
 

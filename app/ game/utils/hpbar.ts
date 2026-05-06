@@ -66,7 +66,7 @@ export class HPBar extends ex.Actor {
             ctx.drawRectangle(ex.vec(x, y), hpWidth, barHeight, ex.Color.fromHex("#008224"));
         } else if (this.actorType === "enemy") {
             const x = -barWidth / 2;
-            const y = 10;
+            const y = 25;
             // → Border (white)
             ctx.drawRectangle(ex.vec(x - 1, y - 1), barWidth + 2, barHeight + 2, ex.Color.White);
 

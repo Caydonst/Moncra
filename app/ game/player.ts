@@ -22,8 +22,8 @@ export class Player extends ex.Actor {
             name: "player",
             pos: ex.vec(x, y),
             anchor: ex.vec(0.5, 0.5),
-            width: 15 * 2,    // set desired width
-            height: 27 * 2,   // set desired height
+            width: 15 * 2.5,    // set desired width
+            height: 27 * 2.5,   // set desired height
             color: ex.Color.Yellow,  // optional, for debugging
             collisionType: ex.CollisionType.Active,
             z: 3,
@@ -37,8 +37,7 @@ export class Player extends ex.Actor {
     onInitialize(engine: Engine) {
         const walkFrames = this.resources.characterWalkSpritesheet.sprites.map(sprite => {
             const s = sprite.clone();        // clone so you can modify safely
-            s.width *= 2.3;                    // scale X
-            s.height *= 2.3;                   // scale Y
+            s.scale = ex.vec(2.5, 2.5);
 
             return {
                 graphic: s,
@@ -47,8 +46,7 @@ export class Player extends ex.Actor {
         });
         const idleFrames = this.resources.characterIdleSpritesheet.sprites.map(sprite => {
             const s = sprite.clone();        // clone so you can modify safely
-            s.width *= 2.3;                    // scale X
-            s.height *= 2.3;                   // scale Y
+            s.scale = ex.vec(2.5, 2.5);
 
             return {
                 graphic: s,

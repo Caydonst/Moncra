@@ -5,7 +5,7 @@ export class Pistol extends Gun {
         return 300;
     }
     protected override getSpread() {
-        return 0.05;
+        return 0;
     }
 
     protected override getBulletSpeed() {

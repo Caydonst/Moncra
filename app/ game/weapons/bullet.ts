@@ -10,58 +10,169 @@ import {DemonBoss} from "../enemies/bosses/DemonBoss";
 
 export class Bullet extends ex.Actor {
     private shadow: Shadow;
+    private previousPos: ex.Vector;
+    private hasHit = false;
 
-    constructor(offsetDistance: number, pos: ex.Vector, vel: ex.Vector, private resources: GameResources, private collisionGroups: any, private damage: number) {
+    constructor(
+        offsetDistance: number,
+        pos: ex.Vector,
+        vel: ex.Vector,
+        private resources: GameResources,
+        private collisionGroups: any,
+        private damage: number
+    ) {
 
-        const spawnPos = pos.add(vel.normalize().scale(offsetDistance));
         super({
             name: "projectile",
-            pos: spawnPos,
-            anchor: ex.vec(0.5, 0),
+            pos: pos,
+            anchor: ex.vec(1, 0),
             height: resources.Images.bullet.height,
             width: resources.Images.bullet.width,
             collisionType: ex.CollisionType.Passive,
             collisionGroup: collisionGroups.projectileGroup,
             z: 2
         });
+
         this.vel = vel;
+        this.previousPos = this.pos.clone();
     }
 
     onInitialize(engine: ex.Engine): void {
-        // Rotate to match movement direction
+        const bulletSprite = this.resources.Images.bullet.toSprite();
+        bulletSprite.scale = ex.vec(0.5, 1.5);
+        //bulletSprite.width = this.width;
+        //bulletSprite.height = this.height;
 
-        const arrowSprite = this.resources.Images.bullet.toSprite();
-        this.graphics.use(arrowSprite);
-        arrowSprite.width = this.width;
-        arrowSprite.height = this.height;
+        this.graphics.use(bulletSprite);
         this.rotation = this.vel.toAngle() + Math.PI / 2;
 
         this.shadow = new Shadow(this);
         engine.currentScene.add(this.shadow);
-
     }
 
-    onPostUpdate(_engine: ex.Engine, _delta: number) {
+    onPostUpdate(engine: ex.Engine, _delta: number) {
+        if (this.hasHit) return;
+
+        this.checkSweptCollision(engine);
+
+        if (this.hasHit) return;
 
         if (this.shadow) {
-            this.shadow.pos = this.pos.add(ex.vec(0, this.height/2 - 2));
+            this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2 - 2));
         }
 
+        this.previousPos = this.pos.clone();
+    }
+
+    private segmentIntersectsRect(
+        start: ex.Vector,
+        end: ex.Vector,
+        minX: number,
+        minY: number,
+        maxX: number,
+        maxY: number
+    ) {
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+
+        let tMin = 0;
+        let tMax = 1;
+
+        const checkAxis = (startValue: number, direction: number, min: number, max: number) => {
+            if (Math.abs(direction) < 0.00001) {
+                return startValue >= min && startValue <= max;
+            }
+
+            let t1 = (min - startValue) / direction;
+            let t2 = (max - startValue) / direction;
+
+            if (t1 > t2) {
+                const temp = t1;
+                t1 = t2;
+                t2 = temp;
+            }
+
+            tMin = Math.max(tMin, t1);
+            tMax = Math.min(tMax, t2);
+
+            return tMin <= tMax;
+        };
+
+        return (
+            checkAxis(start.x, dx, minX, maxX) &&
+            checkAxis(start.y, dy, minY, maxY)
+        );
+    }
+
+    private segmentIntersectsActor(start: ex.Vector, end: ex.Vector, actor: ex.Actor) {
+        const minX = actor.pos.x - actor.width / 2;
+        const maxX = actor.pos.x + actor.width / 2;
+        const minY = actor.pos.y - actor.height / 2;
+        const maxY = actor.pos.y + actor.height / 2;
+
+        return this.segmentIntersectsRect(start, end, minX, minY, maxX, maxY);
+    }
+
+    private checkSweptCollision(engine: ex.Engine) {
+        if (this.hasHit) return;
+
+        const start = this.previousPos;
+        const end = this.pos;
+        const movement = end.sub(start);
+
+        if (movement.size <= 0) return;
+
+        const enemies = engine.currentScene.actors.filter(actor =>
+            actor instanceof Demon || actor instanceof DemonBoss
+        );
+
+        const walls = engine.currentScene.actors.filter(actor =>
+            actor.tags.has("wall")
+        );
+
+        for (const enemy of enemies) {
+            if (this.segmentIntersectsActor(start, end, enemy)) {
+
+                enemy.takeDamage(this.damage);
+                spawnParticles(engine.currentScene, enemy.pos, "enemy");
+
+                this.destroyBullet();
+                return;
+            }
+        }
+
+        for (const wall of walls) {
+            if (this.segmentIntersectsActor(start, end, wall)) {
+
+                wallParticles(engine.currentScene, wall.pos, "wall");
+
+                this.destroyBullet();
+                return;
+            }
+        }
     }
 
     onCollisionStart(_self: ex.Collider, other: ex.Collider) {
-        console.log("collision started");
-        if (other.owner instanceof Demon || other.owner instanceof DemonBoss) {
-            //spawnParticles(this.scene, this.pos, "enemy");
-            this.kill()
-            this.shadow.kill();
-            other.owner.takeDamage(this.damage);
-            if (other.owner.isDead) return;
-        } else {
-            wallParticles(this.scene, this.pos, "wall");
-            this.kill()
-            this.shadow.kill();
+        if (this.hasHit) return;
+
+        const owner = other.owner;
+
+        if (owner instanceof Demon || owner instanceof DemonBoss) {
+            return; // handled by swept collision
         }
+
+        wallParticles(this.scene, this.pos, "wall");
+        this.destroyBullet();
     }
 
+    private destroyBullet() {
+        if (this.hasHit) return;
+
+        this.hasHit = true;
+        this.vel = ex.Vector.Zero;
+
+        this.shadow?.kill();
+        this.kill();
+        console.log("Bullet killed")
+    }
 }

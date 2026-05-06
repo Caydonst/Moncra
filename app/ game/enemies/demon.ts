@@ -39,7 +39,7 @@ export class Demon extends ex.Actor {
         super({
             name: "enemy",
             pos: pos,
-            anchor: ex.vec(0.5, 1),
+            anchor: ex.vec(0.5, 0.5),
             width: 14 * 2.5,
             height: 21 * 2.5,
             color: ex.Color.Red,
@@ -65,20 +65,17 @@ export class Demon extends ex.Actor {
 
         const walkFrames = Object.keys(this.resources.DemonImages.walk).map(key => {
             const sprite = this.resources.DemonImages.walk[key].toSprite();
-            sprite.width *= 2.5;
-            sprite.height *= 2.5;
+            sprite.scale = ex.vec(2.5, 2.5);
             return sprite;
         });
         const deadFrames = Object.keys(this.resources.DemonImages.dead).map(key => {
             const sprite = this.resources.DemonImages.dead[key].toSprite();
-            sprite.width *= 2.5;
-            sprite.height *= 2.5;
+            sprite.scale = ex.vec(2.5, 2.5);
             return sprite;
         });
         const miscFrames = Object.keys(this.resources.MiscImages).map(key => {
             const sprite = this.resources.MiscImages[key].toSprite();
-            sprite.width *= 2.5;
-            sprite.height *= 2.5;
+            sprite.scale = ex.vec(2.5, 2.5);
             return sprite;
         });
         this.walkAnim = new ex.Animation({
@@ -173,8 +170,7 @@ export class Demon extends ex.Actor {
         this.deadAnim.flipHorizontal = flip;
 
         if (this.shadow) {
-            // Position slightly under demon feet (same offset you used before)
-            this.shadow.pos = this.pos.add(ex.vec(0, 2));
+            this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2));
         }
 
         if (!this.touchingPlayer) return;
