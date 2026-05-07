@@ -16,6 +16,8 @@ type Props = {
 }
 
 export default function ChestUI({ chest, chestOpen, inventoryOpen, inventory, chestItems, setChestItems, scene }: Props) {
+    const [hoveredItem, setHoveredItem] = React.useState<Item | Weapon | Ammunition | null>(null);
+    const [tooltipPos, setTooltipPos] = React.useState({ x: 0, y: 0 });
 
     function handleChestItemClick(item: Item | Weapon | Ammunition | null, index: number) {
         if (!item) return;
@@ -23,6 +25,16 @@ export default function ChestUI({ chest, chestOpen, inventoryOpen, inventory, ch
         inventory?.addItem(item);
         chest.removeItem(index);
 
+    }
+
+    function handleMouseMove(e: React.MouseEvent, item: Item | Weapon | Ammunition | null) {
+        if (!item) return;
+
+        setHoveredItem(item);
+        setTooltipPos({
+            x: e.clientX + 12,
+            y: e.clientY + 12,
+        });
     }
 
     return (
@@ -33,7 +45,8 @@ export default function ChestUI({ chest, chestOpen, inventoryOpen, inventory, ch
                     <div id="misc-grid" className={styles.miscGrid}>
                         {chestItems && (
                             chestItems.map((slot, i) => (
-                                <div key={i} id={`misc-slot-${i}`}  className={styles.slot} onClick={() => handleChestItemClick(slot, i)}>
+                                <div key={i} id={`misc-slot-${i}`}  className={styles.slot} onClick={() => handleChestItemClick(slot, i)} onMouseMove={(e) => handleMouseMove(e, slot)}
+                                     onMouseLeave={() => setHoveredItem(null)}>
                                     {slot && <img src={slot.icon} className={slot.type === "pistol" && "stats" in slot ? styles.pistolImg : styles.otherImg} />}
                                     {slot && "amount" in slot && (
                                         <p className={slot.amount <= 0 ? styles.magEmpty : styles.magNotEmpty}>{slot.amount}/{slot.maxAmount}</p>
@@ -44,6 +57,17 @@ export default function ChestUI({ chest, chestOpen, inventoryOpen, inventory, ch
                     </div>
                 </div>
             </div>
+            {hoveredItem && (
+                <div
+                    className={styles.itemTooltip}
+                    style={{
+                        left: tooltipPos.x,
+                        top: tooltipPos.y,
+                    }}
+                >
+                    <p className={`${styles.tooltipName} ${styles[hoveredItem.rarity]}`}>{hoveredItem.name}</p>
+                </div>
+            )}
         </div>
     )
 }

@@ -21,7 +21,7 @@ import AugImg from "../assets/weapons/bow/blaster4.png";
 import GlockImg from "../assets/weapons/bow/pistol1.png"
 import DeagleImg from "../assets/weapons/bow/pistol2.png"
 import handgunMagImg from "../assets/weapons/bow/handgun_mag.png"
-import rifleMagImg from "../assets/weapons/bow/rifle_mag.png"
+import rifleMagImg from "../assets/weapons/bow/rifle_mag1.png"
 import HandgunImg from "../assets/weapons/bow/pistol.png";
 import HandgunMagImg from "../assets/weapons/bow/handgun_mag.png";
 import RifleMagImg from "../assets/weapons/bow/rifle_mag1.png";
@@ -150,15 +150,6 @@ export class GameScene extends ex.Scene {
                 amount: 30,
                 maxAmount: 30,
             }
-            const rifleMag2: Ammunition = {
-                id: "rifle_mag2",
-                name: "Rifle Magazine",
-                type: "rifle",
-                icon: rifleMagImg.src,
-                rarity: "common",
-                amount: 30,
-                maxAmount: 30,
-            }
             const AR15: Weapon = {
                 id: "rifle_1",
                 name: "AR15",
@@ -231,15 +222,6 @@ export class GameScene extends ex.Scene {
                 amount: 20,
                 maxAmount: 20,
             }
-            const handgunMag1: Ammunition = {
-                id: "handgun_mag2",
-                name: "Handgun Magazine",
-                type: "pistol",
-                icon: HandgunMagImg.src,
-                rarity: "common",
-                amount: 20,
-                maxAmount: 20,
-            }
             const Glock: Weapon = {
                 id: "handgun_1",
                 name: "Glock",
@@ -300,163 +282,18 @@ export class GameScene extends ex.Scene {
                 maxAmount: 10,
             }
 
-
-
             this.inventory.addItem(AR15)
             this.inventory.addItem(AUG)
             this.inventory.addItem(FAL)
             this.inventory.addItem(Glock)
             this.inventory.addItem(Deagle)
             this.inventory.addItem(handgunMag)
-            this.inventory.addItem(handgunMag1)
             this.inventory.addItem(rifleMag)
-            this.inventory.addItem(rifleMag2)
             this.inventory.addItem(smgMag)
             this.inventory.addItem(shotgunShells)
 
-            // --- chest ---
-            const handgunMag2: Ammunition = {
-                id: "handgun_mag4",
-                name: "Handgun Magazine",
-                type: "pistol",
-                icon: HandgunMagImg.src,
-                rarity: "common",
-                amount: 20,
-                maxAmount: 20,
-            }
-            const handgunMag3: Ammunition = {
-                id: "handgun_mag3",
-                name: "Handgun Magazine",
-                type: "pistol",
-                icon: HandgunMagImg.src,
-                rarity: "common",
-                amount: 20,
-                maxAmount: 20,
-            }
-            const rifleMag3: Ammunition = {
-                id: "rifle_mag3",
-                name: "Rifle Magazine",
-                type: "rifle",
-                icon: RifleMagImg.src,
-                rarity: "common",
-                amount: 30,
-                maxAmount: 30,
-            }
-            const rifleMag4: Ammunition = {
-                id: "rifle_mag3",
-                name: "Rifle Magazine",
-                type: "rifle",
-                icon: RifleMagImg.src,
-                rarity: "common",
-                amount: 30,
-                maxAmount: 30,
-            }
-            const Deagle2: Weapon = {
-                id: "handgun_1",
-                name: "Desert Eagle",
-                type: "pistol",
-                icon: DeagleImg.src,
-                rarity: "legendary",
-                stats: {
-                    damage: 20,
-                },
-                magazine: handgunMag,
-                createWeapon: () => new Pistol(
-                    this.player,
-                    engine, ex.vec(18, 0),
-                    this.resources,
-                    this.collisionGroups,
-                    this.resources.Images.deagle,
-                    Deagle2,
-                    this.inventory,
-                ),
-            };
-            const Glock2: Weapon = {
-                id: "handgun_1",
-                name: "Glock",
-                type: "pistol",
-                icon: GlockImg.src,
-                rarity: "epic",
-                stats: {
-                    damage: 20,
-                },
-                magazine: handgunMag,
-                createWeapon: () => new Pistol(
-                    this.player,
-                    engine, ex.vec(18, 0),
-                    this.resources,
-                    this.collisionGroups,
-                    this.resources.Images.glock,
-                    Glock2,
-                    this.inventory,
-                ),
-            };
-            const AR152: Weapon = {
-                id: "rifle_1",
-                name: "AR15",
-                type: "rifle",
-                icon: AR15Img.src,
-                rarity: "legendary",
-                stats: {
-                    damage: 50,
-                },
-                magazine: rifleMag,
-                createWeapon: () => new Rifle(
-                    this.player,
-                    engine,
-                    ex.vec(25, 0),
-                    this.resources,
-                    this.collisionGroups,
-                    this.resources.Images.ar15,
-                    AR152,
-                    this.inventory,
-                ),
-            };
-            const AUG2: Weapon = {
-                id: "rifle_1",
-                name: "AUG",
-                type: "rifle",
-                icon: AUGImg.src,
-                rarity: "legendary",
-                stats: {
-                    damage: 50,
-                },
-                magazine: rifleMag,
-                createWeapon: () => new Rifle(
-                    this.player,
-                    engine,
-                    ex.vec(25, 0),
-                    this.resources,
-                    this.collisionGroups,
-                    this.resources.Images.aug,
-                    AUG2,
-                    this.inventory,
-                ),
-            };
-            const FAL2: Weapon = {
-                id: "rifle_1",
-                name: "FAL",
-                type: "rifle",
-                icon: FALImg.src,
-                rarity: "epic",
-                stats: {
-                    damage: 50,
-                },
-                magazine: rifleMag,
-                createWeapon: () => new Rifle(
-                    this.player,
-                    engine,
-                    ex.vec(25, 0),
-                    this.resources,
-                    this.collisionGroups,
-                    this.resources.Images.fal,
-                    FAL2,
-                    this.inventory,
-                ),
-            };
-
             function getRandomItems() {
-                const itemsList = [handgunMag2, rifleMag3, rifleMag4, handgunMag3, AR152, Glock2, AUG2, FAL2, Deagle2]
+                const itemsList = [AR15, AUG, FAL, Glock, Deagle, handgunMag, rifleMag, smgMag, shotgunShells]
                 const chestItems: (Item | Weapon | Ammunition | null)[] = Array(12).fill(null);
 
                 const randomFour = itemsList.sort(() => 0.5 - Math.random()).slice(0, 4);
@@ -467,7 +304,7 @@ export class GameScene extends ex.Scene {
                         const randomIndex = Math.floor(Math.random() * 12);
                         if (!indexes.has(randomIndex)) {
                             indexFound = true;
-                            chestItems[randomIndex] = item;
+                            chestItems[randomIndex] = {...item, id: `${randomIndex}`};
                             indexes.add(randomIndex);
                         }
                     }

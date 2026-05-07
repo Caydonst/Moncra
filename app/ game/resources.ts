@@ -1,6 +1,9 @@
 // resources.ts
 import * as ex from "excalibur";
+import { TiledResource } from "@excaliburjs/plugin-tiled";
 
+// --- MAP ---
+const tiledMap = new TiledResource("/maps/test_map.tmx");
 // --- CHARACTER ---
 import characterWalkSheetImage from "./assets/character/walk/walk_spritesheet1.png"
 import characterIdleSheetImage from "./assets/character/walk/idle_spritesheet.png"
@@ -284,6 +287,7 @@ export async function createResources() {
         ...collect(DemonImages),
         ...Object.values(MiscImages),
         ...collectSounds(sounds),
+        tiledMap,
     ];
 
     // --- LOADER ---
@@ -307,5 +311,6 @@ export async function createResources() {
         chestSpriteSheet,
         CoinSpriteSheet,
         sounds,
+        tiledMap,
     };
 }

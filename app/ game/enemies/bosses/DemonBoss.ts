@@ -323,14 +323,25 @@ export class BossBullet extends ex.Actor {
         }
     }
 
-    onCollisionStart(_self: ex.Collider, other: ex.Collider) {
+    onCollisionStart(other: ex.Collider) {
         if (other.owner instanceof Player) {
             other.owner.takeDamage(20);
             this.kill();
             return;
         }
 
-        wallParticles(this.scene, this.pos, "wall");
+        spawnParticles(this.scene, this.pos, "muzzle", {
+            count: 6,
+            colors: "#5c5c5c",
+            minSpeed: 20,
+            maxSpeed: 20,
+            minLife: 200,
+            maxLife: 240,
+            size: 3,
+            z: 5,
+        });
+
+        //wallParticles(this.scene, this.pos, "wall");
         this.kill();
     }
 }

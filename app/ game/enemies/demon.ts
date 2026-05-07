@@ -26,7 +26,7 @@ export class Demon extends ex.Actor {
     private hpBar: HPBar;
     private playedDeath = false;
     private playedMisc = false;
-    private scene: ex.Scene;
+    public scene: ex.Scene;
     private knockbackVel: ex.Vector = ex.vec(0, 0);
     private knockbackTimer: number = 0;
     private hurtSprite!: ex.Sprite;
@@ -55,10 +55,10 @@ export class Demon extends ex.Actor {
         this.hp = hp;
         this.maxHp = maxHp;
         this.engine = engine;
+        this.scene = engine.currentScene;
     }
 
     onInitialize(engine: ex.Engine) {
-        this.scene = engine.currentScene;
 
         this.displayedHp = this.hp;
         this.body.collisionType = ex.CollisionType.Active;
@@ -75,7 +75,8 @@ export class Demon extends ex.Actor {
         });
         const miscFrames = Object.keys(this.resources.MiscImages).map(key => {
             const sprite = this.resources.MiscImages[key].toSprite();
-            sprite.scale = ex.vec(2.5, 2.5);
+            sprite.scale = ex.vec(2, 2);
+            sprite.origin = ex.vec(0.5, 1);
             return sprite;
         });
         this.walkAnim = new ex.Animation({
@@ -97,9 +98,8 @@ export class Demon extends ex.Actor {
                 graphic: sprite,
                 duration: 80,
                 loop: false,
-                origin: ex.vec(0, -100)
             })),
-            strategy: ex.AnimationStrategy.End
+            strategy: ex.AnimationStrategy.End,
         })
 
         this.graphics.add("walk", this.walkAnim);
@@ -129,6 +129,7 @@ export class Demon extends ex.Actor {
 
         // When the dead animation finishes, switch to misc once
         if (this.playedDeath && !this.playedMisc && this.deadAnim.done) {
+            this.graphics.offset = ex.vec(0, -30);
             this.graphics.use("misc");
             this.playedMisc = true;
             //this.spawnCoins(3);

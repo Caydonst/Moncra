@@ -16,12 +16,24 @@ type Props = {
 }
 
 export default function InventoryUI({ inventoryOpen, inventory, itemPanelOpen, setItemPanelOpen, selectedItem, setSelectedItem, scene }: Props) {
+    const [hoveredItem, setHoveredItem] = React.useState<Item | Weapon | Ammunition | null>(null);
+    const [tooltipPos, setTooltipPos] = React.useState({ x: 0, y: 0 });
 
     function openItemPanel(slot: any) {
         setSelectedItem(slot);
         if (slot) {
             setItemPanelOpen(true);
         }
+    }
+
+    function handleMouseMove(e: React.MouseEvent, item: Item | Weapon | Ammunition | null | undefined) {
+        if (!item) return;
+
+        setHoveredItem(item);
+        setTooltipPos({
+            x: e.clientX + 12,
+            y: e.clientY + 12,
+        });
     }
 
     return (
@@ -31,23 +43,23 @@ export default function InventoryUI({ inventoryOpen, inventory, itemPanelOpen, s
                 <div className={styles.inventoryInner}>
                     <div className={styles.gearContainer}>
                         <div className={styles.weaponSlotsWrapper}>
-                            <div id="weapon-slot" className={styles.weaponSlot} onClick={() => openItemPanel(inventory?.weapon)}>
+                            <div id="weapon-slot" className={styles.weaponSlot} onClick={() => openItemPanel(inventory?.weapon)}onMouseMove={(e) => handleMouseMove(e, inventory?.weapon)}
+                                 onMouseLeave={() => setHoveredItem(null)}>
                                 <p>Primary</p>
                                 {inventory?.weapon && (
                                     <img src={inventory.weapon.icon} className={inventory.weapon.type === "pistol" && "stats" in inventory.weapon ? styles.pistolImg : styles.otherImg} />
                                 )}
                             </div>
-                            <div id="weapon-slot" className={styles.weaponSlot} onClick={() => openItemPanel(inventory?.weapon)}>
+                            <div id="weapon-slot" className={styles.weaponSlot} onClick={() => openItemPanel(inventory?.weapon)} onMouseMove={(e) => handleMouseMove(e, inventory?.weapon)}
+                                 onMouseLeave={() => setHoveredItem(null)}>
                                 <p>Secondary</p>
-                                {inventory?.weapon && (
-                                    <img src={inventory.weapon.icon} className={inventory.weapon.type === "pistol" && "stats" in inventory.weapon ? styles.pistolImg : styles.otherImg} />
-                                )}
                             </div>
                         </div>
                     </div>
                     <div id="misc-grid" className={styles.miscGrid}>
                         {inventory?.misc.map((slot, i) => (
-                            <div key={i} id={`misc-slot-${i}`}  className={styles.slot} onClick={() => openItemPanel(slot)}>
+                            <div key={i} id={`misc-slot-${i}`}  className={styles.slot} onClick={() => openItemPanel(slot)} onMouseMove={(e) => handleMouseMove(e, slot)}
+                                 onMouseLeave={() => setHoveredItem(null)}>
                                 {slot && <img src={slot.icon} className={slot.type === "pistol" && "stats" in slot ? styles.pistolImg : styles.otherImg} />}
                                 {slot && "amount" in slot && (
                                     <p className={slot.amount <= 0 ? styles.magEmpty : styles.magNotEmpty}>{slot.amount}/{slot.maxAmount}</p>
@@ -92,6 +104,17 @@ export default function InventoryUI({ inventoryOpen, inventory, itemPanelOpen, s
                     )}
                 </div>
             </div>
+            {hoveredItem && (
+                <div
+                    className={styles.itemTooltip}
+                    style={{
+                        left: tooltipPos.x,
+                        top: tooltipPos.y,
+                    }}
+                >
+                    <p className={`${styles.tooltipName} ${styles[hoveredItem.rarity]}`}>{hoveredItem.name}</p>
+                </div>
+            )}
         </div>
     )
 }

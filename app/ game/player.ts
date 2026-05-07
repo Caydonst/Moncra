@@ -3,6 +3,7 @@ import {Engine, Resource} from "excalibur";
 import {GameResources} from "@/app/ game/resources";
 import {collidesWithWall8} from './utils/checkCollisions.ts'
 import {Shadow} from "./utils/shadow.ts";
+import {spawnParticles} from "@/app/ game/utils/ParticleHelper";
 
 export class Player extends ex.Actor {
     private speed: number = 350;
@@ -70,6 +71,7 @@ export class Player extends ex.Actor {
 
         const random = new ex.Random(); // or pass a seed if you want reproducible randomness
 
+        /*
         const particleTimer = new ex.Timer({
             interval: 0,             // base interval (ms)
             random,                    // Excalibur Random instance
@@ -92,32 +94,30 @@ export class Player extends ex.Actor {
                         .callMethod(() => engine.currentScene.remove(particle));
                 }
             },
+        });
 
+         */
 
-
-            /*
+        const particleTimer = new ex.Timer({
+            interval: 0,             // base interval (ms)
+            random,                    // Excalibur Random instance
+            randomRange: [20, 200],    // add a random float between 50 and 200 ms
+            repeats: true,
             action: () => {
                 if (this.move.magnitude > 0) {
-                    const particle = new ex.Actor({
-                        pos: this.pos.clone().add(ex.vec(0, this.height / 2 - 10)),
-                        radius: 5,
-                        color: ex.Color.fromHex("#B79794"),
-                        collisionType: ex.CollisionType.PreventCollision,
-                        opacity: 1,
-                        z: 1,
+                    spawnParticles(engine.currentScene, this.pos.add(ex.vec(0, 18)), "muzzle", {
+                        count: 1,
+                        colors: "#5c5c5c",
+                        minSpeed: 0,
+                        maxSpeed: 0,
+                        minLife: 400,
+                        maxLife: 400,
+                        size: 3,
+                        endSize: 1,
+                        z: this.z - 1,
                     });
-                    engine.currentScene.add(particle);
-                    particle.actions.runAction(
-                        new ex.ParallelActions([
-                            new ex.Fade(particle, 0, 300),            // fade to 0 opacity
-                            new ex.ScaleTo(particle, 4, 4, 20, 20)     // scale to 5× size
-                        ])
-                    ).callMethod(() => particle.kill());
                 }
-            }
-
-             */
-
+            },
         });
 
         engine.currentScene.add(particleTimer);

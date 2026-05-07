@@ -2,6 +2,7 @@
 import { GameScene } from "./scenes/GameScene";
 import { createResources } from "./resources";
 //import { loadMapData } from "./map";
+import * as ex from "excalibur";
 import {createCollisionGroups} from "@/app/ game/utils/collisionGroups";
 import {createGame, destroyGame} from "@/app/ game/gameInstance";
 
@@ -15,6 +16,19 @@ export async function startGame(canvas: HTMLCanvasElement, onLoaded: () => void)
     game.goToScene("game");
 
     await game.start(resources.loader);
+
+    //resources.tiledMap.addToScene(game.currentScene);
+
+    /*
+    const tileMaps = game.currentScene.actors.filter(
+        actor => actor instanceof ex.TileMap
+    ) as ex.TileMap[];
+
+    tileMaps.forEach(map => {
+        map.scale = ex.vec(3, 3);
+    });
+
+     */
 
     onLoaded();
 

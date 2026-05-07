@@ -1,5 +1,5 @@
 // gun.ts
-import {Weapon} from "@/app/ game/items/ItemTypes";
+import {Ammunition, Weapon} from "@/app/ game/items/ItemTypes";
 
 const ex = await import("excalibur");
 import {GameResources} from '../resources';
@@ -94,8 +94,8 @@ export class Gun extends ex.Actor {
         this.bowSprite.height = this.height;
         this.graphics.use(this.bowSprite);
 
-        this.shadow = new Shadow(this);
-        engine.currentScene.add(this.shadow);
+        //this.shadow = new Shadow(this);
+        //engine.currentScene.add(this.shadow);
     }
 
     onPostUpdate(engine: ex.Engine, delta: number) {
@@ -162,7 +162,16 @@ export class Gun extends ex.Actor {
 
         const spawnPos = this.pos.add(direction.scale(this.height / 2));
 
-        spawnParticles(this.engine.currentScene, spawnPos, "enemy");
+        spawnParticles(this.engine.currentScene, spawnPos, "muzzle", {
+            count: 12,
+            colors: "#ffd000",
+            minSpeed: 60,
+            maxSpeed: 100,
+            minLife: 40,
+            maxLife: 80,
+            size: 3,
+            z: 5,
+        });
         /*
         const scene = this.engine.currentScene as GameScene;
         scene.particles.emitBurst(spawnPos, {

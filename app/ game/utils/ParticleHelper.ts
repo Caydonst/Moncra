@@ -14,14 +14,16 @@ export function spawnParticles(
     pos: ex.Vector,
     collisionType: string,
     options?: {
-        count?: number,
-        colors?: ex.Color[],
-        minSpeed?: number,
-        maxSpeed?: number,
-        minLife?: number,
-        maxLife?: number,
-        size?: number,
-        enemy?: string,
+        count?: number;
+        colors?: string;
+        minSpeed?: number;
+        maxSpeed?: number;
+        minLife?: number;
+        maxLife?: number;
+        size?: number;
+        endSize?: number;
+        endColor?: string;
+        z?: number;
     }
 ) {
     const {
@@ -32,41 +34,41 @@ export function spawnParticles(
         minLife = 50,
         maxLife = 100,
         size = 2,
+        endSize = 0.3,
+        z = 0,
     } = options || {};
 
-    for (let i = 0; i < count; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = minSpeed + Math.random() * (maxSpeed - minSpeed);
-        const life = minLife + Math.random() * (maxLife - minLife);
+    const emitter = new ex.ParticleEmitter({
+        pos: pos.clone(),
+        z,
+        emitterType: ex.EmitterType.Circle,
+        radius: 1,
+        isEmitting: false,
+        emitRate: count,
+        particle: {
+            life: maxLife,
+            minSpeed,
+            maxSpeed,
+            minAngle: 0,
+            maxAngle: Math.PI * 2,
+            opacity: 1,
+            fade: true,
+            minSize: size,
+            maxSize: size,
+            startSize: size,
+            endSize: size * endSize,
+            beginColor: ex.Color.fromHex(colors),
+            endColor: ex.Color.Transparent,
+        },
+    });
 
-        const dir = ex.vec(Math.cos(angle), Math.sin(angle));
+    scene.add(emitter);
 
-        // particle actor
-        const p = new ex.Actor({
-            pos: pos.clone(),
-            radius: size,
-            z: 5,
-            color: ex.Color.fromHex(colors),
-            anchor: ex.vec(0.5, 0.5),
-            collisionType: ex.CollisionType.PreventCollision,
-            opacity: 1
-        });
+    emitter.emitParticles(count);
 
-        scene.add(p);
-
-        p.actions.clearActions();
-
-        const target = pos.add(dir.scale(speed * 2));
-
-        // run actions in parallel safely
-        p.actions.runAction(
-            new ex.ParallelActions([
-                new ex.MoveTo(p, target.x, target.y, speed),
-                new ex.Fade(p, 0, life),
-                new ex.ScaleTo(p, 0.3, 0.3, 2, 2)
-            ])
-        ).callMethod(() => p.kill());
-    }
+    scene.engine.clock.schedule(() => {
+        emitter.kill();
+    }, maxLife + 50);
 }
 
 

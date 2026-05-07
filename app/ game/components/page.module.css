@@ -1,5 +1,5 @@
 .common {
-    color: #4CFF00;
+    color: #fff;
 }
 .rare {
     color: #0094FF;
@@ -79,15 +79,27 @@
     width: 50%;
     height: 100%;
     border-bottom: 2px solid rgba(255, 255, 255, 0.5);
-    background: linear-gradient(to top, rgba(255, 255, 255, 0.15), transparent);
     padding: 6px;
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow-y: hidden;
 }
 .weaponSlot:hover {
-    background: linear-gradient(to top, rgba(255, 255, 255, 0.3), transparent);
+    background: linear-gradient(to top, rgba(255, 255, 255, 0.1), transparent);
     border-color: #fff;
+}
+.weaponSlot::before {
+    content: '';
+    position: absolute;
+    left: 35px;
+    bottom: 0;
+    transform: translateY(50%);
+    right: 35px;
+    height: 60%;
+    background: rgba(255, 255, 255, 0.5);
+    filter: blur(20px);
+    border-radius: 50%;
 }
 .weaponSlot .pistolImg {
     position: absolute;
@@ -111,7 +123,7 @@
 .weaponSlot p {
     position: absolute;
     top: -5px;
-    left: 5px;
+    left: 0;
     font-size: 8px;
 }
 .armorSlots {
@@ -140,7 +152,6 @@
 }
 .slot:hover {
     background: #363636;
-    border-color: #fff;
 }
 .slot .pistolImg {
     position: absolute;
@@ -223,7 +234,7 @@
     border-radius: 50%;
 }
 .bgLight.common {
-    background: #4CFF00;
+    background: #fff;
 }
 .bgLight.rare {
     background: #0094FF;
@@ -379,4 +390,30 @@
 }
 .chestWrapper.open .chest {
     transform: translateX(0);
+}
+
+.itemTooltip {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    padding: 0 10px 4px 10px;
+    background: #141414;
+    border: 2px solid #424242;
+    color: white;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.tooltipName {
+    font-size: 10px;
+}
+
+.tooltipRarity {
+    margin: 2px 0 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.tooltipText,
+.tooltipStats p {
+    margin: 3px 0;
 }
