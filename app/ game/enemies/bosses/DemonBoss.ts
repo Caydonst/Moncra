@@ -189,6 +189,7 @@ export class DemonBoss extends ex.Actor {
                     this.shookThisFrame = true;
                 }
             } else {
+                this.graphics.use("walk");
                 const dir = direction.normalize();
                 this.vel = dir.scale(this.speed);
                 if (this.hurtTimer?.complete) {

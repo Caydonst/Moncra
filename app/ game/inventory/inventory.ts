@@ -31,7 +31,7 @@ export class Inventory {
         return true;
     }
 
-    removeItem(item: Item) {
+    removeItem(item: Item | Weapon | Ammunition) {
         if (this.weapon?.id === item.id) this.weapon = null;
 
         const ai = this.armor.findIndex(a => a?.id === item.id);

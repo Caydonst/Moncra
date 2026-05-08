@@ -147,10 +147,10 @@
   width: 100%;
 }
 .overlayImgContainer img {
-  width: 70px;
+  max-height: 70px;
+  max-width: 130px;
   object-fit: contain;
   image-rendering: pixelated;
-  transform: rotate(90deg);
 }
 .overlayMagContainer {
   height: 50%;

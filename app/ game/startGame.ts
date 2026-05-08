@@ -19,17 +19,6 @@ export async function startGame(canvas: HTMLCanvasElement, onLoaded: () => void)
 
     //resources.tiledMap.addToScene(game.currentScene);
 
-    /*
-    const tileMaps = game.currentScene.actors.filter(
-        actor => actor instanceof ex.TileMap
-    ) as ex.TileMap[];
-
-    tileMaps.forEach(map => {
-        map.scale = ex.vec(3, 3);
-    });
-
-     */
-
     onLoaded();
 
     return () => {

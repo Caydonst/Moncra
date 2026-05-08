@@ -1,12 +1,12 @@
 import * as ex from "excalibur";
 import {Engine, Resource} from "excalibur";
 import {GameResources} from "@/app/ game/resources";
-import {collidesWithWall8} from './utils/checkCollisions.ts'
-import {Shadow} from "./utils/shadow.ts";
+import {collidesWithWall8} from './utils/checkCollisions'
+import {Shadow} from "./utils/shadow";
 import {spawnParticles} from "@/app/ game/utils/ParticleHelper";
 
 export class Player extends ex.Actor {
-    private speed: number = 350;
+    private speed: number = 300;
     public maxHp: number = 100;
     public hp: number = this.maxHp;
     private readonly worldWidth: number;

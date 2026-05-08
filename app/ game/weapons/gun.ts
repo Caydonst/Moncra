@@ -124,9 +124,10 @@ export class Gun extends ex.Actor {
         this.scale.x = 1;
         this.scale.y = 1;
 
-        this.rotation = angle + (isLeft ? -Math.PI / 2 : Math.PI / 2);
+        // left side of image points toward player / right side points toward cursor
+        this.rotation = angle;
 
-        // flip only the image
+        // flip image when aiming left
         this.bowSprite.flipVertical = isLeft;
 
         // --- Set bow position ---
@@ -147,7 +148,7 @@ export class Gun extends ex.Actor {
         const mag = this.weaponItem.magazine;
         if (!mag || mag.amount <= 0) {
             console.log("no ammo");
-            this.resources.sounds.gunEmpty?.play(0.1);
+            this.resources.sounds.gunEmpty?.play(0.05);
             return;
         }
 
@@ -160,7 +161,7 @@ export class Gun extends ex.Actor {
         const randomAngle = (Math.random() - 0.5) * spread;
         direction = direction.rotate(randomAngle).normalize();
 
-        const spawnPos = this.pos.add(direction.scale(this.height / 2));
+        const spawnPos = this.pos.add(direction.scale(this.width / 2));
 
         spawnParticles(this.engine.currentScene, spawnPos, "muzzle", {
             count: 12,
@@ -208,6 +209,8 @@ export class Gun extends ex.Actor {
         if (this.isReloading) return;
 
         const currentMag = this.weaponItem.magazine;
+
+        if (currentMag?.amount !== 0) return;
 
         const newMag = this.inventory.misc.find(slot =>
             slot &&
