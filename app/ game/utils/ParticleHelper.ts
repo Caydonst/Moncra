@@ -9,6 +9,61 @@ const ex = await import("excalibur");
  * @param options - optional config
  */
 
+export class ParticleManager {
+    private emitter: ex.ParticleEmitter;
+
+    constructor(private scene: ex.Scene) {
+        this.emitter = new ex.ParticleEmitter({
+            pos: ex.vec(0, 0),
+            z: 0,
+            emitterType: ex.EmitterType.Circle,
+            radius: 1,
+            isEmitting: false,
+            emitRate: 100,
+            particle: {
+                life: 400,
+                minSpeed: 0,
+                maxSpeed: 0,
+                minAngle: 0,
+                maxAngle: Math.PI * 2,
+                opacity: 1,
+                fade: true,
+                minSize: 3,
+                maxSize: 3,
+                startSize: 3,
+                endSize: 3,
+                beginColor: ex.Color.fromHex("#5c5c5c"),
+                endColor: ex.Color.Transparent,
+                z: 0,
+            },
+        })
+
+        scene.add(this.emitter);
+    }
+
+    emit(
+        pos: ex.Vector, 
+        count = 1,
+        color = this.emitter.particle.beginColor,
+        minSpeed = this.emitter.particle.minSpeed,
+        maxSpeed = this.emitter.particle.maxSpeed,
+        life = this.emitter.particle.life,
+        startSize = this.emitter.particle.startSize,
+        endSize = this.emitter.particle.endSize,
+        z = this.emitter.particle.z,
+    ) {
+        this.emitter.pos = pos.clone();
+        this.emitter.particle.beginColor = color;
+        this.emitter.particle.minSpeed = minSpeed;
+        this.emitter.particle.maxSpeed = maxSpeed;
+        this.emitter.particle.life = life;
+        this.emitter.particle.startSize = startSize;
+        this.emitter.particle.endSize = endSize;
+        this.emitter.particle.z = z;
+        this.emitter.emitParticles(count);
+    }
+}
+
 export function spawnParticles(
     scene: ex.Scene,
     pos: ex.Vector,
@@ -38,6 +93,12 @@ export function spawnParticles(
         z = 0,
     } = options || {};
 
+    const square = new ex.Rectangle({
+        width: 4,
+        height: 4,
+        color: ex.Color.Yellow,
+    });
+
     const emitter = new ex.ParticleEmitter({
         pos: pos.clone(),
         z,
@@ -59,6 +120,7 @@ export function spawnParticles(
             endSize: size * endSize,
             beginColor: ex.Color.fromHex(colors),
             endColor: ex.Color.Transparent,
+            z: 1,
         },
     });
 

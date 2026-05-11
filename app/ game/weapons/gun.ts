@@ -23,6 +23,10 @@ export class Gun extends ex.Actor {
     protected isHolding = false;
     protected isReloading = false;
 
+    protected getDamage() {
+        return 10;
+    }
+
     protected getSpread() {
         return 0;
     }
@@ -75,8 +79,8 @@ export class Gun extends ex.Actor {
         super({
             pos: player.pos.clone(),
             anchor: ex.vec(0.5, 0.5),
-            width: weaponImg.width / 2.5,
-            height: weaponImg.height / 2.5,
+            width: weaponImg.width * 1.5,
+            height: weaponImg.height * 1.5,
             collisionType: ex.CollisionType.PreventCollision,
             z: 3
         });
@@ -105,32 +109,32 @@ export class Gun extends ex.Actor {
             this.shoot();
         }
 
-        const worldPos = engine.screenToWorldCoordinates(pointer.lastScreenPos);
-        const direction = worldPos.sub(this.player.pos);
-
         const addBobbing = (offset: ex.Vector) => {
             return offset.add(ex.vec(0, this.player.bobOffsetY));
         };
 
-        // --- Rotate offset vector to point toward mouse ---
-        const angle = direction.toAngle();
-        const distance = this.offset.x; // how far from player center
-        const offsetVec = direction.normalize().scale(distance);
+        const worldPos = engine.screenToWorldCoordinates(pointer.lastScreenPos);
 
-        const bobbedOffset = addBobbing(offsetVec);
+        const playerToMouse = worldPos.sub(this.player.pos);
+        const offsetAngle = playerToMouse.toAngle();
+        const isLeft = playerToMouse.x < 0;
 
-        const isLeft = direction.x < 0;
+        const localOffset = ex.vec(
+            this.offset.x,
+            isLeft ? -this.offset.y : this.offset.y
+        );
 
-        this.scale.x = 1;
-        this.scale.y = 1;
+        const rotatedOffset = localOffset.rotate(offsetAngle);
+        const bobbedOffset = addBobbing(rotatedOffset);
 
-        // left side of image points toward player / right side points toward cursor
-        this.rotation = angle;
+        this.pos = this.player.pos.clone().add(bobbedOffset);
 
-        // flip image when aiming left
+        // now rotate gun toward cursor from actual gun position
+        const gunToMouse = worldPos.sub(this.pos);
+        this.rotation = gunToMouse.toAngle();
+
         this.bowSprite.flipVertical = isLeft;
 
-        // --- Set bow position ---
         this.pos = this.player.pos.clone().add(bobbedOffset);
 
         if (this.shadow) {
@@ -155,44 +159,33 @@ export class Gun extends ex.Actor {
         const pointer = this.engine.input.pointers.primary;
         const target = this.engine.screenToWorldCoordinates(pointer.lastScreenPos);
 
-        let direction = target.sub(this.player.pos).normalize();
+        const gunForward = ex.Vector.fromAngle(this.rotation);
+        const spawnPos = this.pos.add(gunForward.scale(this.width / 2));
+
+        let aimDirection = target.sub(spawnPos).normalize();
 
         const spread = this.getSpread();
         const randomAngle = (Math.random() - 0.5) * spread;
-        direction = direction.rotate(randomAngle).normalize();
+        aimDirection = aimDirection.rotate(randomAngle).normalize();
 
-        const spawnPos = this.pos.add(direction.scale(this.width / 2));
+        (this.engine.currentScene as GameScene).particleManager.emit(
+            spawnPos,
+            12,
+            ex.Color.fromHex("#ffd000"),
+            60,
+            100,
+            80,
+            3,
+            0,
+        );
 
-        spawnParticles(this.engine.currentScene, spawnPos, "muzzle", {
-            count: 12,
-            colors: "#ffd000",
-            minSpeed: 60,
-            maxSpeed: 100,
-            minLife: 40,
-            maxLife: 80,
-            size: 3,
-            z: 5,
-        });
-        /*
-        const scene = this.engine.currentScene as GameScene;
-        scene.particles.emitBurst(spawnPos, {
-            count: 200,
-            color: ex.Color.fromHex("#ffd500"),
-            minSpeed: 80,
-            maxSpeed: 140,
-            minLife: 500,
-            maxLife: 800,
-            size: 3,
-        });
-
-         */
-
-        this.engine.currentScene.camera.shake(4, 4, 60);
+        //this.engine.currentScene.camera.shake(4, 4, 60);
 
         const bullet = new Bullet(
-            this.height,
+            this.engine,
+            0,
             spawnPos.clone(),
-            direction.scale(this.getBulletSpeed()),
+            aimDirection.scale(this.getBulletSpeed()),
             this.resources,
             this.collisionGroups,
             this.weaponItem.stats.damage

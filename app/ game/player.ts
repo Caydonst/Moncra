@@ -4,6 +4,7 @@ import {GameResources} from "@/app/ game/resources";
 import {collidesWithWall8} from './utils/checkCollisions'
 import {Shadow} from "./utils/shadow";
 import {spawnParticles} from "@/app/ game/utils/ParticleHelper";
+import { GameScene } from "./scenes/GameScene";
 
 export class Player extends ex.Actor {
     private speed: number = 300;
@@ -24,7 +25,7 @@ export class Player extends ex.Actor {
             pos: ex.vec(x, y),
             anchor: ex.vec(0.5, 0.5),
             width: 15 * 2.5,    // set desired width
-            height: 27 * 2.5,   // set desired height
+            height: 19 * 2.5,   // set desired height
             color: ex.Color.Yellow,  // optional, for debugging
             collisionType: ex.CollisionType.Active,
             z: 3,
@@ -51,7 +52,7 @@ export class Player extends ex.Actor {
 
             return {
                 graphic: s,
-                duration: 120
+                duration: 180
             };
         });
 
@@ -71,7 +72,6 @@ export class Player extends ex.Actor {
 
         const random = new ex.Random(); // or pass a seed if you want reproducible randomness
 
-        /*
         const particleTimer = new ex.Timer({
             interval: 0,             // base interval (ms)
             random,                    // Excalibur Random instance
@@ -79,46 +79,20 @@ export class Player extends ex.Actor {
             repeats: true,
             action: () => {
                 if (this.move.magnitude > 0) {
-                    const particle = new ex.Actor({
-                        pos: this.pos.clone().add(ex.vec(0, this.height / 2 - 10)),
-                        width: 5,
-                        height: 5,
-                        color: ex.Color.fromHex("#B79794"),
-                        collisionType: ex.CollisionType.PreventCollision,
-                        opacity: 1,
-                        z: 1,
-                    });
-                    engine.currentScene.add(particle);
-                    particle.actions
-                        .fade(1, 250)
-                        .callMethod(() => engine.currentScene.remove(particle));
+                    (engine.currentScene as GameScene).particleManager.emit(
+                        this.pos.add(ex.vec(0, 18)),
+                        1,
+                        ex.Color.fromHex("#5c5c5c"),
+                        0,
+                        0,
+                        400,
+                        3,
+                        3,
+                    );
                 }
             },
         });
 
-         */
-
-        const particleTimer = new ex.Timer({
-            interval: 0,             // base interval (ms)
-            random,                    // Excalibur Random instance
-            randomRange: [20, 200],    // add a random float between 50 and 200 ms
-            repeats: true,
-            action: () => {
-                if (this.move.magnitude > 0) {
-                    spawnParticles(engine.currentScene, this.pos.add(ex.vec(0, 18)), "muzzle", {
-                        count: 1,
-                        colors: "#5c5c5c",
-                        minSpeed: 0,
-                        maxSpeed: 0,
-                        minLife: 400,
-                        maxLife: 400,
-                        size: 3,
-                        endSize: 1,
-                        z: this.z - 1,
-                    });
-                }
-            },
-        });
 
         engine.currentScene.add(particleTimer);
         particleTimer.start();
@@ -161,33 +135,25 @@ export class Player extends ex.Actor {
 
             this.pos.x += step.x;
             this.pos.y += step.y;
-            /*
-            // --- Try X axis first ---
-            const tryX = ex.vec(this.pos.x + step.x, this.pos.y);
-            if (!collidesWithWall8(tryX, this.width, this.height)) {
-                this.pos.x += step.x;
-            }
-
-            // --- Then try Y axis ---
-            const tryY = ex.vec(this.pos.x, this.pos.y + step.y);
-            if (!collidesWithWall8(tryY, this.width, this.height)) {
-                this.pos.y += step.y;
-            }*/
+            
         } else if (this.move.magnitude <= 0) {
             this.graphics.use("idle");
         }
 
+        const pointer = engine.input.pointers.primary;
 
-        if (engine.input.keyboard.isHeld(ex.Keys.A)) {
+        const worldPos = engine.screenToWorldCoordinates(pointer.lastScreenPos);
+
+        if (worldPos.x < this.pos.x) {
             this.walkAnim.flipHorizontal = true;
             this.idleAnim.flipHorizontal = true;
-        } else if (engine.input.keyboard.isHeld(ex.Keys.D)) {
+        } else {
             this.walkAnim.flipHorizontal = false;
             this.idleAnim.flipHorizontal = false;
         }
 
         if (this.shadow) {
-            this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2 - 5));
+            this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2));
         }
 
     }

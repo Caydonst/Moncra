@@ -176,14 +176,14 @@ export default function GameCanvas() {
                     <div className={styles.overlayFooter}>
                         {inventory && (
                             <div className={styles.overlayWeaponInfoContainer}>
-                                {inventory.weapon ? (
+                                {inventory.primary ? (
                                     <>
                                         <div className={styles.overlayImgContainer}>
-                                            <img src={inventory.weapon.icon} />
+                                            <img src={inventory.primary.icon} />
                                         </div>
-                                        {inventory.weapon.magazine ? (
+                                        {inventory.primary.magazine ? (
                                             <div className={styles.overlayMagContainer}>
-                                                <p>{inventory.weapon.magazine?.amount} / {inventory.weapon.magazine?.maxAmount}</p>
+                                                <p>{inventory.primary.magazine?.amount} / {inventory.primary.magazine?.maxAmount}</p>
                                             </div>
                                         ) : (
                                             <div className={styles.overlayMagContainer}>

@@ -3,7 +3,8 @@ const ex = await import("excalibur");
 import {Player} from "../player"
 
 export class Inventory {
-    weapon: Weapon | null = null;
+    primary: Weapon | null = null;
+    secondary: Weapon | null = null;
     armor: (Item | null)[] = [null, null, null]; // 3 armor slots
     misc: (Item | Weapon | Ammunition | null)[] = Array(24).fill(null);
 
@@ -32,7 +33,7 @@ export class Inventory {
     }
 
     removeItem(item: Item | Weapon | Ammunition) {
-        if (this.weapon?.id === item.id) this.weapon = null;
+        if (this.primary?.id === item.id) this.primary = null;
 
         const ai = this.armor.findIndex(a => a?.id === item.id);
         if (ai !== -1) this.armor[ai] = null;
@@ -44,12 +45,12 @@ export class Inventory {
     equipWeapon(item: Weapon, scene: ex.Scene | null) {
 
         // Remove previous equipped weapon
-        if (this.weapon?.instance) {
-            this.weapon.instance.cleanup?.();
+        if (this.primary?.instance) {
+            this.primary.instance.cleanup?.();
             if (scene) {
-                scene.remove(this.weapon.instance);
+                scene.remove(this.primary.instance);
             }
-            this.weapon.instance = undefined;
+            this.primary.instance = undefined;
         }
 
         if (!item.createWeapon) {
@@ -66,7 +67,7 @@ export class Inventory {
         instance.addListeners?.();
 
         item.instance = instance;
-        this.weapon = item;
+        this.primary = item;
     }
 
     equipArmor(slotIndex: number, item: Item) {

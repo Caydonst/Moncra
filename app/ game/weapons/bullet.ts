@@ -6,14 +6,18 @@ import {spawnParticles, wallParticles} from "../utils/ParticleHelper";
 import {Shadow} from "../utils/shadow";
 import {Player} from "../player";
 import {DemonBoss} from "../enemies/bosses/DemonBoss";
+import { GameScene } from '../scenes/GameScene';
 
 
 export class Bullet extends ex.Actor {
     private shadow: Shadow;
     private previousPos: ex.Vector;
     private hasHit = false;
+    private lastTrailTime = 0;
+    private trailInterval = 20; // ms
 
     constructor(
+        private engine: ex.Engine,
         offsetDistance: number,
         pos: ex.Vector,
         vel: ex.Vector,
@@ -25,9 +29,9 @@ export class Bullet extends ex.Actor {
         super({
             name: "projectile",
             pos: pos,
-            anchor: ex.vec(1, 0),
-            height: resources.Images.bullet.height,
-            width: resources.Images.bullet.width,
+            anchor: ex.vec(0.5, 0.5),
+            height: resources.Images.bullet.height * 2,
+            width: resources.Images.bullet.width * 0.5,
             collisionType: ex.CollisionType.Passive,
             collisionGroup: collisionGroups.projectileGroup,
             z: 2
@@ -39,15 +43,19 @@ export class Bullet extends ex.Actor {
 
     onInitialize(engine: ex.Engine): void {
         const bulletSprite = this.resources.Images.bullet.toSprite();
-        bulletSprite.scale = ex.vec(0.5, 1.5);
-        //bulletSprite.width = this.width;
-        //bulletSprite.height = this.height;
+        bulletSprite.scale = ex.vec(0.5, 2);
+        bulletSprite.width = this.width;
+        bulletSprite.height = this.height;
 
         this.graphics.use(bulletSprite);
         this.rotation = this.vel.toAngle() + Math.PI / 2;
 
-        this.shadow = new Shadow(this);
-        engine.currentScene.add(this.shadow);
+        const start = this.previousPos;
+        const end = this.pos;
+        const movement = end.sub(start);
+
+        //this.shadow = new Shadow(this);
+        //engine.currentScene.add(this.shadow);
     }
 
     onPostUpdate(engine: ex.Engine, _delta: number) {
@@ -60,6 +68,26 @@ export class Bullet extends ex.Actor {
         if (this.shadow) {
             this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2 - 2));
         }
+        /*
+        const now = performance.now();
+
+        if (now - this.lastTrailTime >= this.trailInterval) {
+            this.lastTrailTime = now;
+
+            spawnParticles(engine.currentScene, this.pos.clone(), "muzzle", {
+                count: 1,
+                colors: "#ffd000",
+                minSpeed: 10,
+                maxSpeed: 30,
+                minLife: 80,
+                maxLife: 120,
+                size: 2,
+                z: 5,
+            });
+        }
+
+         */
+
 
         this.previousPos = this.pos.clone();
     }
@@ -134,7 +162,8 @@ export class Bullet extends ex.Actor {
             if (this.segmentIntersectsActor(start, end, enemy)) {
 
                 enemy.takeDamage(this.damage);
-                spawnParticles(engine.currentScene, enemy.pos, "enemy");
+                engine.currentScene.camera.shake(4, 4, 60);
+                //spawnParticles(engine.currentScene, enemy.pos, "enemy");
 
                 this.destroyBullet();
                 return;
@@ -143,8 +172,19 @@ export class Bullet extends ex.Actor {
 
         for (const wall of walls) {
             if (this.segmentIntersectsActor(start, end, wall)) {
-
-                wallParticles(engine.currentScene, wall.pos, "wall");
+                /*
+                (engine.currentScene as GameScene).particleManager.emit(
+                    wall.pos,
+                    12,
+                    ex.Color.fromHex("#919191"),
+                    10,
+                    20,
+                    300,
+                    3,
+                    0,
+                    5,
+                );
+                */
 
                 this.destroyBullet();
                 return;
@@ -158,10 +198,12 @@ export class Bullet extends ex.Actor {
         const owner = other.owner;
 
         if (owner instanceof Demon || owner instanceof DemonBoss) {
-            return; // handled by swept collision
+            return;
+            //owner.takeDamage(this.damage);
+            //spawnParticles(engine.currentScene, enemy.pos, "enemy");
+
         }
 
-        wallParticles(this.scene, this.pos, "wall");
         this.destroyBullet();
     }
 

@@ -14,12 +14,12 @@ import { Demon } from '../enemies/demon';
 import { Gun } from '../weapons/gun';
 import { WarHammer } from '../weapons/warhammer';
 import { Chest } from "../chest"
-import AUGImg from "../assets/weapons/bow/blaster4.png";
-import FALImg from "../assets/weapons/bow/blaster6.png";
-import AR15Img from "../assets/weapons/bow/blaster7.png";
-import AugImg from "../assets/weapons/bow/blaster4.png";
-import GlockImg from "../assets/weapons/bow/pistol1.png"
-import DeagleImg from "../assets/weapons/bow/pistol2.png"
+import M4Img from "../assets/weapons/bow/m4.png";
+import AK47Img from "../assets/weapons/bow/ak47.png";
+import ScoutImg from "../assets/weapons/bow/scout.png";
+import MinigunImg from "../assets/weapons/bow/minigun.png";
+import MP5Img from "../assets/weapons/bow/mp5.png"
+import M9Img from "../assets/weapons/bow/m9.png"
 import handgunMagImg from "../assets/weapons/bow/handgun_mag.png"
 import rifleMagImg from "../assets/weapons/bow/rifle_mag1.png"
 import HandgunImg from "../assets/weapons/bow/pistol.png";
@@ -36,7 +36,10 @@ import {DemonBoss} from "../enemies/bosses/DemonBoss";
 import type { GameResources } from "../resources";
 import {Rifle} from "@/app/ game/weapons/rifle";
 import {Pistol} from "@/app/ game/weapons/pistol";
-import { ParticleSystem } from "../utils/ParticleSystem";
+import { SMG } from "../weapons/smg";
+import { ParticleManager } from "../utils/ParticleHelper";
+import {getSpawnPointsFromTiledMap} from "./helperFunctions"
+import { DarknessOverlay } from "../utils/darknessOverlay";
 
 type Maps = {
     layer1: number[][];
@@ -56,7 +59,9 @@ export class GameScene extends ex.Scene {
     chest1!: Chest;
     chest2!: Chest;
     chest3!: Chest;
-    public particles!: ParticleSystem;
+    public enemySpawnPoints: ex.Vector[] = [];
+
+    particleManager!: ParticleManager;
 
     constructor(
         private resources: GameResources,
@@ -69,35 +74,6 @@ export class GameScene extends ex.Scene {
 
     async onInitialize(engine: ex.Engine) {
         try {
-// --- Create Player ---
-
-            // --- Add Weapon ---
-            //this.add(this.warHammer);
-
-            // --- Collision Groups ---
-
-
-            // --- Add tilemap ---
-            /*
-            const TILE_SIZE = 70;
-            const { layer1, layer2, layer3 } = this.maps;
-            const { tilemap1, tilemap2, tilemap3 } = createTileMaps(this.resources.ex, layer1);
-
-            const COLS = layer1[0].length;
-            const ROWS = layer1.length;
-
-            const worldWidth = COLS * TILE_SIZE;
-            const worldHeight = ROWS * TILE_SIZE;
-
-            loadTileMaps(this.resources.ex, tilemap1, tilemap3, layer1, layer3, this.resources.tileSheet);
-
-            this.add(tilemap1);
-            this.add(tilemap2);
-            this.add(tilemap3);
-
-            spawnWallsInto(this.resources.ex, this, layer2, this.resources.tileSheet, this.collisionGroups);
-
-             */
 
             const fpsText = new ex.Text({
                 text: "FPS: 0",
@@ -122,10 +98,9 @@ export class GameScene extends ex.Scene {
                 fpsText.text = `FPS: ${Math.round(engine.stats.currFrame.fps)}`;
             });
 
-            createSimpleMap(ex, this, this.collisionGroups);
+            //createSimpleMap(ex, this, this.collisionGroups);
 
-            this.particles = new ParticleSystem(500);
-            this.add(this.particles);
+            this.particleManager = new ParticleManager(this);
 
             this.player = new Player(400, 300, 1920, 1080, this.resources, this.collisionGroups);
             this.add(this.player);
@@ -147,14 +122,35 @@ export class GameScene extends ex.Scene {
                 type: "rifle",
                 icon: rifleMagImg.src,
                 rarity: "common",
-                amount: 30,
-                maxAmount: 30,
+                amount: 999,
+                maxAmount: 999,
             }
-            const AR15: Weapon = {
+            const M4: Weapon = {
                 id: "rifle_1",
-                name: "AR15",
+                name: "M4",
                 type: "rifle",
-                icon: AR15Img.src,
+                icon: M4Img.src,
+                rarity: "legendary",
+                stats: {
+                    damage: 30,
+                },
+                magazine: rifleMag,
+                createWeapon: () => new Rifle(
+                    this.player,
+                    engine,
+                    ex.vec(15, 0),
+                    this.resources,
+                    this.collisionGroups,
+                    this.resources.Images.m4,
+                    M4,
+                    this.inventory,
+                ),
+            };
+            const Minigun: Weapon = {
+                id: "minigun",
+                name: "Minigun",
+                type: "rifle",
+                icon: MinigunImg.src,
                 rarity: "legendary",
                 stats: {
                     damage: 50,
@@ -163,53 +159,11 @@ export class GameScene extends ex.Scene {
                 createWeapon: () => new Rifle(
                     this.player,
                     engine,
-                    ex.vec(25, 0),
+                    ex.vec(25, 10),
                     this.resources,
                     this.collisionGroups,
-                    this.resources.Images.ar15,
-                    AR15,
-                    this.inventory,
-                ),
-            };
-            const AUG: Weapon = {
-                id: "rifle_1",
-                name: "AUG",
-                type: "rifle",
-                icon: AUGImg.src,
-                rarity: "legendary",
-                stats: {
-                    damage: 50,
-                },
-                magazine: rifleMag,
-                createWeapon: () => new Rifle(
-                    this.player,
-                    engine,
-                    ex.vec(25, 0),
-                    this.resources,
-                    this.collisionGroups,
-                    this.resources.Images.aug,
-                    AUG,
-                    this.inventory,
-                ),
-            };
-            const FAL: Weapon = {
-                id: "rifle_1",
-                name: "FAL",
-                type: "rifle",
-                icon: FALImg.src,
-                rarity: "epic",
-                stats: {
-                    damage: 50,
-                },
-                magazine: rifleMag,
-                createWeapon: () => new Rifle(
-                    this.player,
-                    engine,
-                    ex.vec(25, 0),
-                    this.resources,
-                    this.collisionGroups,
-                    this.resources.Images.fal,
-                    FAL,
+                    this.resources.Images.minigun,
+                    Minigun,
                     this.inventory,
                 ),
             };
@@ -219,14 +173,34 @@ export class GameScene extends ex.Scene {
                 type: "pistol",
                 icon: HandgunMagImg.src,
                 rarity: "common",
-                amount: 20,
-                maxAmount: 20,
+                amount: 999,
+                maxAmount: 999,
             }
-            const Glock: Weapon = {
+            const MP5: Weapon = {
                 id: "handgun_1",
-                name: "Glock",
+                name: "MP5",
+                type: "rifle",
+                icon: MP5Img.src,
+                rarity: "epic",
+                stats: {
+                    damage: 20,
+                },
+                magazine: rifleMag,
+                createWeapon: () => new SMG(
+                    this.player,
+                    engine, ex.vec(13, 0),
+                    this.resources,
+                    this.collisionGroups,
+                    this.resources.Images.mp5,
+                    MP5,
+                    this.inventory,
+                ),
+            };
+            const M9: Weapon = {
+                id: "handgun_1",
+                name: "M9",
                 type: "pistol",
-                icon: GlockImg.src,
+                icon: M9Img.src,
                 rarity: "epic",
                 stats: {
                     damage: 20,
@@ -237,28 +211,8 @@ export class GameScene extends ex.Scene {
                     engine, ex.vec(18, 0),
                     this.resources,
                     this.collisionGroups,
-                    this.resources.Images.glock,
-                    Glock,
-                    this.inventory,
-                ),
-            };
-            const Deagle: Weapon = {
-                id: "handgun_1",
-                name: "Desert Eagle",
-                type: "pistol",
-                icon: DeagleImg.src,
-                rarity: "legendary",
-                stats: {
-                    damage: 20,
-                },
-                magazine: handgunMag,
-                createWeapon: () => new Pistol(
-                    this.player,
-                    engine, ex.vec(18, 0),
-                    this.resources,
-                    this.collisionGroups,
-                    this.resources.Images.deagle,
-                    Deagle,
+                    this.resources.Images.m9,
+                    M9,
                     this.inventory,
                 ),
             };
@@ -282,18 +236,17 @@ export class GameScene extends ex.Scene {
                 maxAmount: 10,
             }
 
-            this.inventory.addItem(AR15)
-            this.inventory.addItem(AUG)
-            this.inventory.addItem(FAL)
-            this.inventory.addItem(Glock)
-            this.inventory.addItem(Deagle)
+            this.inventory.addItem(M4)
+            this.inventory.addItem(MP5)
+            this.inventory.addItem(M9)
+            this.inventory.addItem(Minigun)
             this.inventory.addItem(handgunMag)
-            this.inventory.addItem(rifleMag)
+            this.inventory.addItem(rifleMag) 
             this.inventory.addItem(smgMag)
             this.inventory.addItem(shotgunShells)
 
             function getRandomItems() {
-                const itemsList = [AR15, AUG, FAL, Glock, Deagle, handgunMag, rifleMag, smgMag, shotgunShells]
+                const itemsList = [M4, MP5, M9, handgunMag, rifleMag, smgMag, shotgunShells]
                 const chestItems: (Item | Weapon | Ammunition | null)[] = Array(12).fill(null);
 
                 const randomFour = itemsList.sort(() => 0.5 - Math.random()).slice(0, 4);
@@ -334,37 +287,85 @@ export class GameScene extends ex.Scene {
                 worldHeight + 200
             );
             engine.currentScene.camera.strategy.limitCameraBounds(bounds);
+            this.camera.zoom = 1.25
 
         } catch (err) {
             console.error("GameScene init failed:", err);
             throw err;
         }
 
+        console.log(this.resources.tiledMap)
+
+        this.enemySpawnPoints = getSpawnPointsFromTiledMap(
+            ex,
+            this.resources.tiledMap,
+            "floor"
+        );
+
+        console.log(this.enemySpawnPoints)
+
 
     }
 
 
     onPostUpdate(engine: ex.Engine, delta: number) {
-        //console.log('FPS:', this.engine.stats.currFrame.fps);
         const camera = engine.currentScene.camera;
+        const pointer = engine.input.pointers.primary;
 
-        const lookAhead = this.player.vel.scale(0.15);
-        const target = this.player.pos.add(lookAhead);
+        const mouseWorldPos = engine.screenToWorldCoordinates(pointer.lastScreenPos);
 
-        const followStrength = 3;
-        const t = 1 - Math.exp(-followStrength * (delta / 1000));
+        // Direction from player to mouse
+        const mouseOffset = mouseWorldPos.sub(this.player.pos);
 
-        camera.pos = camera.pos.lerp(target, t);
+        const maxLookDistance = 2000;
+
+        const clampedOffset =
+            mouseOffset.size > maxLookDistance
+                ? mouseOffset.normalize().scale(maxLookDistance)
+                : mouseOffset;
+
+        const lookAmount = 0.1;
+
+        const targetPos = this.player.pos.add(
+            clampedOffset.scale(lookAmount)
+        );
+
+        // ---- MAP BOUNDS ----
+        const mapWidth = worldWidth;
+        const mapHeight = worldHeight;
+
+        const halfScreenW = engine.drawWidth / 2;
+        const halfScreenH = engine.drawHeight / 2;
+
+        const clampedX = Math.max(
+            halfScreenW,
+            Math.min(mapWidth - halfScreenW, targetPos.x)
+        );
+
+        const clampedY = Math.max(
+            halfScreenH,
+            Math.min(mapHeight - halfScreenH, targetPos.y)
+        );
+
+        camera.pos = ex.vec(clampedX, clampedY);
     }
     public getInventory() {
         return this.inventory;
     }
+
+    private getRandomSpawn() {
+        const index = Math.floor(Math.random() * this.enemySpawnPoints.length);
+        return this.enemySpawnPoints[index].clone();
+    }
+    
     public spawnEnemy() {
-        const randomPos = Math.floor(Math.random() * floorTilePositions.length);
+        const randomIndex = Math.floor(Math.random() * this.enemySpawnPoints.length);
+        const spawnPos = this.enemySpawnPoints[randomIndex];
+        console.log(spawnPos)
 
         const enemy = new Demon(
             this.engine,
-            ex.vec(floorTilePositions[randomPos].x, floorTilePositions[randomPos].y),
+            spawnPos,
             worldWidth,
             worldHeight,
             this.player,
@@ -378,17 +379,18 @@ export class GameScene extends ex.Scene {
         this.add(enemy);
     }
     public spawnBoss() {
-        const randomPos = Math.floor(Math.random() * floorTilePositions.length);
+        const randomIndex = Math.floor(Math.random() * this.enemySpawnPoints.length);
+        const spawnPos = this.enemySpawnPoints[randomIndex];
 
         const boss = new DemonBoss(
             this.engine,
-            ex.vec(floorTilePositions[randomPos].x, floorTilePositions[randomPos].y),
+            spawnPos,
             worldWidth,
             worldHeight,
             this.player,
             200,
-            300,
-            300,
+            5000,
+            5000,
             this.resources,
             this.collisionGroups,
         );

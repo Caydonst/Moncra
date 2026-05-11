@@ -3,7 +3,7 @@ import * as ex from "excalibur";
 import { TiledResource } from "@excaliburjs/plugin-tiled";
 
 // --- MAP ---
-const tiledMap = new TiledResource("/maps/test_map.tmx");
+const tiledMap = new TiledResource("/maps/testmap1.tmx");
 // --- CHARACTER ---
 import characterWalkSheetImage from "./assets/character/walk/walk_spritesheet1.png"
 import characterIdleSheetImage from "./assets/character/walk/idle_spritesheet.png"
@@ -45,15 +45,15 @@ import miscDead11 from "./assets/enemies/misc/dead11.png";
 // --- SPRITESHEET ---
 import Tilesheet from "./assets/map/spritesheet.png";
 // --- WEAPONS ---
-import AUGImg from "./assets/weapons/bow/blaster4.png";
-import FALImg from "./assets/weapons/bow/blaster6.png";
-import AR15Img from "./assets/weapons/bow/blaster7.png";
-import AugImg from "./assets/weapons/bow/blaster4.png";
-import GlockImg from "./assets/weapons/bow/pistol1.png"
-import DeagleImg from "./assets/weapons/bow/pistol2.png"
+import M4Img from "./assets/weapons/bow/m4.png";
+import Ak47Img from "./assets/weapons/bow/ak47.png";
+import ScoutImg from "./assets/weapons/bow/scout.png";
+import MinigunImg from "./assets/weapons/bow/minigun.png";
+import MP5Img from "./assets/weapons/bow/mp5.png"
+import M9Img from "./assets/weapons/bow/m9.png"
 
 import arrowImage from './assets/projectiles/arrow.png';
-import bulletImage from './assets/projectiles/arrow1.png';
+import bulletImage from './assets/projectiles/bullet1.png';
 import warHammer from "./assets/weapons/war_hammer/anime_war_hammer.png";
 import greatSword from "./assets/weapons/great_sword/anime_sword.png";
 /// --- MISC ---
@@ -95,11 +95,12 @@ export async function createResources() {
         characterIdleSheetImage: new ex.ImageSource(characterIdleSheetImage.src),
         arrow: new ex.ImageSource(arrowImage.src),
         tileSheet: new ex.ImageSource(Tilesheet.src),
-        aug: new ex.ImageSource(AUGImg.src),
-        fal: new ex.ImageSource(FALImg.src),
-        ar15: new ex.ImageSource(AR15Img.src),
-        glock: new ex.ImageSource(GlockImg.src),
-        deagle: new ex.ImageSource(DeagleImg.src),
+        m4: new ex.ImageSource(M4Img.src),
+        ak47: new ex.ImageSource(Ak47Img.src),
+        scout: new ex.ImageSource(ScoutImg.src),
+        mp5: new ex.ImageSource(MP5Img.src),
+        m9: new ex.ImageSource(M9Img.src),
+        minigun: new ex.ImageSource(MinigunImg.src),
         warHammer: new ex.ImageSource(warHammer.src),
         greatSword: new ex.ImageSource(greatSword.src),
         coinSheetImage: new ex.ImageSource(coinSpritesheet.src),

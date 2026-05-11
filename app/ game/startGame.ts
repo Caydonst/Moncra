@@ -17,7 +17,7 @@ export async function startGame(canvas: HTMLCanvasElement, onLoaded: () => void)
 
     await game.start(resources.loader);
 
-    //resources.tiledMap.addToScene(game.currentScene);
+    resources.tiledMap.addToScene(game.currentScene);
 
     onLoaded();
 

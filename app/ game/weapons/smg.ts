@@ -1,8 +1,8 @@
 import { Gun } from "./gun";
 
-export class Pistol extends Gun {
+export class SMG extends Gun {
     protected getBulletCooldown() {
-        return 300;
+        return 120
     }
     protected override getSpread() {
         return 0;
@@ -21,8 +21,6 @@ export class Pistol extends Gun {
     }
 
     protected override playReloadSound() {
-        const sound = this.resources.sounds.pistol?.reload;
-        if (sound) sound.playbackRate = 1.3;
-        sound?.play(0.1);
+        this.resources.sounds.rifle?.reload?.play(0.1);
     }
 }

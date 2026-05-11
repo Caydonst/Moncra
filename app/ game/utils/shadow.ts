@@ -1,7 +1,7 @@
 // shadow.ts
 const ex = await import("excalibur");
 import { Bullet } from '../weapons/bullet'
-import {GreatSword} from "../weapons/sword.ts";
+import {GreatSword} from "../weapons/sword";
 
 export class Shadow extends ex.Actor {
 

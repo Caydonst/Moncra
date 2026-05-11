@@ -2,14 +2,14 @@ import { Gun } from "./gun";
 
 export class Rifle extends Gun {
     protected getBulletCooldown() {
-        return 130
+        return 160
     }
     protected override getSpread() {
         return 0;
     }
 
     protected override getBulletSpeed() {
-        return 4000;
+        return 2000;
     }
 
     protected override getReloadTime() {
@@ -17,7 +17,7 @@ export class Rifle extends Gun {
     }
 
     protected override playShootSound() {
-        this.resources.sounds.rifle?.shoot?.play(0.5);
+        this.resources.sounds.pistol?.shoot?.play(0.02);
     }
 
     protected override playReloadSound() {

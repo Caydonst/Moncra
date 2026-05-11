@@ -192,10 +192,10 @@ export function spawnWallsInto(ex: any, scene: ex.Scene, mapLayer2Data: number[]
 
  */
 
-export const TILE_SIZE = 70;
+export const TILE_SIZE = 64;
 
 export const MAP_COLS = 30;
-export const MAP_ROWS = 20;
+export const MAP_ROWS = 30;
 
 export const worldWidth = MAP_COLS * TILE_SIZE;
 export const worldHeight = MAP_ROWS * TILE_SIZE;
@@ -231,21 +231,6 @@ export function createSimpleMap(ex: any, scene: any, collisionGroups: any) {
                 wall.tags.add("wall");
                 scene.add(wall);
             } else {
-                const isDark = (x + y) % 2 === 0;
-
-                const floor = new ex.Actor({
-                    pos: ex.vec(worldX, worldY),
-                    anchor: ex.vec(0, 0),
-                    width: TILE_SIZE,
-                    height: TILE_SIZE,
-                    color: isDark
-                        ? ex.Color.fromHex("#1c1c1c")
-                        : ex.Color.fromHex("#1f1f1f"),
-                    collisionType: ex.CollisionType.PreventCollision,
-                    z: 0,
-                });
-
-                scene.add(floor);
 
                 floorTilePositions.push(
                     ex.vec(worldX + TILE_SIZE / 2, worldY + TILE_SIZE / 2)

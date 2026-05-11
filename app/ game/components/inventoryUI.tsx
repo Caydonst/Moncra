@@ -43,14 +43,14 @@ export default function InventoryUI({ inventoryOpen, inventory, itemPanelOpen, s
                 <div className={styles.inventoryInner}>
                     <div className={styles.gearContainer}>
                         <div className={styles.weaponSlotsWrapper}>
-                            <div id="weapon-slot" className={styles.weaponSlot} onClick={() => openItemPanel(inventory?.weapon)}onMouseMove={(e) => handleMouseMove(e, inventory?.weapon)}
+                            <div id="weapon-slot" className={styles.weaponSlot} onClick={() => openItemPanel(inventory?.primary)}onMouseMove={(e) => handleMouseMove(e, inventory?.primary)}
                                  onMouseLeave={() => setHoveredItem(null)}>
                                 <p>Primary</p>
-                                {inventory?.weapon && (
-                                    <img src={inventory.weapon.icon} className={inventory.weapon.type === "pistol" && "stats" in inventory.weapon ? styles.pistolImg : styles.otherImg} />
+                                {inventory?.primary && (
+                                    <img src={inventory.primary.icon} className={inventory.primary.type === "pistol" && "stats" in inventory.primary ? styles.pistolImg : styles.otherImg} />
                                 )}
                             </div>
-                            <div id="weapon-slot" className={styles.weaponSlot} onClick={() => openItemPanel(inventory?.weapon)} onMouseMove={(e) => handleMouseMove(e, inventory?.weapon)}
+                            <div id="weapon-slot" className={styles.weaponSlot} onClick={() => openItemPanel(inventory?.primary)} onMouseMove={(e) => handleMouseMove(e, inventory?.primary)}
                                  onMouseLeave={() => setHoveredItem(null)}>
                                 <p>Secondary</p>
                             </div>
