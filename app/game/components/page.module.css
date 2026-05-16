@@ -103,7 +103,7 @@
 }
 .weaponSlot .otherImg {
     position: absolute;
-    width: 70%;
+    width: 50%;
     height: 70%;
     object-fit: contain;
     image-rendering: pixelated;

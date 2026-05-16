@@ -23,9 +23,6 @@ import {GreatSword} from "../weapons/sword";
 //import { spawnWallsInto } from "../map";
 import {DemonBoss} from "../enemies/bosses/DemonBoss";
 import type { GameResources } from "../resources";
-import {Rifle} from "@/app/ game/weapons/rifle";
-import {Pistol} from "@/app/ game/weapons/pistol";
-import { SMG } from "../weapons/smg";
 import { ParticleManager } from "../utils/ParticleHelper";
 import {getSpawnPointsFromTiledMap} from "./helperFunctions"
 import { EnemyPlayer } from "../enemies/enemyPlayer"
@@ -40,7 +37,6 @@ type Maps = {
 export class GameScene extends ex.Scene {
     player!: Player;
     enemyPlayer!: EnemyPlayer;
-    gun!: Gun;
     warHammer!: WarHammer;
     greatSword!: GreatSword;
     enemyCount!: number;
@@ -159,7 +155,7 @@ export class GameScene extends ex.Scene {
             this.inventory.addItem(Bow1);
 
             function getRandomItems() {
-                const itemsList = [null]
+                const itemsList = [GreatSword1, Bow1]
                 const chestItems: (Item | Weapon | Ammunition | null)[] = Array(12).fill(null);
 
                 const randomFour = itemsList.sort(() => 0.5 - Math.random()).slice(0, 4);

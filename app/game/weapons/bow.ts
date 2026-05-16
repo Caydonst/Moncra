@@ -1,5 +1,5 @@
 // gun.ts
-import {Ammunition, Weapon} from "@/app/ game/items/ItemTypes";
+import {Ammunition, Weapon} from "@/app/game/items/ItemTypes";
 
 const ex = await import("excalibur");
 import {GameResources} from '../resources';
@@ -7,9 +7,9 @@ import { Player } from '../player';
 import { Bullet } from './bullet';
 import { Shadow } from '../utils/shadow';
 import {spawnParticles, wallParticles} from "../utils/ParticleHelper";
-import {Inventory} from "@/app/ game/inventory/inventory";
-import {Demon} from "@/app/ game/enemies/demon";
-import {GameScene} from "@/app/ game/scenes/GameScene";
+import {Inventory} from "@/app/game/inventory/inventory";
+import {Demon} from "@/app/game/enemies/demon";
+import {GameScene} from "@/app/game/scenes/GameScene";
 import { dir } from "console";
 
 export class Bow extends ex.Actor {
@@ -44,7 +44,7 @@ export class Bow extends ex.Actor {
     ) {
         super({
             pos: player.pos.clone(),
-            anchor: ex.vec(0.5, 1), // bottom-center pivot
+            anchor: ex.vec(0.5, 0.5), // bottom-center pivot
             width: weaponImg.width * 1.2,
             height: weaponImg.height * 1.2,
             collisionType: ex.CollisionType.PreventCollision,
@@ -83,7 +83,7 @@ export class Bow extends ex.Actor {
             return offset.add(ex.vec(0, this.player.bobOffsetY));
         };
 
-        const distance = this.offset.x;
+        const distance = this.offset.x + 5;
         const offsetVec = direction.normalize().scale(distance);
         const bobbedOffset = addBobbing(offsetVec);
 

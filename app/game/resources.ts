@@ -57,7 +57,7 @@ import chestImage from "./assets/chest/chest.png"
 import chestSelected from "./assets/chest/chest_selected.png"
 import chestOpen from "./assets/chest/chest_open.png"
 import chestSpritesheet from "./assets/chest/chest_spritesheet.png"
-import {CustomLoader} from "@/app/ game/utils/customLoader";
+import {CustomLoader} from "@/app/game/utils/customLoader";
 
 type ImageGroups = {
     walk: Record<string, any>;

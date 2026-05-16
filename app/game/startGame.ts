@@ -3,8 +3,8 @@ import { GameScene } from "./scenes/GameScene";
 import { createResources } from "./resources";
 //import { loadMapData } from "./map";
 import * as ex from "excalibur";
-import {createCollisionGroups} from "@/app/ game/utils/collisionGroups";
-import {createGame, destroyGame} from "@/app/ game/gameInstance";
+import {createCollisionGroups} from "@/app/game/utils/collisionGroups";
+import {createGame, destroyGame} from "@/app/game/gameInstance";
 
 export async function startGame(canvas: HTMLCanvasElement, onLoaded: () => void) {
     const resources = await createResources();

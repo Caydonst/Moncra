@@ -2,10 +2,10 @@
 import {useEffect, useRef, useState} from "react";
 import { getGame } from "../gameInstance";
 import type { GameScene } from "../scenes/GameScene";
-import {Inventory} from "@/app/ game/inventory/inventory";
+import {Inventory} from "@/app/game/inventory/inventory";
 import styles from "../page.module.css"
-import InventoryUI from "@/app/ game/components/inventoryUI";
-import ChestUI from "@/app/ game/components/chestUI";
+import InventoryUI from "@/app/game/components/inventoryUI";
+import ChestUI from "@/app/game/components/chestUI";
 
 export default function GameCanvas() {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);

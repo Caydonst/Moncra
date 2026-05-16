@@ -89,20 +89,19 @@ export class ProjectileManager extends ex.Actor {
         ctx: ex.ExcaliburGraphicsContext,
         projectile: Projectile
     ) {
-        const elapsed = performance.now() - projectile.spawnTime;
-        const growPercent = Math.min(elapsed / this.trailGrowTimeMs, 1);
-        const currentLength = this.maxTrailLength * growPercent;
-
-        const bulletBackOffset = this.resources.Images.bullet.height * 0.75;
-
         ctx.save();
 
         const localPos = projectile.pos.sub(this.pos);
+
         ctx.translate(localPos.x, localPos.y);
         ctx.rotate(projectile.rotation);
 
-        // draw bullet sprite
-        this.arrowSprite.draw(ctx, 0, 0);
+        // Center arrow image on projectile.pos
+        this.arrowSprite.draw(
+            ctx,
+            -this.resources.Images.arrow.width / 2,
+            -this.resources.Images.arrow.height / 2
+        );
 
         ctx.restore();
     }
