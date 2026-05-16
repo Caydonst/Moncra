@@ -11,23 +11,12 @@ import {
 } from '../map';
 import { Player } from '../player';
 import { Demon } from '../enemies/demon';
-import { Gun } from '../weapons/gun';
+import { Bow } from '../weapons/bow';
 import { WarHammer } from '../weapons/warhammer';
 import { Chest } from "../chest"
-import M4Img from "../assets/weapons/bow/m4.png";
-import AK47Img from "../assets/weapons/bow/ak47.png";
-import ScoutImg from "../assets/weapons/bow/scout.png";
-import MinigunImg from "../assets/weapons/bow/minigun.png";
-import MP5Img from "../assets/weapons/bow/mp5.png"
-import M9Img from "../assets/weapons/bow/m9.png"
-import handgunMagImg from "../assets/weapons/bow/handgun_mag.png"
-import rifleMagImg from "../assets/weapons/bow/rifle_mag1.png"
-import HandgunImg from "../assets/weapons/bow/pistol.png";
-import HandgunMagImg from "../assets/weapons/bow/handgun_mag.png";
-import RifleMagImg from "../assets/weapons/bow/rifle_mag1.png";
-import SmgMagImg from "../assets/weapons/bow/smg_mag.png";
-import ShotgunShellsImg from "../assets/weapons/bow/shotgun_shells.png";
 import warHammer from "../assets/weapons/war_hammer/anime_war_hammer.png";
+import greatSword from "../assets/weapons/great_sword/anime_sword.png";
+import bow from "../assets/weapons/bow/bow.png";
 import { Inventory } from "../inventory/inventory";
 import type {Ammunition, Item, Weapon} from "../items/ItemTypes";
 import {GreatSword} from "../weapons/sword";
@@ -39,7 +28,8 @@ import {Pistol} from "@/app/ game/weapons/pistol";
 import { SMG } from "../weapons/smg";
 import { ParticleManager } from "../utils/ParticleHelper";
 import {getSpawnPointsFromTiledMap} from "./helperFunctions"
-import { DarknessOverlay } from "../utils/darknessOverlay";
+import { EnemyPlayer } from "../enemies/enemyPlayer"
+import { ProjectileManager } from "../utils/projectileManager";
 
 type Maps = {
     layer1: number[][];
@@ -49,6 +39,7 @@ type Maps = {
 
 export class GameScene extends ex.Scene {
     player!: Player;
+    enemyPlayer!: EnemyPlayer;
     gun!: Gun;
     warHammer!: WarHammer;
     greatSword!: GreatSword;
@@ -60,6 +51,7 @@ export class GameScene extends ex.Scene {
     chest2!: Chest;
     chest3!: Chest;
     public enemySpawnPoints: ex.Vector[] = [];
+    public projectileManager!: ProjectileManager;
 
     particleManager!: ParticleManager;
 
@@ -74,7 +66,9 @@ export class GameScene extends ex.Scene {
 
     async onInitialize(engine: ex.Engine) {
         try {
-
+            
+            this.camera.zoom = 1.25
+            
             const fpsText = new ex.Text({
                 text: "FPS: 0",
                 font: new ex.Font({
@@ -98,7 +92,12 @@ export class GameScene extends ex.Scene {
                 fpsText.text = `FPS: ${Math.round(engine.stats.currFrame.fps)}`;
             });
 
-            //createSimpleMap(ex, this, this.collisionGroups);
+            this.projectileManager = new ProjectileManager(
+                this.resources,
+                this.collisionGroups
+            );
+
+            this.add(this.projectileManager);
 
             this.particleManager = new ParticleManager(this);
 
@@ -109,144 +108,58 @@ export class GameScene extends ex.Scene {
             const warHammerOffset = ex.vec(26, 0);
             this.warHammer = new WarHammer(this.player, engine, warHammerOffset, this.resources);
 
-            this.greatSword = new GreatSword(this.player, engine, this.resources, this.collisionGroups);
+            //this.greatSword = new GreatSword(this.player, engine, this.resources, this.collisionGroups);
 
             console.log(engine.graphicsContext);
 
             // --- Inventory ---
             this.inventory = new Inventory()
+            
 
-            const rifleMag: Ammunition = {
-                id: "rifle_mag1",
-                name: "Rifle Magazine",
-                type: "rifle",
-                icon: rifleMagImg.src,
-                rarity: "common",
-                amount: 999,
-                maxAmount: 999,
-            }
-            const M4: Weapon = {
-                id: "rifle_1",
-                name: "M4",
-                type: "rifle",
-                icon: M4Img.src,
+            const GreatSword1: Weapon = {
+                id: "great_sword1",
+                name: "Great Sword",
+                type: "greatsword",
+                icon: greatSword.src,
                 rarity: "legendary",
                 stats: {
                     damage: 30,
                 },
-                magazine: rifleMag,
-                createWeapon: () => new Rifle(
+                magazine: null,
+                createWeapon: () => new GreatSword(
                     this.player,
                     engine,
-                    ex.vec(15, 0),
                     this.resources,
                     this.collisionGroups,
-                    this.resources.Images.m4,
-                    M4,
-                    this.inventory,
                 ),
             };
-            const Minigun: Weapon = {
-                id: "minigun",
-                name: "Minigun",
-                type: "rifle",
-                icon: MinigunImg.src,
+
+            this.inventory.addItem(GreatSword1);
+
+            const Bow1: Weapon = {
+                id: "bow1",
+                name: "Bow",
+                type: "bow",
+                icon: bow.src,
                 rarity: "legendary",
                 stats: {
-                    damage: 50,
+                    damage: 30,
                 },
-                magazine: rifleMag,
-                createWeapon: () => new Rifle(
+                magazine: null,
+                createWeapon: () => new Bow(
                     this.player,
                     engine,
-                    ex.vec(25, 10),
+                    ex.vec(10, 0),
                     this.resources,
                     this.collisionGroups,
-                    this.resources.Images.minigun,
-                    Minigun,
-                    this.inventory,
-                ),
-            };
-            const handgunMag: Ammunition = {
-                id: "handgun_mag1",
-                name: "Handgun Magazine",
-                type: "pistol",
-                icon: HandgunMagImg.src,
-                rarity: "common",
-                amount: 999,
-                maxAmount: 999,
-            }
-            const MP5: Weapon = {
-                id: "handgun_1",
-                name: "MP5",
-                type: "rifle",
-                icon: MP5Img.src,
-                rarity: "epic",
-                stats: {
-                    damage: 20,
-                },
-                magazine: rifleMag,
-                createWeapon: () => new SMG(
-                    this.player,
-                    engine, ex.vec(13, 0),
-                    this.resources,
-                    this.collisionGroups,
-                    this.resources.Images.mp5,
-                    MP5,
-                    this.inventory,
-                ),
-            };
-            const M9: Weapon = {
-                id: "handgun_1",
-                name: "M9",
-                type: "pistol",
-                icon: M9Img.src,
-                rarity: "epic",
-                stats: {
-                    damage: 20,
-                },
-                magazine: handgunMag,
-                createWeapon: () => new Pistol(
-                    this.player,
-                    engine, ex.vec(18, 0),
-                    this.resources,
-                    this.collisionGroups,
-                    this.resources.Images.m9,
-                    M9,
-                    this.inventory,
+                    this.resources.Images.bow,
                 ),
             };
 
-            const smgMag: Ammunition = {
-                id: "smg_mag1",
-                name: "SMG Magazine",
-                type: "smg",
-                icon: SmgMagImg.src,
-                rarity: "common",
-                amount: 0,
-                maxAmount: 50,
-            }
-            const shotgunShells: Ammunition = {
-                id: "shotgun_shells1",
-                name: "Shotgun Shells",
-                type: "shotgun",
-                icon: ShotgunShellsImg.src,
-                rarity: "common",
-                amount: 10,
-                maxAmount: 10,
-            }
-
-            this.inventory.addItem(M4)
-            this.inventory.addItem(MP5)
-            this.inventory.addItem(M9)
-            this.inventory.addItem(Minigun)
-            this.inventory.addItem(handgunMag)
-            this.inventory.addItem(rifleMag) 
-            this.inventory.addItem(smgMag)
-            this.inventory.addItem(shotgunShells)
+            this.inventory.addItem(Bow1);
 
             function getRandomItems() {
-                const itemsList = [M4, MP5, M9, handgunMag, rifleMag, smgMag, shotgunShells]
+                const itemsList = [null]
                 const chestItems: (Item | Weapon | Ammunition | null)[] = Array(12).fill(null);
 
                 const randomFour = itemsList.sort(() => 0.5 - Math.random()).slice(0, 4);
@@ -266,8 +179,6 @@ export class GameScene extends ex.Scene {
                 return chestItems;
             }
 
-
-
             this.chest1 = new Chest(ex.vec(500, 500), this.resources, getRandomItems());
             this.add(this.chest1);
 
@@ -280,14 +191,6 @@ export class GameScene extends ex.Scene {
             // --- Camera setup ---
             //engine.currentScene.camera.strategy.lockToActor(this.player);
 
-            const bounds = new ex.BoundingBox(
-                -200,
-                -200,
-                worldWidth + 200,
-                worldHeight + 200
-            );
-            engine.currentScene.camera.strategy.limitCameraBounds(bounds);
-            this.camera.zoom = 1.25
 
         } catch (err) {
             console.error("GameScene init failed:", err);
@@ -362,7 +265,7 @@ export class GameScene extends ex.Scene {
         const randomIndex = Math.floor(Math.random() * this.enemySpawnPoints.length);
         const spawnPos = this.enemySpawnPoints[randomIndex];
         console.log(spawnPos)
-
+        
         const enemy = new Demon(
             this.engine,
             spawnPos,

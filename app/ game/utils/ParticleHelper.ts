@@ -33,7 +33,7 @@ export class ParticleManager {
                 startSize: 3,
                 endSize: 3,
                 beginColor: ex.Color.fromHex("#5c5c5c"),
-                endColor: ex.Color.Transparent,
+                endColor: ex.Color.fromHex("#5c5c5c"),
                 z: 0,
             },
         })
@@ -53,7 +53,8 @@ export class ParticleManager {
         z = this.emitter.particle.z,
     ) {
         this.emitter.pos = pos.clone();
-        this.emitter.particle.beginColor = color;
+        //this.emitter.particle.beginColor = color;
+        //this.emitter.particle.endColor = color;
         this.emitter.particle.minSpeed = minSpeed;
         this.emitter.particle.maxSpeed = maxSpeed;
         this.emitter.particle.life = life;

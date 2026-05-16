@@ -14,7 +14,7 @@ export class GreatSword extends ex.Actor {
     // Swing state
     private swinging = false;
     private swingProgress = 0;
-    private swingDuration = 150; // ms for full swing
+    private swingDuration = 200; // ms for full swing
 
     private swingStartAngle = 0;
     private swingEndAngle = 0;
@@ -44,8 +44,8 @@ export class GreatSword extends ex.Actor {
         super({
             pos: player.pos.clone(),
             anchor: ex.vec(0.5, 0.7),
-            width: resources.Images.greatSword.width * 2.5,
-            height: resources.Images.greatSword.height * 2.5,
+            width: resources.Images.greatSword.width * 2.3,
+            height: resources.Images.greatSword.height * 2.3,
             z: 4,
         });
 

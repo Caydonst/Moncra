@@ -50,9 +50,12 @@ export default function InventoryUI({ inventoryOpen, inventory, itemPanelOpen, s
                                     <img src={inventory.primary.icon} className={inventory.primary.type === "pistol" && "stats" in inventory.primary ? styles.pistolImg : styles.otherImg} />
                                 )}
                             </div>
-                            <div id="weapon-slot" className={styles.weaponSlot} onClick={() => openItemPanel(inventory?.primary)} onMouseMove={(e) => handleMouseMove(e, inventory?.primary)}
+                            <div id="weapon-slot" className={styles.weaponSlot} onClick={() => openItemPanel(inventory?.secondary)} onMouseMove={(e) => handleMouseMove(e, inventory?.secondary)}
                                  onMouseLeave={() => setHoveredItem(null)}>
                                 <p>Secondary</p>
+                                {inventory?.secondary && (
+                                    <img src={inventory.secondary.icon} className={inventory.secondary.type === "pistol" && "stats" in inventory.secondary ? styles.pistolImg : styles.otherImg} />
+                                )}
                             </div>
                         </div>
                     </div>

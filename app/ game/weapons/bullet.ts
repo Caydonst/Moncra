@@ -13,8 +13,12 @@ export class Bullet extends ex.Actor {
     private shadow: Shadow;
     private previousPos: ex.Vector;
     private hasHit = false;
-    private lastTrailTime = 0;
-    private trailInterval = 20; // ms
+    private bulletSprite!: ex.Sprite;
+    private trailStartTime = performance.now();
+
+    private maxTrailLength = 90;
+    private trailGrowTimeMs = 80;
+    private trailWidth = 2;
 
     constructor(
         private engine: ex.Engine,
@@ -30,7 +34,7 @@ export class Bullet extends ex.Actor {
             name: "projectile",
             pos: pos,
             anchor: ex.vec(0.5, 0.5),
-            height: resources.Images.bullet.height * 2,
+            height: resources.Images.bullet.height * 1.5,
             width: resources.Images.bullet.width * 0.5,
             collisionType: ex.CollisionType.Passive,
             collisionGroup: collisionGroups.projectileGroup,
@@ -43,9 +47,9 @@ export class Bullet extends ex.Actor {
 
     onInitialize(engine: ex.Engine): void {
         const bulletSprite = this.resources.Images.bullet.toSprite();
-        bulletSprite.scale = ex.vec(0.5, 2);
-        bulletSprite.width = this.width;
-        bulletSprite.height = this.height;
+        bulletSprite.scale = ex.vec(0.5, 1);
+        //bulletSprite.width = this.width;
+        //bulletSprite.height = this.height;
 
         this.graphics.use(bulletSprite);
         this.rotation = this.vel.toAngle() + Math.PI / 2;
@@ -56,6 +60,11 @@ export class Bullet extends ex.Actor {
 
         //this.shadow = new Shadow(this);
         //engine.currentScene.add(this.shadow);
+
+        this.trailStartTime = performance.now();
+
+        this.updateBulletGraphic();
+        this.rotation = this.vel.toAngle() + Math.PI / 2;
     }
 
     onPostUpdate(engine: ex.Engine, _delta: number) {
@@ -68,28 +77,71 @@ export class Bullet extends ex.Actor {
         if (this.shadow) {
             this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2 - 2));
         }
+
+        this.updateBulletGraphic();
+        
         /*
         const now = performance.now();
 
         if (now - this.lastTrailTime >= this.trailInterval) {
             this.lastTrailTime = now;
 
-            spawnParticles(engine.currentScene, this.pos.clone(), "muzzle", {
-                count: 1,
-                colors: "#ffd000",
-                minSpeed: 10,
-                maxSpeed: 30,
-                minLife: 80,
-                maxLife: 120,
-                size: 2,
-                z: 5,
-            });
+            engine.currentScene.particleManager.emit(
+                this.pos.clone(),
+                1,
+                ex.Color.fromHex("#ffd000"),
+                0,
+                0,
+                300,
+                2,
+                2,
+                5,
+            )
         }
+        */
 
-         */
+         
 
 
         this.previousPos = this.pos.clone();
+    }
+    private updateBulletGraphic() {
+        const elapsed = performance.now() - this.trailStartTime;
+        const growPercent = Math.min(elapsed / this.trailGrowTimeMs, 1);
+        const currentLength = this.maxTrailLength * growPercent;
+
+        const bulletBackOffset = this.height / 2;
+
+        const trail = new ex.Polygon({
+            points: [
+                ex.vec(0, this.trailWidth / 2),
+                ex.vec(this.trailWidth / 2, bulletBackOffset),
+                ex.vec(-this.trailWidth / 2, bulletBackOffset),
+            ],
+            color: ex.Color.fromRGB(255, 170, 0, 0.6),
+        });
+
+        trail.points = [
+            ex.vec(0, bulletBackOffset + currentLength),
+            ex.vec(-this.trailWidth / 2, bulletBackOffset),
+            ex.vec(this.trailWidth / 2, bulletBackOffset),
+        ];
+
+        const group = new ex.GraphicsGroup({
+            useAnchor: false,
+            members: [
+                {
+                    graphic: trail,
+                    offset: ex.vec(0, 0),
+                },
+                {
+                    graphic: this.bulletSprite,
+                    offset: ex.vec(0, 0),
+                },
+            ],
+        });
+
+        this.graphics.use(group);
     }
 
     private segmentIntersectsRect(

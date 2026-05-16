@@ -1,5 +1,5 @@
 import {WarHammer} from "../weapons/warhammer"
-import {Bow} from "../weapons/gun"
+import {Bow} from "../weapons/bow"
 import {GreatSword} from "../weapons/sword"
 import {Player} from "../player"
 export type ItemSlot = "weapon" | "armor" | "misc";
@@ -28,7 +28,7 @@ export type Item = {
 export type Weapon = {
     id: string;
     name: string;
-    type: "rifle" | "pistol";
+    type: "rifle" | "pistol" | "greatsword" | "bow";
     icon: string; // URL to image
     rarity: "common" | "rare" | "epic" | "legendary" | "artifact";
     stats?: any;

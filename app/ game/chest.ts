@@ -20,8 +20,8 @@ export class Chest extends ex.Actor {
         super({
             pos: pos,
             anchor: ex.vec(0.5, 0.5),
-            height: resources.Images.chest.height * 3,
-            width: resources.Images.chest.width * 3,
+            height: resources.Images.chest.height * 2,
+            width: resources.Images.chest.width * 2,
             collisionType: ex.CollisionType.Fixed,
             z: 2,
         })
@@ -34,8 +34,8 @@ export class Chest extends ex.Actor {
         chestSprite.width = this.width;
         chestSprite.height = this.height;
         const chestSelectedSprite = this.resources.Images.chestSelected.toSprite();
-        chestSelectedSprite.width = this.resources.Images.chestSelected.width * 3;
-        chestSelectedSprite.height = this.resources.Images.chestSelected.height * 3;
+        chestSelectedSprite.width = this.resources.Images.chestSelected.width * 2;
+        chestSelectedSprite.height = this.resources.Images.chestSelected.height * 2;
         const chestOpenSprite = this.resources.Images.chestOpen.toSprite();
         chestOpenSprite.width = this.width;
         chestOpenSprite.height = this.height;

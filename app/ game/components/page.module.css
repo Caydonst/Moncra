@@ -101,19 +101,10 @@
     filter: blur(20px);
     border-radius: 50%;
 }
-.weaponSlot .pistolImg {
-    position: absolute;
-    left: 50%;
-    top: 14px;
-    transform: translateX(-50%);
-    height: 55%;
-    object-fit: cover;
-    image-rendering: pixelated;
-}
 .weaponSlot .otherImg {
     position: absolute;
-    top: 15px;
     width: 70%;
+    height: 70%;
     object-fit: contain;
     image-rendering: pixelated;
 }
@@ -150,22 +141,10 @@
 .slot:hover {
     background: #363636;
 }
-.slot .pistolImg {
-    position: absolute;
-    left: 50%;
-    top: 45%;
-    transform: translateY(-50%) translateX(-50%);
-    height: 45%;
-    object-fit: cover;
-    image-rendering: pixelated;
-    filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.5));
-}
 .slot .otherImg {
-    max-width: 100%;
-    max-height: 100%;
-    min-height: 50%;
-    width: auto;
-    height: auto;
+    width: 75%;
+    height: 75%;
+    
     object-fit: contain;
     image-rendering: pixelated;
     filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.5));

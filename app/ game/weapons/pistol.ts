@@ -1,4 +1,4 @@
-import { Gun } from "./gun";
+import { Gun } from "./bow";
 
 export class Pistol extends Gun {
     protected getBulletCooldown() {
@@ -9,7 +9,7 @@ export class Pistol extends Gun {
     }
 
     protected override getBulletSpeed() {
-        return 2000;
+        return 1300;
     }
 
     protected override getReloadTime() {

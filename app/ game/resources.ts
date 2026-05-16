@@ -45,25 +45,18 @@ import miscDead11 from "./assets/enemies/misc/dead11.png";
 // --- SPRITESHEET ---
 import Tilesheet from "./assets/map/spritesheet.png";
 // --- WEAPONS ---
-import M4Img from "./assets/weapons/bow/m4.png";
-import Ak47Img from "./assets/weapons/bow/ak47.png";
-import ScoutImg from "./assets/weapons/bow/scout.png";
-import MinigunImg from "./assets/weapons/bow/minigun.png";
-import MP5Img from "./assets/weapons/bow/mp5.png"
-import M9Img from "./assets/weapons/bow/m9.png"
 
 import arrowImage from './assets/projectiles/arrow.png';
 import bulletImage from './assets/projectiles/bullet1.png';
 import warHammer from "./assets/weapons/war_hammer/anime_war_hammer.png";
 import greatSword from "./assets/weapons/great_sword/anime_sword.png";
+import bow from "./assets/weapons/bow/bow.png";
 /// --- MISC ---
 import coinSpritesheet from "./assets/currency/coin_spritesheet.png";
 import chestImage from "./assets/chest/chest.png"
 import chestSelected from "./assets/chest/chest_selected.png"
 import chestOpen from "./assets/chest/chest_open.png"
 import chestSpritesheet from "./assets/chest/chest_spritesheet.png"
-import handgunMagImg from "./assets/weapons/bow/handgun_mag.png"
-import rifleMagImg from "./assets/weapons/bow/rifle_mag.png"
 import {CustomLoader} from "@/app/ game/utils/customLoader";
 
 type ImageGroups = {
@@ -95,14 +88,9 @@ export async function createResources() {
         characterIdleSheetImage: new ex.ImageSource(characterIdleSheetImage.src),
         arrow: new ex.ImageSource(arrowImage.src),
         tileSheet: new ex.ImageSource(Tilesheet.src),
-        m4: new ex.ImageSource(M4Img.src),
-        ak47: new ex.ImageSource(Ak47Img.src),
-        scout: new ex.ImageSource(ScoutImg.src),
-        mp5: new ex.ImageSource(MP5Img.src),
-        m9: new ex.ImageSource(M9Img.src),
-        minigun: new ex.ImageSource(MinigunImg.src),
         warHammer: new ex.ImageSource(warHammer.src),
         greatSword: new ex.ImageSource(greatSword.src),
+        bow: new ex.ImageSource(bow.src),
         coinSheetImage: new ex.ImageSource(coinSpritesheet.src),
         chestSheetImage: new ex.ImageSource(chestSpritesheet.src),
         chest: new ex.ImageSource(chestImage.src),
@@ -112,8 +100,6 @@ export async function createResources() {
         demonBossHurt: new ex.ImageSource(demonBossHurt.src),
         demonBossWalkSheetImage: new ex.ImageSource(demonBossWalkSheetImage.src),
         bullet: new ex.ImageSource(bulletImage.src),
-        rifleMag: new ex.ImageSource(rifleMagImg.src),
-        handgunMag: new ex.ImageSource(handgunMagImg.src),
     };
 
     const PlayerImages: ImageGroups = {
