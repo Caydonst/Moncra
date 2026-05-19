@@ -14,11 +14,10 @@ export class Shadow extends ex.Actor {
 
         let radius;
 
-
         if (parent instanceof Bullet) {
             radius = parent.width;
         } else if (parent instanceof GreatSword) {
-            radius = parent.height / 3;
+            radius = parent.height / 4;
             this.z = parent.z - 3;
         } else {
             radius = parent.width * 0.4;

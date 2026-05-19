@@ -19,10 +19,10 @@ export class Player extends ex.Actor {
     private shadow: Shadow;
     public isDead: boolean = false;
 
-    constructor(x: number, y: number, worldWidth: number, worldHeight: number, private resources: GameResources, private collisionGroups: any) {
+    constructor(pos: ex.Vector, worldWidth: number, worldHeight: number, private resources: GameResources, private collisionGroups: any) {
         super({
             name: "player",
-            pos: ex.vec(x, y),
+            pos: pos,
             anchor: ex.vec(0.5, 0.5),
             width: 15 * 2,    // set desired width
             height: 19 * 2,   // set desired height
@@ -40,6 +40,8 @@ export class Player extends ex.Actor {
         const walkFrames = this.resources.characterWalkSpritesheet.sprites.map(sprite => {
             const s = sprite.clone();        // clone so you can modify safely
             s.scale = ex.vec(2, 2);
+            //s.width = 15 * 2;
+            //s.height = 23 * 2;
 
             return {
                 graphic: s,
@@ -49,6 +51,8 @@ export class Player extends ex.Actor {
         const idleFrames = this.resources.characterIdleSpritesheet.sprites.map(sprite => {
             const s = sprite.clone();        // clone so you can modify safely
             s.scale = ex.vec(2, 2);
+            //s.width = this.width;
+            //s.height = this.height;
 
             return {
                 graphic: s,
@@ -79,24 +83,24 @@ export class Player extends ex.Actor {
             repeats: true,
             action: () => {
                 if (this.move.magnitude > 0) {
-                    (engine.currentScene as GameScene).particleManager.emit(
+                    /*(engine.currentScene as GameScene).particleManager.emit(
                         this.pos.add(ex.vec(0, 18)),
                         1,
                         ex.Color.fromHex("#5c5c5c"),
                         0,
                         0,
-                        400,
+                        300,
                         3,
                         3,
                         1,
+                    );*/
+                    (engine.currentScene as GameScene).dustParticleManager.spawnDust(
+                        this.pos.add(ex.vec(0, 18)),
+                        1
                     );
                 }
             },
         });
-
-
-        engine.currentScene.add(particleTimer);
-        particleTimer.start();
 
 
         engine.currentScene.add(particleTimer);

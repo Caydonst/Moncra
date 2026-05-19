@@ -2,19 +2,28 @@
 import {useEffect, useRef, useState} from "react";
 import { getGame } from "../gameInstance";
 import type { GameScene } from "../scenes/GameScene";
+import type { HubScene } from "../scenes/HubScene";
+import type { MenuScene } from "../scenes/MenuScene";
+import type { TestScene } from "../scenes/TestScene";
+import type { DungeonScene } from "../scenes/DungeonScene";
 import {Inventory} from "@/app/game/inventory/inventory";
 import styles from "../page.module.css"
 import InventoryUI from "@/app/game/components/inventoryUI";
 import ChestUI from "@/app/game/components/chestUI";
+import DungeonMenu from "../components/dungeonMenu";
+import LandingPage from "../components/landingPage";
+
+type Scenes = GameScene | HubScene | MenuScene | TestScene | DungeonScene
 
 export default function GameCanvas() {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const [scene, setScene] = useState<GameScene | null>(null);
+    const [game, setGame] = useState(null);
+    const [scene, setScene] = useState<Scenes | null>(null);
+    const [sceneName, setSceneName] = useState<string | null>(null);
     const [inventory, setInventory] = useState<Inventory | null>(null);
     const [inventoryOpen, setInventoryOpen] = useState<boolean>(false);
     const [itemPanelOpen, setItemPanelOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
-    const [ammoAmtState, setAmmoAmtState] = useState(0);
     const [gameLoaded, setGameLoaded] = useState(false);
     const [characterHp, setCharacterHp] = useState(0);
     const [chestItems, setChestItems] = useState(null);
@@ -29,7 +38,7 @@ export default function GameCanvas() {
 
             const canvas = canvasRef.current;
 
-            // 🔥 ensure it's real DOM node
+            // ensure it's real DOM node
             if (!(canvas instanceof HTMLCanvasElement)) {
                 console.error("Not a canvas:", canvas);
                 return;
@@ -43,16 +52,45 @@ export default function GameCanvas() {
                 setGameLoaded(true);
             });
 
-            const scene = getGame().currentScene as GameScene;
+            const game = getGame()
+            setGame(game);
+
+            syncScene(game.currentScene as Scenes);
+
+            const scene = game.currentScene as Scenes;
             setScene(scene);
-            const inventory = scene.getInventory()
-            setInventory(inventory);
+            setSceneName(scene.constructor.name);
         }
 
         init();
 
         return () => cleanup?.();
     }, []);
+
+    const isMenuScene = sceneName === "MenuScene";
+    const isDungeonScene = sceneName === "DungeonScene";
+    const isGameScene = sceneName === "GameScene" || sceneName === "HubScene" || sceneName === "DungeonScene";
+
+    function syncScene(newScene: Scenes) {
+        setScene(newScene);
+        setSceneName(newScene.constructor.name);
+
+        if ("getInventory" in newScene && typeof newScene.getInventory === "function") {
+            setInventory(newScene.getInventory());
+        } else {
+            setInventory(null);
+        }
+
+        if ("player" in newScene && newScene.player) {
+            setCharacterHp((newScene.player.hp / newScene.player.maxHp) * 100);
+        } else {
+            setCharacterHp(0);
+        }
+
+        setInventoryOpen(false);
+        setItemPanelOpen(false);
+        setChestOpen(false);
+        }
 
     useEffect(() => {
         if (!gameLoaded) return;
@@ -87,18 +125,6 @@ export default function GameCanvas() {
     }, [characterHp, scene]);
 
     useEffect(() => {
-        const handler = () => {
-            setAmmoAmtState(v => v + 1);
-        };
-
-        window.addEventListener("inventory-updated", handler);
-
-        return () => {
-            window.removeEventListener("inventory-updated", handler);
-        };
-    }, []);
-
-    useEffect(() => {
         const handler = (e: Event) => {
             const event = e as CustomEvent;
 
@@ -113,8 +139,8 @@ export default function GameCanvas() {
     }, []);
 
     useEffect(() => {
-        if (scene) {
-            setCharacterHp(scene.player.hp);
+        if (scene && scene.player) {
+            setCharacterHp((scene.player.hp / scene.player.maxHp) * 100);
         }
     }, [scene]);
 
@@ -150,54 +176,85 @@ export default function GameCanvas() {
         };
     }, []);
 
+    useEffect(() => {
+        const handleSceneChanged = (e: Event) => {
+            const event = e as CustomEvent;
+
+            syncScene(event.detail.scene as Scenes);
+        };
+
+        window.addEventListener("scene-changed", handleSceneChanged);
+
+        return () => {
+            window.removeEventListener("scene-changed", handleSceneChanged);
+        };
+        }, []);
+
     return (
         <div id="game-wrapper" className={styles.gameWrapper}>
             <canvas id="game" ref={canvasRef}></canvas>
             {gameLoaded && (
                 <>
-                    <div className={styles.enemiesContainer}>
-                        <p id="enemy-count" className={styles.enemyCount}></p>
-                    </div>
-                    <div className={styles.characterHpWrapper}>
-                        <div className={styles.textContainer}>
-                            <p>HP</p>
-                            <p>{scene?.player.hp} / {scene?.player.maxHp}</p>
-                        </div>
-                        <div className={styles.characterHpContainer}>
-                            <div className={styles.characterHp} style={{ width: `${characterHp}%` }}></div>
-                        </div>
-                    </div>
-                    <InventoryUI inventoryOpen={inventoryOpen} inventory={inventory} itemPanelOpen={itemPanelOpen} setItemPanelOpen={setItemPanelOpen} selectedItem={selectedItem} setSelectedItem={setSelectedItem} scene={scene} />
-                    <ChestUI chest={chest} chestOpen={chestOpen} inventoryOpen={inventoryOpen} inventory={inventory} chestItems={chestItems} setChestItems={setChestItems} scene={scene} />
-                    <div className={styles.spawnBtns}>
-                        <button id="spawn-enemy-btn" className={styles.spawnEnemyBtn} onClick={() => scene?.spawnEnemy()}>Spawn Enemy</button>
-                        <button id="spawn-boss-btn" className={styles.spawnEnemyBtn} onClick={() => scene?.spawnBoss()}>Spawn Boss</button>
-                    </div>
-                    <div className={styles.overlayFooter}>
-                        {inventory && (
-                            <div className={styles.overlayWeaponInfoContainer}>
-                                {inventory.primary ? (
-                                    <>
-                                        <div className={styles.overlayImgContainer}>
-                                            <img src={inventory.primary.icon} />
-                                        </div>
-                                        {inventory.primary.magazine ? (
-                                            <div className={styles.overlayMagContainer}>
-                                                <p>{inventory.primary.magazine?.amount} / {inventory.primary.magazine?.maxAmount}</p>
-                                            </div>
+                    {isMenuScene && game && (
+                        <LandingPage
+                            game={game}
+                            onStart={() => {
+                            game.goToScene("game");
+
+                            requestAnimationFrame(() => {
+                                syncScene(game.currentScene as Scenes);
+                            });
+                            }}
+                        />
+                    )}
+                    {(isGameScene || isDungeonScene) && (
+                        <>
+                            <div className={styles.enemiesContainer}>
+                            <p id="enemy-count" className={styles.enemyCount}></p>
+                            </div>
+                            <div className={styles.characterHpWrapper}>
+                                <div className={styles.textContainer}>
+                                    <p>HP</p>
+                                    <p>{scene?.player?.hp} / {scene?.player?.maxHp}</p>
+                                </div>
+                                <div className={styles.characterHpContainer}>
+                                    <div className={styles.characterHp} style={{ width: `${characterHp}%` }}></div>
+                                </div>
+                            </div>
+                            <InventoryUI inventoryOpen={inventoryOpen} inventory={inventory} itemPanelOpen={itemPanelOpen} setItemPanelOpen={setItemPanelOpen} selectedItem={selectedItem} setSelectedItem={setSelectedItem} scene={scene} />
+                            <ChestUI chest={chest} chestOpen={chestOpen} inventoryOpen={inventoryOpen} inventory={inventory} chestItems={chestItems} setChestItems={setChestItems} scene={scene} />
+                            <div className={styles.spawnBtns}>
+                                <button id="spawn-enemy-btn" className={styles.spawnEnemyBtn} onClick={() => scene?.spawnEnemy()}>Spawn Enemy</button>
+                                <button id="spawn-boss-btn" className={styles.spawnEnemyBtn} onClick={() => scene?.spawnBoss()}>Spawn Boss</button>
+                            </div>
+                            <div className={styles.overlayFooter}>
+                                {inventory && (
+                                    <div className={styles.overlayWeaponInfoContainer}>
+                                        {inventory.weapon ? (
+                                            <>
+                                                <div className={styles.overlayImgContainer}>
+                                                    <img src={inventory.weapon.icon} />
+                                                </div>
+                                                {inventory.weapon.magazine ? (
+                                                    <div className={styles.overlayMagContainer}>
+                                                        <p>{inventory.weapon.magazine?.amount} / {inventory.weapon.magazine?.maxAmount}</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className={styles.overlayMagContainer}>
+                                                        <p>No Magazine</p>
+                                                    </div>
+                                                )}
+                                            </>
                                         ) : (
-                                            <div className={styles.overlayMagContainer}>
-                                                <p>No Magazine</p>
-                                            </div>
+                                            <p>No Weapon Equipped</p>
                                         )}
-                                    </>
-                                ) : (
-                                    <p>No Weapon Equipped</p>
+                                    </div>
+
                                 )}
                             </div>
-
-                        )}
-                    </div>
+                            <DungeonMenu scene={scene} />
+                        </>
+                    )}
                 </>
             )}
 

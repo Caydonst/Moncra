@@ -35,7 +35,7 @@ type Maps = {
     layer3: number[][];
 };
 
-export class GameScene extends ex.Scene {
+export class HubScene extends ex.Scene {
     player!: Player;
     enemyPlayer!: EnemyPlayer;
     warHammer!: WarHammer;

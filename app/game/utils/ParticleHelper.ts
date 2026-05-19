@@ -1,14 +1,5 @@
 const ex = await import("excalibur");
 
-/**
- * Spawns a burst of particles at a position.
- *
- * @param scene - The scene to spawn particles in
- * @param pos - ex.Vector position
- * @param collisionType - ex.Vector position
- * @param options - optional config
- */
-
 export class ParticleManager {
     private emitter: ex.ParticleEmitter;
 
@@ -53,13 +44,14 @@ export class ParticleManager {
         z = this.emitter.particle.z,
     ) {
         this.emitter.pos = pos.clone();
-        //this.emitter.particle.beginColor = color;
-        //this.emitter.particle.endColor = color;
+        this.emitter.particle.beginColor = color;
+        this.emitter.particle.endColor = color;
         this.emitter.particle.minSpeed = minSpeed;
         this.emitter.particle.maxSpeed = maxSpeed;
         this.emitter.particle.life = life;
         this.emitter.particle.startSize = startSize;
         this.emitter.particle.endSize = endSize;
+        this.emitter.particle.fade = false;
         this.emitter.particle.z = z;
         this.emitter.emitParticles(count);
     }
@@ -193,4 +185,75 @@ export function wallParticles(
             ])
         ).callMethod(() => p.kill());
     }
+}
+
+type DustParticle = {
+  pos: ex.Vector;
+  age: number;
+  life: number;
+  size: number;
+};
+
+export class DustParticleManager extends ex.Actor {
+  private particles: DustParticle[] = [];
+
+  constructor() {
+    super({
+      name: "dust-particle-manager",
+      pos: ex.vec(0, 0),
+      width: 1,
+      height: 1,
+      z: 1,
+      collisionType: ex.CollisionType.PreventCollision,
+    });
+
+    this.graphics.onPostDraw = (ctx) => {
+      ctx.save();
+
+      // Force these custom draw calls below the player
+      ctx.z = 1;
+
+      for (const p of this.particles) {
+
+        ctx.save();
+
+        ctx.drawRectangle(
+          p.pos.sub(this.pos),
+          p.size,
+          p.size,
+          ex.Color.fromHex("#5c5c5c")
+        );
+
+        ctx.restore();
+      }
+
+      ctx.restore();
+    };
+  }
+
+  spawnDust(pos: ex.Vector, count = 1) {
+    console.log("spawn dust", pos);
+
+    for (let i = 0; i < count; i++) {
+      this.particles.push({
+        pos: pos.clone().add(ex.vec(
+          (Math.random() - 0.5) * 6,
+          (Math.random() - 0.5) * 3
+        )),
+        age: 0,
+        life: 300,
+        size: 5,
+      });
+    }
+  }
+
+  onPreUpdate(engine: ex.Engine, delta: number) {
+    this.pos = engine.currentScene.camera.pos.clone();
+
+    for (const p of this.particles) {
+      p.age += delta;
+    }
+
+    this.particles = this.particles.filter(p => p.age < p.life);
+  }
 }

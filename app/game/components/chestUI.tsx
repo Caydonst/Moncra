@@ -47,7 +47,7 @@ export default function ChestUI({ chest, chestOpen, inventoryOpen, inventory, ch
                             chestItems.map((slot, i) => (
                                 <div key={i} id={`misc-slot-${i}`}  className={styles.slot} onClick={() => handleChestItemClick(slot, i)} onMouseMove={(e) => handleMouseMove(e, slot)}
                                      onMouseLeave={() => setHoveredItem(null)}>
-                                    {slot && <img src={slot.icon} className={slot.type === "pistol" && "stats" in slot ? styles.pistolImg : styles.otherImg} />}
+                                    {slot && <img src={slot.icon} className={slot.type === "greatsword" && "stats" in slot ? styles.swordImg : styles.otherImg} />}
                                     {slot && "amount" in slot && (
                                         <p className={slot.amount <= 0 ? styles.magEmpty : styles.magNotEmpty}>{slot.amount}/{slot.maxAmount}</p>
                                     )}

@@ -45,8 +45,8 @@ export class Bow extends ex.Actor {
         super({
             pos: player.pos.clone(),
             anchor: ex.vec(0.5, 0.5), // bottom-center pivot
-            width: weaponImg.width * 1.2,
-            height: weaponImg.height * 1.2,
+            width: weaponImg.width * 1.5,
+            height: weaponImg.height * 1.5,
             collisionType: ex.CollisionType.PreventCollision,
             z: 3,
         });

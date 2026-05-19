@@ -3,9 +3,9 @@ import * as ex from "excalibur";
 import { TiledResource } from "@excaliburjs/plugin-tiled";
 
 // --- MAP ---
-const tiledMap = new TiledResource("/maps/testmap1.tmx");
+const tiledMap = new TiledResource("/maps/hub.tmx");
 // --- CHARACTER ---
-import characterWalkSheetImage from "./assets/character/walk/walk_spritesheet1.png"
+import characterWalkSheetImage from "./assets/character/walk/walk_spritesheet2.png"
 import characterIdleSheetImage from "./assets/character/walk/idle_spritesheet.png"
 import characterWalk0 from "./assets/character/walk/walk0.png";
 import characterWalk1 from "./assets/character/walk/walk1.png";
@@ -57,7 +57,10 @@ import chestImage from "./assets/chest/chest.png"
 import chestSelected from "./assets/chest/chest_selected.png"
 import chestOpen from "./assets/chest/chest_open.png"
 import chestSpritesheet from "./assets/chest/chest_spritesheet.png"
+import portalSpritesheetImage from "./assets/misc/portal_spritesheet.png"
+import portalSelectedSpritesheetImage from "./assets/misc/portal_selected_spritesheet.png"
 import {CustomLoader} from "@/app/game/utils/customLoader";
+import mapSpritesheet64 from "./assets/map/map_spritesheet_64.png"
 
 type ImageGroups = {
     walk: Record<string, any>;
@@ -86,6 +89,9 @@ export async function createResources() {
     const Images = {
         characterWalkSheetImage: new ex.ImageSource(characterWalkSheetImage.src),
         characterIdleSheetImage: new ex.ImageSource(characterIdleSheetImage.src),
+        portalSpritesheet: new ex.ImageSource(portalSpritesheetImage.src),
+        portalSelectedSpritesheet: new ex.ImageSource(portalSelectedSpritesheetImage.src),
+        mapSpritesheetImage: new ex.ImageSource(mapSpritesheet64.src),
         arrow: new ex.ImageSource(arrowImage.src),
         tileSheet: new ex.ImageSource(Tilesheet.src),
         warHammer: new ex.ImageSource(warHammer.src),
@@ -170,7 +176,7 @@ export async function createResources() {
             rows: 1,
             columns: 5,
             spriteWidth: 15,
-            spriteHeight: 27,
+            spriteHeight: 23,
         }
     });
 
@@ -221,6 +227,36 @@ export async function createResources() {
             spriteHeight: 16,
         }
     })
+
+    const portalSpritesheet = ex.SpriteSheet.fromImageSource({
+        image: Images.portalSpritesheet,
+        grid: {
+            rows: 1,
+            columns: 8,
+            spriteWidth: 64,
+            spriteHeight: 64,
+        }
+    })
+    
+    const portalSelectedSpritesheet = ex.SpriteSheet.fromImageSource({
+        image: Images.portalSelectedSpritesheet,
+        grid: {
+            rows: 1,
+            columns: 8,
+            spriteWidth: 64,
+            spriteHeight: 64,
+        }
+    })
+
+    const mapSpritesheet = ex.SpriteSheet.fromImageSource({
+        image: Images.mapSpritesheetImage,
+        grid: {
+            rows: 1,
+            columns: 15,
+            spriteWidth: 64,
+            spriteHeight: 64,
+        },
+    });
 
     const sounds: SoundGroup = {
         rifle: {
@@ -297,6 +333,9 @@ export async function createResources() {
         tileSheet,
         chestSpriteSheet,
         CoinSpriteSheet,
+        portalSpritesheet,
+        portalSelectedSpritesheet,
+        mapSpritesheet,
         sounds,
         tiledMap,
     };

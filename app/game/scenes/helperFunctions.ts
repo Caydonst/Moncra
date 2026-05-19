@@ -16,13 +16,16 @@ export function getSpawnPointsFromTiledMap(
       //if (tileInfo.exTile.solid) continue;
 
       if (tiledMap.layers[0].data[index] === 1) {
+        
+        if (!tileInfo.exTile) continue;
+
         spawnPoints.push(
-            ex.vec(
-                tileInfo.exTile.pos.x,
-                tileInfo.exTile.pos.y
-            )
+          ex.vec(
+            tileInfo.exTile.pos.x,
+            tileInfo.exTile.pos.y
+          )
         );
-        console.log(tileInfo)
+        
       }
       index++;
 

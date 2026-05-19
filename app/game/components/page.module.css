@@ -1,17 +1,22 @@
 .common {
     color: #fff;
+    border-color: #fff;
 }
 .rare {
     color: #0094FF;
+    border-color: #0094FF;
 }
 .epic {
     color: #B200FF;
+    border-color: #B200FF;
 }
 .legendary {
     color: #FFAA00;
+    border-color: #FFAA00;
 }
 .artifact {
     color: #00FFF6;
+    border-color: #00FFF6;
 }
 .inventoryWrapper {
     display: flex;
@@ -22,34 +27,56 @@
     width: 500px;
     bottom: 0;
     left: 0;
-    padding: 10px;
     z-index: 3;
     visibility: hidden;
-
 }
 .inventoryWrapper.open {
-
     visibility: visible;
 }
-.inventory {
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 500px;
+.inventoryContainer {
+    width: 100%;
+    height: 100%;
     display: flex;
-    background: linear-gradient(to right, #000, transparent);
+    justify-content: start;
+    align-items: center;
+    background: #080808;
     color: white;
     font-family: sans-serif;
-    gap: 50px;
+    transform: translateX(-100%);
+    transition: 0.2s;
+    overflow: hidden;
+    border-right: 3px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 20px 0 30px rgba(0, 0, 0, 0.5);
+}
+.inventoryWrapper.open .inventoryContainer {
+    transform: translateX(0);
+}
+.inventorySlider {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 1000px;
+    transition: 0.2s;
+}
+.inventorySlider.slide {
+    transform: translateX(-500px);
+}
+.inventory {
+    display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    transform: translateX(-100%);
-    transition: 0.2s;
+    gap: 50px;
+    width: 500px;
+    height: 100%;
+    flex-shrink: 0;
 }
-.inventoryWrapper.open .inventory {
-    transform: translateX(0);
+.inventory h3 {
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: #fff;
+    text-shadow: 2px 2px #000;
 }
 .inventoryInner {
     display: flex;
@@ -78,7 +105,7 @@
     position: relative;
     width: 50%;
     height: 100%;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+    border-bottom: 3px solid rgba(255, 255, 255, 0.5);
     padding: 6px;
     display: flex;
     justify-content: center;
@@ -130,24 +157,64 @@
 .slot {
     width: var(--slot-size);
     height: var(--slot-size);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: 3px solid rgba(255, 255, 255, 0.3);
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 6px;
     position: relative;
     background: #1a1a1a;
+    box-shadow: inset 0 0 10px #000;
+    
+}
+.slot.common {
+    border-color: #fff;
+}
+.slot.rare {
+    border-color: #0094FF;
+}
+.slot.epic {
+    border-color: #B200FF;
+}
+.slot.legendary {
+    border-color: #FFAA00;
+}
+.slot.artifact {
+    border-color: #00FFF6;
 }
 .slot:hover {
-    background: #363636;
+    background:
+        radial-gradient(circle at center, rgba(255,255,255,0.18), transparent 65%),
+        #202020;
+    border-color: #fff;
+    transform: translateY(-2px);
 }
 .slot .otherImg {
-    width: 75%;
-    height: 75%;
-    
+    width: 80%;
+    height: 80%;
+    transform: rotate(45deg);
     object-fit: contain;
     image-rendering: pixelated;
-    filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.5));
+    filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
+}
+.slot .bowImg {
+    position: absolute;
+    left: 15px;
+    top: 9px;
+    width: 50px;
+    height: 50px;
+    transform: rotate(30deg);
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
+}
+.slot .swordImg {
+    width: 80%;
+    height: 80%;
+    transform: rotate(30deg);
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
 }
 .slot p {
     position: absolute;
@@ -164,24 +231,16 @@
 
 /* ------------------------------- ITEM PANEL ---------------------------------- */
 .itemInfoPanel {
-    display: none;
+    position: relative;
+    display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #0f0f0f;
-    backdrop-filter: blur(20px);
     height: 100%;
-    width: 90%;
-    max-height: 600px;
-    max-width: 800px;
-    padding: 50px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    width: 500px;
+    padding: 0;
     color: white;
-    z-index: 999;
+    overflow: hidden;
 }
 .itemInfoPanel.open {
     display: flex;
@@ -191,21 +250,27 @@
     height: 150px;
 }
 .itemIconContainer {
-    width: 300px;
-    height: 200px;
+    width: 100%;
+    height: 60%;
     border: 5px solid transparent;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    background: #080808;
     position: relative;
 }
 .bgLight {
     position: absolute;
-    width: 120px;
-    height: 120px;
-    filter: blur(50px);
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    width: 200px;
+    height: 200px;
     border-radius: 50%;
+    filter: blur(100px);
+    background: #000;
+    z-index: 1;
 }
 .bgLight.common {
     background: #fff;
@@ -234,14 +299,27 @@
     filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
 }
 .itemIconContainer .selectedOtherImg {
-    max-height: 100%;
-    max-width: 100%;
+    max-height: 70%;
+    max-width: 70%;
     height: 100%;
     width: 100%;
     object-fit: contain;
     image-rendering: pixelated;
+    transform: rotate(30deg);
     z-index: 2;
-    filter: drop-shadow(0 0 8px rgba(0,0,0,1));
+    
+    filter: drop-shadow(0 0 8px #000);
+}
+.itemInfoContainer {
+    width: 100%;
+    height: 40%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background: #080808;
+    border-top: 3px solid rgba(255, 255, 255, 0.1);
+    z-index: 2;
 }
 .nameContainer {
     display: flex;
@@ -285,7 +363,7 @@
 }
 .equipBtnContainer {
     position: absolute;
-    bottom: 10px;
+    bottom: 14px;
     left: 10px;
     right: 10px;
     display: flex;
@@ -294,38 +372,44 @@
 }
 .equipBtn {
     width: 100%;
-    height: 40px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    background: transparent;
+    max-width: 300px;
+    height: 45px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    background: #101010;
     color: white;
-    cursor: pointer;
     font-size: 12px;
+    box-shadow: 0 5px 0 #000;
+    font-size: 10px;
+    letter-spacing: 2;
 }
 .equipBtn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #181818;
 }
 .closeBtn {
     position: absolute;
     top: 15px;
-    right: 15px;
-    background: transparent;
+    left: 15px;
+    background: #141414;
     color: white;
-    cursor: pointer;
     width: 36px;
     height: 36px;
-    border: none;
+    border: 3px solid rgba(255, 255, 255, 0.1);
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 50%;
+    border-radius: 0;
+    z-index: 2;
+    box-shadow: 0 5px 0 #000;
 }
 .closeIcon {
     color: #fff;
-    width: 26px;
-    height: 26px;
+    width: 22px;
+    height: 22px;
 }
 .closeBtn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #000;
 }
 
 /* ======================== CHEST ============================== */
@@ -392,4 +476,175 @@
 .tooltipText,
 .tooltipStats p {
     margin: 3px 0;
+}
+.dungeonMenuWrapper {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 5;
+}
+.dungeonMenuWrapper.open {
+    display: flex;
+}
+.dungeonMenuOuter {
+    padding: 20px;
+    border: 3px solid #351A1A;
+    background: #160B0B;
+    box-shadow: 0 0 1000px #1E0605;
+}
+.dungeonMenuContainer {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background: #101010;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    z-index: 3;
+}
+.dungeonMenuContent {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 50px;
+}
+.dungeonIconContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    border: 3px solid #F6362B;
+    background:
+        radial-gradient(circle at center, rgba(246,54,43,0.25), transparent 65%),
+        #000;
+    box-shadow: 0 0 20px #5B120F;
+}
+.title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+}
+.title img {
+    width: 40px;
+    image-rendering: pixelated;
+}
+.title h3 {
+    color: #F6362B;
+    letter-spacing: 3;
+    font-size: 14px;
+    line-height: 1;
+    text-shadow: 3px 3px #000;
+}
+.dungeonMenuContainer p {
+    color: #fff;
+    font-size: 10px;
+}
+.dungeonMenuContent .buttonsContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+.enterBtn {
+    width: 300px;
+    height: 45px;
+    border: 3px solid #F48781;
+    background: #F6362B;
+    color: #fff;
+    box-shadow: 0 5px 0 #721714;
+    font-size: 8px;
+    letter-spacing: 2;
+}
+.enterBtn:hover {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #721714;
+}
+.cancelBtn:hover {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #020202;
+}
+.cancelBtn {
+    width: 300px;
+    height: 45px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    background: #141414;
+    color: #fff;
+    box-shadow: 0 5px 0 #020202;
+    font-size: 8px;
+    letter-spacing: 2;
+}
+.dungeonMenuBackground {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: #000;
+    width: 800px;
+    height: 500px;
+    border-radius: 50%;
+    filter: blur(100);
+    z-index: -1;
+}
+.landingPageWrapper {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #080808;
+    z-index: 5;
+}
+.landingPageContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 80px;
+}
+.landingPageContainer h1 {
+    line-height: 1.5;
+    font-size: 80px;
+    letter-spacing: 10;
+    color: #F6362B;
+    text-shadow: 10px 10px 0 #000;
+    margin-right: -40px;
+}
+.landingPageContainer p {
+    color: #fff;
+}
+.landingPageContainer .buttonsContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    max-width: 400px;
+}
+.landingPageContainer .buttonsContainer .startBtn {
+    width: 100%;
+    height: 50px;
+    border: 3px solid #F48781;
+    background: #F6362B;
+    color: #fff;
+    box-shadow: 0 5px 0 #721714;
+    font-size: 8px;
+    letter-spacing: 2;
+}
+.landingPageContainer .buttonsContainer .startBtn:hover {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #721714;
 }

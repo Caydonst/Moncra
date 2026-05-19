@@ -5,6 +5,16 @@ import {Shadow} from "../utils/shadow";
 import {Demon} from "../enemies/demon";
 import { Outline } from "../utils/swordOutline";
 import {DemonBoss} from "../enemies/bosses/DemonBoss";
+import { GameScene } from '../scenes/GameScene';
+
+type SwingAttack = {
+    duration: number;
+    cooldown: number;
+    damage: number;
+    startOffset: number;
+    endOffset: number;
+    knockback: number;
+};
 
 export class GreatSword extends ex.Actor {
     public player: Player;
@@ -14,13 +24,14 @@ export class GreatSword extends ex.Actor {
     // Swing state
     private swinging = false;
     private swingProgress = 0;
-    private swingDuration = 200; // ms for full swing
+    private swingDuration = 300; // ms for full swing
 
     private swingStartAngle = 0;
     private swingEndAngle = 0;
 
     private swingCooldown = 300;
     private lastSwingTime = 0;
+    private swingTracer: SwingTracer;
 
     // Orbit around player
     private orbitAngle = 0;
@@ -31,9 +42,38 @@ export class GreatSword extends ex.Actor {
     private shadow: Shadow;
     private swingHitSet = new Set<ex.Actor>();
 
-    private getEnemies() {
-        return this.engine.currentScene.actors.filter(a => a.tags.has("enemy"));
-    }
+    
+    private comboIndex = 0;
+    private lastComboTime = 0;
+    private comboResetTime = 700;
+    private currentAttack!: SwingAttack;
+
+    private combo: SwingAttack[] = [
+        {
+            duration: 180,
+            cooldown: 180,
+            damage: 15,
+            startOffset: Math.PI / 1.8,
+            endOffset: -Math.PI / 1.8,
+            knockback: 80,
+        },
+        {
+            duration: 220,
+            cooldown: 220,
+            damage: 22,
+            startOffset: -Math.PI / 1.8,
+            endOffset: Math.PI / 1.8,
+            knockback: 120,
+        },
+        {
+            duration: 320,
+            cooldown: 400,
+            damage: 35,
+            startOffset: Math.PI / 1.2,
+            endOffset: -Math.PI / 1.2,
+            knockback: 220,
+        },
+    ];
 
     constructor(
         player: Player,
@@ -64,6 +104,9 @@ export class GreatSword extends ex.Actor {
 
         this.graphics.use(sprite);
 
+        this.swingTracer = new SwingTracer();
+        engine.currentScene.add(this.swingTracer);
+
         //const outline = new Outline(engine);
         //this.graphics.material = outline.outlineMaterial;
     }
@@ -76,7 +119,51 @@ export class GreatSword extends ex.Actor {
         const dir = worldPos.sub(this.player.pos);
         return dir.toAngle();
     }
+    /*
+    startSwing() {
+        const now = performance.now();
 
+        if (this.swinging) return;
+        if (now - this.lastSwingTime < this.swingCooldown) return;
+
+        const mouseAngle = this.getMouseAngle();
+        if (mouseAngle === null) return;
+
+        if (now - this.lastComboTime > this.comboResetTime) {
+            this.comboIndex = 0;
+        }
+
+        this.currentAttack = this.combo[this.comboIndex];
+
+        this.lastSwingTime = now;
+        this.lastComboTime = now;
+
+        this.swingDuration = this.currentAttack.duration;
+        this.swingCooldown = this.currentAttack.cooldown;
+
+        this.swinging = true;
+        this.swingProgress = 0;
+        this.swingHitSet.clear();
+
+        this.swingStartAngle = mouseAngle + this.currentAttack.startOffset;
+        this.swingEndAngle = mouseAngle + this.currentAttack.endOffset;
+
+        const nextAttack = this.combo[this.comboIndex];
+
+        this.orbitAngle = mouseAngle + nextAttack.startOffset;
+
+        this.comboIndex = (this.comboIndex + 1) % this.combo.length;
+
+        this.swingTracer.start(
+            this.player,
+            this.swingStartAngle,
+            this.swingEndAngle,
+            this.swingDuration,
+            this.height * 0.75
+        );
+    }
+        */
+    
     startSwing() {
         const now = performance.now();
 
@@ -93,13 +180,24 @@ export class GreatSword extends ex.Actor {
         // Reset hit cache
         this.swingHitSet.clear();
 
-        this.orbitAngle = mouseAngle + this.side * (Math.PI / 1.7);
+        this.orbitAngle = mouseAngle + this.side * (Math.PI / 1.5);
         this.swingStartAngle = this.orbitAngle;
 
-        this.swingEndAngle = mouseAngle - this.side * (Math.PI / 1.7);
+        this.swingEndAngle = mouseAngle - this.side * (Math.PI / 1.5);
+
+        this.swingTracer.start(
+            this.player,
+            this.swingStartAngle,
+            this.swingEndAngle,
+            this.swingDuration,
+            this.height * 0.75
+        );
     }
+    
 
     onPostUpdate(_engine: ex.Engine, delta: number) {
+        this.swingTracer?.updateTracer(this.engine, delta);
+
         const mouseAngle = this.getMouseAngle();
         if (mouseAngle === null) return;
 
@@ -123,7 +221,7 @@ export class GreatSword extends ex.Actor {
             // rotate offset
             const rotatedOffset = this.offset.rotate(this.orbitAngle);
 
-            // ⭐ ADD BOBBING HERE
+            // ADD BOBBING HERE
             const bobbedOffset = addBobbing(rotatedOffset);
 
             // position sword with bobbing
@@ -152,7 +250,7 @@ export class GreatSword extends ex.Actor {
         // -------------------------------
         //   IDLE LOGIC
         // -------------------------------
-        this.orbitAngle = mouseAngle + this.side * (Math.PI / 1.7);
+        this.orbitAngle = mouseAngle + this.side * (Math.PI / 1.5);
 
         const rotatedOffset = this.offset.rotate(this.orbitAngle);
 
@@ -180,6 +278,7 @@ export class GreatSword extends ex.Actor {
 
         // First hit this swing → apply damage
         this.swingHitSet.add(target);
+        this.engine.currentScene.camera.shake(4, 4, 60);
         target.takeDamage(20);
     }
 
@@ -189,6 +288,90 @@ export class GreatSword extends ex.Actor {
     }
     cleanup() {
         this.engine.input.pointers.primary.off("down");
-        this.shadow.kill()
+        this.shadow.kill();
+        this.swingTracer.kill();
+    }
+}
+
+export class SwingTracer extends ex.Actor {
+    public active = false;
+
+    private player!: ex.Actor;
+    private startAngle = 0;
+    private endAngle = 0;
+    private progress = 0;
+    private duration = 10;
+    private radius = 160;
+
+    constructor() {
+        super({
+            name: "swing-tracer",
+            pos: ex.vec(0, 0),
+            z: 3,
+            collisionType: ex.CollisionType.PreventCollision,
+        });
+
+        this.graphics.onPostDraw = (ctx) => {
+            if (!this.active || !this.player) return;
+
+            const t = Math.min(this.progress / this.duration, 1);
+            const eased = t * t * (3 - 2 * t);
+
+            const currentAngle =
+                this.startAngle + (this.endAngle - this.startAngle) * eased;
+
+            const trailLength = Math.PI / 2;
+            const steps = 50;
+
+            const swingDir = Math.sign(this.endAngle - this.startAngle) || 1;
+
+            const totalArc = Math.abs(this.endAngle - this.startAngle);
+            const visibleTrailLength = Math.min(trailLength, totalArc * eased);
+
+            for (let i = 0; i < steps; i++) {
+                const percent = i / steps;
+
+                const a =
+                    currentAngle -
+                    swingDir * visibleTrailLength * percent;
+
+                const alpha = (1 - percent) * 0.45;
+
+                //const inner = this.radius * 0.45;
+                //const outer = this.radius * 1.15;
+
+                const inner = this.radius * 0.45;
+                const outer = this.radius * 1.35;
+
+                const p1 = this.player.pos.add(ex.Vector.fromAngle(a).scale(inner)).sub(this.pos);
+                const p2 = this.player.pos.add(ex.Vector.fromAngle(a).scale(outer)).sub(this.pos);
+
+                ctx.save();
+                ctx.opacity = alpha;
+                ctx.drawLine(p1, p2, ex.Color.White, 4);
+                ctx.restore();
+            }
+        };
+    }
+
+    start(player: ex.Actor, startAngle: number, endAngle: number, duration: number, radius: number) {
+        this.player = player;
+        this.startAngle = startAngle;
+        this.endAngle = endAngle;
+        this.duration = duration;
+        this.radius = radius;
+        this.progress = 0;
+        this.active = true;
+    }
+
+    updateTracer(engine: ex.Engine, delta: number) {
+        if (!this.active) return;
+        this.pos = engine.currentScene.camera.pos.clone();
+
+        this.progress += delta;
+
+        if (this.progress >= this.duration) {
+            this.active = false;
+        }
     }
 }
