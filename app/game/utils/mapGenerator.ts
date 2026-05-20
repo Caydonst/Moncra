@@ -87,7 +87,7 @@ type Room = {
   centerY: number;
 };
 
-export function generateDungeon(rows: number, cols: number) {
+export function generateDungeonFloor(rows: number, cols: number) {
   const map: TileType[][] = [];
 
   for (let y = 0; y < rows; y++) {
@@ -167,7 +167,7 @@ function roomsOverlap(a: Room, b: Room) {
   );
 }
 
-export function createTileMapFromDungeon(
+export function createTileMapFromDungeonFloor(
   dungeonMap: TileType[][],
   tileset: ex.SpriteSheet
 ) {

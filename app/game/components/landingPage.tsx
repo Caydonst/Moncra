@@ -1,18 +1,18 @@
 import styles from "./page.module.css"
+import { changeScene } from "../utils/sceneChanges"
 
 type Props = {
     game: ex.Engine;
-    onStart: () => void;
 }
 
-export default function LandingPage({ game, onStart }: Props) {
+export default function LandingPage({ game }: Props) {
     return (
     <div className={styles.landingPageWrapper}>
         <div className={styles.landingPageContainer}>
             <h1>MONCRA</h1>
             <p>A 2D DUNGEON CRAWLER RPG</p>
             <div className={styles.buttonsContainer}>
-                <button className={styles.startBtn} onClick={onStart}>
+                <button className={styles.startBtn} onClick={() => changeScene("hub")}>
                     START GAME
                 </button>
             </div>

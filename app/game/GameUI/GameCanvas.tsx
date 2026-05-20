@@ -12,6 +12,7 @@ import InventoryUI from "@/app/game/components/inventoryUI";
 import ChestUI from "@/app/game/components/chestUI";
 import DungeonMenu from "../components/dungeonMenu";
 import LandingPage from "../components/landingPage";
+import { gameState } from "../gameState/gameState";
 
 type Scenes = GameScene | HubScene | MenuScene | TestScene | DungeonScene
 
@@ -75,17 +76,8 @@ export default function GameCanvas() {
         setScene(newScene);
         setSceneName(newScene.constructor.name);
 
-        if ("getInventory" in newScene && typeof newScene.getInventory === "function") {
-            setInventory(newScene.getInventory());
-        } else {
-            setInventory(null);
-        }
-
-        if ("player" in newScene && newScene.player) {
-            setCharacterHp((newScene.player.hp / newScene.player.maxHp) * 100);
-        } else {
-            setCharacterHp(0);
-        }
+        setInventory(gameState.inventory);
+        setCharacterHp(gameState.player?.hp);
 
         setInventoryOpen(false);
         setItemPanelOpen(false);
@@ -177,10 +169,13 @@ export default function GameCanvas() {
     }, []);
 
     useEffect(() => {
-        const handleSceneChanged = (e: Event) => {
-            const event = e as CustomEvent;
+        if (!game) return;
 
-            syncScene(event.detail.scene as Scenes);
+        const handleSceneChanged = () => {
+            requestAnimationFrame(() => {
+                console.log(game.currentScene);
+                syncScene(game.currentScene as Scenes);
+            });
         };
 
         window.addEventListener("scene-changed", handleSceneChanged);
@@ -188,7 +183,7 @@ export default function GameCanvas() {
         return () => {
             window.removeEventListener("scene-changed", handleSceneChanged);
         };
-        }, []);
+    }, [game]);
 
     return (
         <div id="game-wrapper" className={styles.gameWrapper}>
@@ -198,13 +193,6 @@ export default function GameCanvas() {
                     {isMenuScene && game && (
                         <LandingPage
                             game={game}
-                            onStart={() => {
-                            game.goToScene("game");
-
-                            requestAnimationFrame(() => {
-                                syncScene(game.currentScene as Scenes);
-                            });
-                            }}
                         />
                     )}
                     {(isGameScene || isDungeonScene) && (

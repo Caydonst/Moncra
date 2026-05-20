@@ -1,6 +1,4 @@
 import type {Ammunition, Item, Weapon} from "../items/ItemTypes";
-const ex = await import("excalibur");
-import {Player} from "../player"
 
 export class Inventory {
     weapon: Weapon | null = null;

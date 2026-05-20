@@ -2,7 +2,6 @@ import * as ex from "excalibur";
 import { Demon } from "../enemies/demon";
 import { DemonBoss } from "../enemies/bosses/DemonBoss";
 import { GameResources } from "../resources";
-import { EnemyPlayer } from "../enemies/enemyPlayer";
 
 type Projectile = {
     pos: ex.Vector;
@@ -109,8 +108,7 @@ export class ProjectileManager extends ex.Actor {
     private checkSweptCollision(engine: ex.Engine, projectile: Projectile) {
         const enemies = engine.currentScene.actors.filter(actor =>
             actor instanceof Demon ||
-             actor instanceof DemonBoss ||
-             actor instanceof EnemyPlayer
+             actor instanceof DemonBoss
         );
 
         // Enemy collision

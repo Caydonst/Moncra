@@ -1,4 +1,4 @@
-import {GameResources} from "@/app/ game/resources";
+import {GameResources} from "@/app/game/resources";
 
 const ex = await import("excalibur");
 import { Player } from '../player'
@@ -10,7 +10,7 @@ import {spawnParticles, wallParticles} from "../utils/ParticleHelper";
 import {DemonBoss} from "@/app/game/enemies/bosses/DemonBoss";
 
 export class Demon extends ex.Actor {
-    private speed: number; // pixels per second
+    private speed = 220; // pixels per second
     private target: ex.Actor; // the player
     private worldWidth: number;
     private worldHeight: number;
@@ -34,8 +34,9 @@ export class Demon extends ex.Actor {
     private touchingPlayer: Player | null = null;
     private damageCooldown = 1000; // ms
     private lastDamageTime = 0;
+    private isAFK = true;
 
-    constructor(engine: ex.Engine, pos: ex.Vector, worldWidth: number, worldHeight: number, target: ex.Actor, speed: number = 100, hp: number, maxHp: number, private resources: GameResources, private collisionGroups: any) {
+    constructor(engine: ex.Engine, pos: ex.Vector, worldWidth: number, worldHeight: number, target: ex.Actor, hp: number, maxHp: number, private resources: GameResources, private collisionGroups: any) {
         super({
             name: "enemy",
             pos: pos,
@@ -50,7 +51,6 @@ export class Demon extends ex.Actor {
         this.tags.add("enemy");
         this.worldWidth = worldWidth;
         this.worldHeight = worldHeight;
-        this.speed = speed;
         this.target = target;
         this.hp = hp;
         this.maxHp = maxHp;
@@ -159,13 +159,16 @@ export class Demon extends ex.Actor {
 
         const direction = this.target.pos.sub(this.pos);
 
-        if (direction.magnitude < 500) {
+        if (direction.magnitude <= 500) {
+            this.isAFK = false;
+
+        }
+
+        if (!this.isAFK) {
             const dir = direction.normalize();
             this.vel = dir.scale(this.speed);
-
-        } else {
-            this.vel = ex.vec(0, 0);
         }
+
         const flip = this.vel.x > 0;
         this.walkAnim.flipHorizontal = flip;
         this.deadAnim.flipHorizontal = flip;
@@ -195,6 +198,8 @@ export class Demon extends ex.Actor {
             this.handleDeath();
             return;
         }
+
+        this.isAFK = false;
 
         const knockDir = this.pos.sub(this.target.pos).normalize();
 

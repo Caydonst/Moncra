@@ -203,7 +203,7 @@
     top: 9px;
     width: 50px;
     height: 50px;
-    transform: rotate(30deg);
+    transform: rotate(45deg);
     object-fit: contain;
     image-rendering: pixelated;
     filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
@@ -211,7 +211,6 @@
 .slot .swordImg {
     width: 80%;
     height: 80%;
-    transform: rotate(30deg);
     object-fit: contain;
     image-rendering: pixelated;
     filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
@@ -305,7 +304,6 @@
     width: 100%;
     object-fit: contain;
     image-rendering: pixelated;
-    transform: rotate(30deg);
     z-index: 2;
     
     filter: drop-shadow(0 0 8px #000);

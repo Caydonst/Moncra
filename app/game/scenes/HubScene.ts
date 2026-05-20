@@ -27,7 +27,8 @@ import {getSpawnPointsFromTiledMap} from "./helperFunctions"
 import { EnemyPlayer } from "../enemies/enemyPlayer"
 import { ProjectileManager } from "../utils/projectileManager";
 import { Portal } from "../portal";
-import { generateDungeon, createTileMapFromDungeon, tileToWorld } from "../utils/mapGenerator"
+import { generateDungeonFloor, createTileMapFromDungeonFloor, tileToWorld } from "../utils/mapGenerator"
+import { GameState } from "../gameState/gameState";
 
 type Maps = {
     layer1: number[][];
@@ -43,7 +44,6 @@ export class HubScene extends ex.Scene {
     enemyCount!: number;
     enemyTag!: HTMLElement;
     enemies!: []
-    inventory!: Inventory;
     chest1!: Chest;
     chest2!: Chest;
     chest3!: Chest;
@@ -62,7 +62,8 @@ export class HubScene extends ex.Scene {
     constructor(
         private resources: GameResources,
         private collisionGroups: any,
-        public engine: ex.Engine
+        public engine: ex.Engine,
+        private gameState: GameState,
     )
     {
         super();
@@ -71,20 +72,36 @@ export class HubScene extends ex.Scene {
     async onInitialize(engine: ex.Engine) {
         try {
             
-            this.camera.zoom = 1.10
+            this.camera.zoom = 1.20
 
             this.particleManager = new ParticleManager(this);
 
+
+            this.resources.tiledMap.addToScene(this);
+
+            for (const layer of this.resources.tiledMap.layers) {
+                if (layer.name === "floorBottom") {
+                    layer.tilemap.z = 5;
+                }
+                if (layer.name === "wallsTop") {
+                    layer.tilemap.z = 1;
+                }
+                if (layer.name === "wallsBottom") {
+                    layer.tilemap.z = 5;
+                }
+            }
+
             const baseLayer = this.resources.tiledMap.layers[0].tilemap;
 
-            const generatedMap = generateDungeon(100, 100);
-            const tileMap = createTileMapFromDungeon(generatedMap.map, this.resources.mapSpritesheet)
-            this.add(tileMap);
+            const generatedMap = generateDungeonFloor(100, 100);
+            //const tileMap = createTileMapFromDungeon(generatedMap.map, this.resources.mapSpritesheet)
+            //this.add(tileMap);
+            //this.add(baseLayer);
 
             console.log(generatedMap);
             this.worldBounds = {
-                width: generatedMap.map.length * 64,
-                height: generatedMap.map[0].length * 64,
+                width: baseLayer.width,
+                height: baseLayer.height,
             };
 
             console.log(this.worldBounds)
@@ -119,7 +136,8 @@ export class HubScene extends ex.Scene {
 
             this.add(this.projectileManager);
 
-            this.player = new Player(tileToWorld(generatedMap.playerSpawn.x, generatedMap.playerSpawn.y), 1920, 1080, this.resources, this.collisionGroups);
+            this.player = new Player(ex.vec(400, 400), 1920, 1080, this.resources, this.collisionGroups);
+            this.gameState.player = this.player;
             this.add(this.player);
 
             this.dustParticleManager = new DustParticleManager();
@@ -133,9 +151,6 @@ export class HubScene extends ex.Scene {
 
             this.portal = new Portal(ex.vec(this.worldBounds.width / 2, this.worldBounds.height / 2), this.resources)
             this.add(this.portal);
-
-            // --- Inventory ---
-            this.inventory = new Inventory()
             
 
             const GreatSword1: Weapon = {
@@ -156,7 +171,7 @@ export class HubScene extends ex.Scene {
                 ),
             };
 
-            this.inventory.addItem(GreatSword1);
+            this.gameState.inventory.addItem(GreatSword1);
 
             const SNS: Weapon = {
                 id: "great_sword1",
@@ -176,7 +191,7 @@ export class HubScene extends ex.Scene {
                 ),
             };
 
-            this.inventory.addItem(SNS);
+            this.gameState.inventory.addItem(SNS);
 
             const Bow1: Weapon = {
                 id: "bow1",
@@ -198,7 +213,7 @@ export class HubScene extends ex.Scene {
                 ),
             };
 
-            this.inventory.addItem(Bow1);
+            this.gameState.inventory.addItem(Bow1);
 
             function getRandomItems() {
                 const itemsList = [GreatSword1, Bow1]
@@ -277,7 +292,7 @@ export class HubScene extends ex.Scene {
         camera.pos = ex.vec(clampedX, clampedY);
     }
     public getInventory() {
-        return this.inventory;
+        return this.gameState.inventory;
     }
 
     private getRandomSpawn() {
@@ -295,7 +310,6 @@ export class HubScene extends ex.Scene {
             this.worldBounds.width,
             this.worldBounds.height,
             this.player,
-            300,
             100,
             100,
             this.resources,

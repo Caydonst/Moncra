@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import styles from "./page.module.css"
 import { GameScene } from "../scenes/GameScene";
 import DungeonImg from "../assets/misc/dungeon_icon.png"
+import { changeScene } from "../utils/sceneChanges"
 
 export default function DungeonMenu(scene: GameScene | null) {
     const [dungeonMenuOpen, setDungeonMenuOpen] = useState(false);
@@ -31,7 +32,7 @@ export default function DungeonMenu(scene: GameScene | null) {
                         </div>
                         <p>Enter the dungeon?</p>
                         <div className={styles.buttonsContainer}>
-                            <button className={styles.enterBtn}>ENTER DUNGEON</button>
+                            <button className={styles.enterBtn} onClick={() => changeScene("dungeon")}>ENTER DUNGEON</button>
                             <button className={styles.cancelBtn} onClick={() => setDungeonMenuOpen(false)}>CANCEL</button>
                         </div>
                     </div>

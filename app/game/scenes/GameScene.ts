@@ -27,7 +27,7 @@ import {getSpawnPointsFromTiledMap} from "./helperFunctions"
 import { EnemyPlayer } from "../enemies/enemyPlayer"
 import { ProjectileManager } from "../utils/projectileManager";
 import { Portal } from "../portal";
-import { generateDungeon, createTileMapFromDungeon, tileToWorld } from "../utils/mapGenerator"
+import { generateDungeonFloor, createTileMapFromDungeonFloor, tileToWorld } from "../utils/mapGenerator"
 
 type Maps = {
     layer1: number[][];
@@ -77,8 +77,8 @@ export class GameScene extends ex.Scene {
 
             const baseLayer = this.resources.tiledMap.layers[0].tilemap;
 
-            const generatedMap = generateDungeon(100, 100);
-            const tileMap = createTileMapFromDungeon(generatedMap.map, this.resources.mapSpritesheet)
+            const generatedMap = generateDungeonFloor(100, 100);
+            const tileMap = createTileMapFromDungeonFloor(generatedMap.map, this.resources.mapSpritesheet)
             this.add(tileMap);
 
             console.log(generatedMap);

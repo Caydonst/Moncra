@@ -6,6 +6,9 @@ import { createResources } from "./resources";
 import * as ex from "excalibur";
 import {createCollisionGroups} from "@/app/game/utils/collisionGroups";
 import {createGame, destroyGame} from "@/app/game/gameInstance";
+import { HubScene } from "./scenes/HubScene";
+import { gameState } from "./gameState/gameState";
+import { DungeonScene } from "./scenes/DungeonScene";
 
 export async function startGame(canvas: HTMLCanvasElement, onLoaded: () => void) {
     const resources = await createResources();
@@ -14,24 +17,12 @@ export async function startGame(canvas: HTMLCanvasElement, onLoaded: () => void)
     const game = await createGame(canvas);
 
     game.add("game", new GameScene(resources, collisionGroups, game));
-    game.add("menu", new MenuScene(game))
+    game.add("menu", new MenuScene(game));
+    game.add("hub", new HubScene(resources, collisionGroups, game, gameState));
+    game.add("dungeon", new DungeonScene(resources, gameState));
     game.goToScene("menu");
 
     await game.start(resources.loader);
-
-    for (const layer of resources.tiledMap.layers) {
-        if (layer.name === "floorBottom") {
-            layer.tilemap.z = 5;
-        }
-        if (layer.name === "wallsTop") {
-            layer.tilemap.z = 1;
-        }
-        if (layer.name === "wallsBottom") {
-            layer.tilemap.z = 5;
-        }
-    }
-
-    //resources.tiledMap.addToScene(game.currentScene);
 
 
 

@@ -62,8 +62,8 @@ export class Bow extends ex.Actor {
         this.bowSprite.height = this.height;
         this.graphics.use(this.bowSprite);
 
-        // this.shadow = new Shadow(this);
-        // engine.currentScene.add(this.shadow);
+        this.shadow = new Shadow(this);
+        engine.currentScene.add(this.shadow);
     }
 
     onPostUpdate(engine: ex.Engine, delta: number) {

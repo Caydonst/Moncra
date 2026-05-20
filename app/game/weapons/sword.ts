@@ -219,7 +219,7 @@ export class GreatSword extends ex.Actor {
                 (this.swingEndAngle - this.swingStartAngle) * eased;
 
             // rotate offset
-            const rotatedOffset = this.offset.rotate(this.orbitAngle);
+            const rotatedOffset = this.offset.rotate(this.orbitAngle).add(ex.vec(0, 5));
 
             // ADD BOBBING HERE
             const bobbedOffset = addBobbing(rotatedOffset);
@@ -252,7 +252,7 @@ export class GreatSword extends ex.Actor {
         // -------------------------------
         this.orbitAngle = mouseAngle + this.side * (Math.PI / 1.5);
 
-        const rotatedOffset = this.offset.rotate(this.orbitAngle);
+        const rotatedOffset = this.offset.rotate(this.orbitAngle).add(ex.vec(0, 5));
 
         // ADD BOBBING HERE TOO
         const bobbedOffset = addBobbing(rotatedOffset);
@@ -302,6 +302,7 @@ export class SwingTracer extends ex.Actor {
     private progress = 0;
     private duration = 10;
     private radius = 160;
+    private visualOffset = ex.vec(0, 5);
 
     constructor() {
         super({
@@ -343,8 +344,8 @@ export class SwingTracer extends ex.Actor {
                 const inner = this.radius * 0.45;
                 const outer = this.radius * 1.35;
 
-                const p1 = this.player.pos.add(ex.Vector.fromAngle(a).scale(inner)).sub(this.pos);
-                const p2 = this.player.pos.add(ex.Vector.fromAngle(a).scale(outer)).sub(this.pos);
+                const p1 = this.player.pos.add(ex.Vector.fromAngle(a).scale(inner)).sub(this.pos).add(ex.vec(0, 5));
+                const p2 = this.player.pos.add(ex.Vector.fromAngle(a).scale(outer)).sub(this.pos).add(ex.vec(0, 5));
 
                 ctx.save();
                 ctx.opacity = alpha;

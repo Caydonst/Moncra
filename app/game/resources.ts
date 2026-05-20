@@ -6,7 +6,7 @@ import { TiledResource } from "@excaliburjs/plugin-tiled";
 const tiledMap = new TiledResource("/maps/hub.tmx");
 // --- CHARACTER ---
 import characterWalkSheetImage from "./assets/character/walk/walk_spritesheet2.png"
-import characterIdleSheetImage from "./assets/character/walk/idle_spritesheet.png"
+import characterIdleSheetImage from "./assets/character/walk/idle_spritesheet1.png"
 import characterWalk0 from "./assets/character/walk/walk0.png";
 import characterWalk1 from "./assets/character/walk/walk1.png";
 import characterWalk2 from "./assets/character/walk/walk2.png";
@@ -45,9 +45,7 @@ import miscDead11 from "./assets/enemies/misc/dead11.png";
 // --- SPRITESHEET ---
 import Tilesheet from "./assets/map/spritesheet.png";
 // --- WEAPONS ---
-
 import arrowImage from './assets/projectiles/arrow.png';
-import bulletImage from './assets/projectiles/bullet1.png';
 import warHammer from "./assets/weapons/war_hammer/anime_war_hammer.png";
 import greatSword from "./assets/weapons/great_sword/anime_sword.png";
 import bow from "./assets/weapons/bow/bow.png";
@@ -105,7 +103,6 @@ export async function createResources() {
         demonBossIdleSheetImage: new ex.ImageSource(demonBossIdleSheetImage.src),
         demonBossHurt: new ex.ImageSource(demonBossHurt.src),
         demonBossWalkSheetImage: new ex.ImageSource(demonBossWalkSheetImage.src),
-        bullet: new ex.ImageSource(bulletImage.src),
     };
 
     const PlayerImages: ImageGroups = {
@@ -186,7 +183,7 @@ export async function createResources() {
             rows: 1,
             columns: 4,
             spriteWidth: 15,
-            spriteHeight: 19,
+            spriteHeight: 23,
         }
     });
     const demonBossIdleSpritesheet = ex.SpriteSheet.fromImageSource({
@@ -336,7 +333,6 @@ export async function createResources() {
         portalSpritesheet,
         portalSelectedSpritesheet,
         mapSpritesheet,
-        sounds,
         tiledMap,
     };
 }

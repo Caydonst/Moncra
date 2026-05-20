@@ -25,7 +25,7 @@ export class Player extends ex.Actor {
             pos: pos,
             anchor: ex.vec(0.5, 0.5),
             width: 15 * 2,    // set desired width
-            height: 19 * 2,   // set desired height
+            height: 23 * 2,   // set desired height
             color: ex.Color.Yellow,  // optional, for debugging
             collisionType: ex.CollisionType.Active,
             z: 3,
@@ -174,5 +174,12 @@ export class Player extends ex.Actor {
 
         this.hp -= damage;
         window.dispatchEvent(new Event("player-damaged"));
+    }
+    public attachToScene(scene: ex.Scene) {
+        if (!this.shadow || this.shadow.isKilled()) {
+            this.shadow = new Shadow(this);
+        }
+
+        scene.add(this.shadow);
     }
 }
