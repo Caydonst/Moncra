@@ -15,12 +15,13 @@ import LandingPage from "../components/landingPage";
 import { gameState } from "../gameState/gameState";
 
 type Scenes = GameScene | HubScene | MenuScene | TestScene | DungeonScene
+type SceneKey = "menu" | "hub" | "game" | "dungeon" | "test";
 
 export default function GameCanvas() {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [game, setGame] = useState(null);
     const [scene, setScene] = useState<Scenes | null>(null);
-    const [sceneName, setSceneName] = useState<string | null>(null);
+    const [sceneName, setSceneName] = useState<SceneKey | null>(null);
     const [inventory, setInventory] = useState<Inventory | null>(null);
     const [inventoryOpen, setInventoryOpen] = useState<boolean>(false);
     const [itemPanelOpen, setItemPanelOpen] = useState(false);
@@ -56,11 +57,7 @@ export default function GameCanvas() {
             const game = getGame()
             setGame(game);
 
-            syncScene(game.currentScene as Scenes);
-
-            const scene = game.currentScene as Scenes;
-            setScene(scene);
-            setSceneName(scene.constructor.name);
+            syncScene(game.currentScene as Scenes, "menu");
         }
 
         init();
@@ -68,21 +65,27 @@ export default function GameCanvas() {
         return () => cleanup?.();
     }, []);
 
-    const isMenuScene = sceneName === "MenuScene";
-    const isDungeonScene = sceneName === "DungeonScene";
-    const isGameScene = sceneName === "GameScene" || sceneName === "HubScene" || sceneName === "DungeonScene";
+    const isMenuScene = sceneName === "menu";
+    const isHubScene = sceneName === "hub";
+    const isDungeonScene = sceneName === "dungeon";
+    const isGameScene = isHubScene || isDungeonScene || sceneName === "game";
 
-    function syncScene(newScene: Scenes) {
+    function syncScene(newScene: Scenes, newSceneName: SceneKey) {
         setScene(newScene);
-        setSceneName(newScene.constructor.name);
+        setSceneName(newSceneName);
 
         setInventory(gameState.inventory);
-        setCharacterHp(gameState.player?.hp);
+
+        if (gameState.player) {
+            setCharacterHp((gameState.player.hp / gameState.player.maxHp) * 100);
+        } else {
+            setCharacterHp(0);
+        }
 
         setInventoryOpen(false);
         setItemPanelOpen(false);
         setChestOpen(false);
-        }
+    }
 
     useEffect(() => {
         if (!gameLoaded) return;
@@ -171,10 +174,12 @@ export default function GameCanvas() {
     useEffect(() => {
         if (!game) return;
 
-        const handleSceneChanged = () => {
+        const handleSceneChanged = (e: Event) => {
+            const event = e as CustomEvent<{ sceneName: SceneKey }>;
+            const nextSceneName = event.detail.sceneName;
+
             requestAnimationFrame(() => {
-                console.log(game.currentScene);
-                syncScene(game.currentScene as Scenes);
+                syncScene(game.currentScene as Scenes, nextSceneName);
             });
         };
 
@@ -190,7 +195,7 @@ export default function GameCanvas() {
             <canvas id="game" ref={canvasRef}></canvas>
             {gameLoaded && (
                 <>
-                    {isMenuScene && game && (
+                    {sceneName === "menu" && game && (
                         <LandingPage
                             game={game}
                         />

@@ -13,5 +13,11 @@ export function changeScene(sceneString: string) {
             break;
     }
 
-    window.dispatchEvent(new Event("scene-changed"));
+    window.dispatchEvent(
+        new CustomEvent("scene-changed", {
+            detail: {
+                sceneName: sceneString,
+            },
+        })
+    );
 }
