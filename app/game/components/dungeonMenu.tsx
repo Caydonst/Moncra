@@ -32,7 +32,10 @@ export default function DungeonMenu(scene: GameScene | null) {
                         </div>
                         <p>Enter the dungeon?</p>
                         <div className={styles.buttonsContainer}>
-                            <button className={styles.enterBtn} onClick={() => changeScene("dungeon")}>ENTER DUNGEON</button>
+                            <button className={styles.enterBtn} onClick={() => {
+                                changeScene("dungeon")
+                                setDungeonMenuOpen(false);
+                                }}>ENTER DUNGEON</button>
                             <button className={styles.cancelBtn} onClick={() => setDungeonMenuOpen(false)}>CANCEL</button>
                         </div>
                     </div>
