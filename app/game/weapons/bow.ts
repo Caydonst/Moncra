@@ -41,6 +41,7 @@ export class Bow extends ex.Actor {
         protected resources: GameResources,
         protected collisionGroups: any,
         protected weaponImg: ex.ImageSource,
+        private damage: number,
     ) {
         super({
             pos: player.pos.clone(),
@@ -120,7 +121,7 @@ export class Bow extends ex.Actor {
         this.engine.currentScene.projectileManager.spawn(
             this.pos.clone(),
             direction.scale(1000),
-            30
+            this.damage,
         );
 
         window.dispatchEvent(new Event("inventory-updated"));

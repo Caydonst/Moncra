@@ -19,7 +19,7 @@ export async function startGame(canvas: HTMLCanvasElement, onLoaded: () => void)
     game.add("game", new GameScene(resources, collisionGroups, game));
     game.add("menu", new MenuScene(game));
     game.add("hub", new HubScene(resources, collisionGroups, game, gameState));
-    game.add("dungeon", new DungeonScene(resources, gameState));
+    game.add("dungeon", new DungeonScene(resources, gameState, collisionGroups));
     game.goToScene("menu");
 
     await game.start(resources.loader);

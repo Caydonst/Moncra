@@ -29,7 +29,7 @@ export class GreatSword extends ex.Actor {
     private swingStartAngle = 0;
     private swingEndAngle = 0;
 
-    private swingCooldown = 300;
+    private swingCooldown = 400;
     private lastSwingTime = 0;
     private swingTracer: SwingTracer;
 
@@ -80,6 +80,7 @@ export class GreatSword extends ex.Actor {
         engine: ex.Engine,
         private resources: GameResources,
         private collisionGroups: any,
+        private damage: number,
     ) {
         super({
             pos: player.pos.clone(),
@@ -278,8 +279,8 @@ export class GreatSword extends ex.Actor {
 
         // First hit this swing → apply damage
         this.swingHitSet.add(target);
-        this.engine.currentScene.camera.shake(4, 4, 60);
-        target.takeDamage(20);
+        this.engine.currentScene.camera.shake(8, 8, 60);
+        target.takeDamage(this.damage);
     }
 
 

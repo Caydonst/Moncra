@@ -36,7 +36,7 @@ export class Demon extends ex.Actor {
     private lastDamageTime = 0;
     private isAFK = true;
 
-    constructor(engine: ex.Engine, pos: ex.Vector, worldWidth: number, worldHeight: number, target: ex.Actor, hp: number, maxHp: number, private resources: GameResources, private collisionGroups: any) {
+    constructor(engine: ex.Engine, pos: ex.Vector, target: ex.Actor, hp: number, maxHp: number, private resources: GameResources, private collisionGroups: any) {
         super({
             name: "enemy",
             pos: pos,
@@ -49,8 +49,6 @@ export class Demon extends ex.Actor {
             collisionGroup: collisionGroups.enemyGroup,
         });
         this.tags.add("enemy");
-        this.worldWidth = worldWidth;
-        this.worldHeight = worldHeight;
         this.target = target;
         this.hp = hp;
         this.maxHp = maxHp;

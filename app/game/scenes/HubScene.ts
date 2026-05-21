@@ -19,6 +19,8 @@ import bow from "../assets/weapons/bow/bow.png";
 import { Inventory } from "../inventory/inventory";
 import type {Ammunition, Item, Weapon} from "../items/ItemTypes";
 import {GreatSword} from "../weapons/sword";
+import {SpearAndShield} from "../weapons/spearAndShield"
+import spearAndShieldImg from "../assets/weapons/spear_and_shield/spear_and_shield1.png"
 //import { spawnWallsInto } from "../map";
 import {DemonBoss} from "../enemies/bosses/DemonBoss";
 import type { GameResources } from "../resources";
@@ -149,7 +151,7 @@ export class HubScene extends ex.Scene {
 
             //this.greatSword = new GreatSword(this.player, engine, this.resources, this.collisionGroups);
 
-            this.portal = new Portal(ex.vec(this.worldBounds.width / 2, this.worldBounds.height / 2), this.resources)
+            this.portal = new Portal(ex.vec(this.worldBounds.width / 2, this.worldBounds.height / 2), this.resources, "hub")
             this.add(this.portal);
             
 
@@ -168,6 +170,7 @@ export class HubScene extends ex.Scene {
                     engine,
                     this.resources,
                     this.collisionGroups,
+                    GreatSword1.stats.damage
                 ),
             };
 
@@ -175,19 +178,21 @@ export class HubScene extends ex.Scene {
 
             const SNS: Weapon = {
                 id: "great_sword1",
-                name: "Sword & Shield",
+                name: "Spear And Shield",
                 type: "greatsword",
-                icon: SNSImg.src,
-                rarity: "rare",
+                icon: spearAndShieldImg.src,
+                rarity: "artifact",
                 stats: {
                     damage: 30,
                 },
                 magazine: null,
-                createWeapon: () => new GreatSword(
+                createWeapon: () => new SpearAndShield(
                     this.player,
                     engine,
                     this.resources,
-                    this.collisionGroups,
+                    this.resources.Images.spear,
+                    this.resources.Images.shield,
+                    SNS.stats.damage
                 ),
             };
 
@@ -210,6 +215,7 @@ export class HubScene extends ex.Scene {
                     this.resources,
                     this.collisionGroups,
                     this.resources.Images.bow,
+                    Bow1.stats.damage
                 ),
             };
 
@@ -307,8 +313,6 @@ export class HubScene extends ex.Scene {
         const enemy = new Demon(
             this.engine,
             spawnPos,
-            this.worldBounds.width,
-            this.worldBounds.height,
             this.player,
             100,
             100,

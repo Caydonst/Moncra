@@ -11,8 +11,9 @@ export class Portal extends ex.Actor {
     private baseY: number = 0;
     private floatTime: number = 0;
     private player!: Player;
+    public interacted = false;
 
-    constructor(pos: ex.Vector, private resources: GameResources) {
+    constructor(pos: ex.Vector, private resources: GameResources, private type: string) {
         super({
             pos: pos,
             anchor: ex.vec(0.5, 0.5),
@@ -66,7 +67,11 @@ export class Portal extends ex.Actor {
         engine.input.keyboard.on("press", (evt) => {
             if (evt.key === ex.Keys.F) {
                 if (this.pos.distance(this.player.pos) < 100) {
-                    window.dispatchEvent(new Event("dungeon-menu-open"));
+                    if (this.type === "hub") {
+                        window.dispatchEvent(new Event("dungeon-menu-open"));
+                    } else if (this.type === "dungeon") {
+                        this.interacted = true;
+                    }
                 }
             }
         });

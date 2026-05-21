@@ -20,6 +20,7 @@ const colors = {
     rare: "#0094FF",
     epic: "#B200FF",
     legendary: "#FFAA00",
+    artifact: "#00FFF6",
 }
 
 export default function InventoryUI({ inventoryOpen, inventory, itemPanelOpen, setItemPanelOpen, selectedItem, setSelectedItem, scene }: Props) {

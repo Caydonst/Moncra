@@ -5,30 +5,55 @@ import { createTileMapFromDungeonFloor, generateDungeonFloor, tileToWorld } from
 import { GameResources } from "../resources";
 import { Player } from "../player";
 import { GameState } from "../gameState/gameState";
+import { ProjectileManager } from "../utils/projectileManager";
+import { DustParticleManager, ParticleManager } from "../utils/ParticleHelper";
+import { Demon } from "../enemies/demon";
 
 export class DungeonScene extends ex.Scene {
-  private currentFloor: number = 1;
-  private dungeon!: Dungeon;
-  private player!: Player;
-  private worldBounds!: {
+  private currentFloorIndex: number = 1;
+  private currentFloor!: Floor | null;
+  private numFloors = 5;
+    private worldBounds!: {
       width: number;
       height: number;
   };
+  private dungeon!: Dungeon;
+  public player!: Player;
+  public engine!: ex.Engine;
+  private projectileManager!: ProjectileManager;
+  particleManager!: ParticleManager;
+  dustParticleManager!: DustParticleManager;
 
-  constructor(private resources: GameResources, private gameState: GameState) {
+  constructor(private resources: GameResources, private gameState: GameState, public collisionGroups: any) {
     super()
   }
 
   onInitialize(engine: ex.Engine): void {
 
+    this.engine = engine;
+
     this.camera.zoom = 1.20
 
-    this.dungeon = generateDungeon(this.resources);
     this.player = this.gameState.player;
     this.add(this.player);
     this.player.attachToScene(this);
 
+    this.dungeon = generateDungeon(this, this.numFloors, this.resources);
+
+    if (this.gameState.inventory.weapon) {
+      this.gameState.inventory.equipWeapon(this.gameState.inventory.weapon, this);
+    }
+
     this.worldBounds = this.dungeon.worldBounds;
+
+    this.projectileManager = new ProjectileManager(
+        this.resources,
+        this.collisionGroups
+    );
+    this.add(this.projectileManager);
+
+    this.dustParticleManager = new DustParticleManager();
+    this.add(this.dustParticleManager);
 
     this.loadFloor();
   }
@@ -59,24 +84,28 @@ export class DungeonScene extends ex.Scene {
       );
 
       camera.pos = ex.vec(clampedX, clampedY);
+
+      if (this.currentFloor?.portal.interacted) {
+        if (this.currentFloorIndex === 5) {
+          engine.goToScene("hub");
+        }
+
+        this.loadFloor();
+      }
   }
 
   loadFloor() {
-    if (this.currentFloor === 1) {
-      this.dungeon.floors[this.currentFloor]?.draw(this);
-      this.player.pos = tileToWorld(this.dungeon.floors[this.currentFloor]?.tileLayer.playerSpawn.x, this.dungeon.floors[this.currentFloor]?.tileLayer.playerSpawn.y)
-    } else {
-      if (this.currentFloor) {
-          this.dungeon.floors[this.currentFloor]?.kill()
-      }
-
-      this.currentFloor++
-
-      this.dungeon.floors[this.currentFloor]?.draw(this);
-
-      this.player.pos = tileToWorld(this.dungeon.floors[this.currentFloor]?.tileLayer.playerSpawn.x, this.dungeon.floors[this.currentFloor]?.tileLayer.playerSpawn.y)
-      this.player.z = 20;
+    if (this.currentFloor) {
+      this.currentFloor.kill()
     }
+
+    this.currentFloor = this.dungeon.floors[this.currentFloorIndex];
+
+    this.currentFloor?.draw(this);
+
+    this.player.pos = tileToWorld(this.currentFloor?.tileLayer.playerSpawn.x, this.currentFloor?.tileLayer.playerSpawn.y);
+
+    this.currentFloorIndex++;
 
     console.log("Dungeon Loaded");
   }
@@ -84,13 +113,7 @@ export class DungeonScene extends ex.Scene {
 }
 
 class Dungeon {
-  public floors: Record<number, Floor | null> = {
-    1: null,
-    2: null,
-    3: null,
-    4: null,
-    5: null,
-  }
+  public floors: Record<number, Floor | null> = {}
   public worldBounds!: {
       width: number;
       height: number;
@@ -106,9 +129,10 @@ class Dungeon {
 class Floor {
   public chests: Chest[] = [];
   public portal!: Portal;
-  public enemies = [];
-  public tileLayer!;
+  public enemies: Demon[] = [];
+  public tileLayer!: any;
   public tileMap!: ex.TileMap;
+  public numEnemies = 30;
 
   constructor() {
 
@@ -116,28 +140,28 @@ class Floor {
 
   draw(scene: ex.Scene) {
     scene.add(this.tileMap);
-    this.chests.forEach(chest => {
-      scene.add(chest);
-    })
+    this.chests.forEach(chest => scene.add(chest))
+    scene.add(this.portal);
+    this.enemies.forEach(enemy => scene.add(enemy))
   }
 
   kill() {
     this.tileMap?.kill();
 
     this.chests.forEach(chest => chest.kill());
-    //this.enemies.forEach(enemy => enemy.kill());
+    this.enemies.forEach(enemy => enemy.kill());
     this.portal?.kill();
   }
 }
 
-function generateDungeon(resources: GameResources) {
+function generateDungeon(scene: DungeonScene, numFloors: number, resources: GameResources) {
   const dungeon = new Dungeon();
 
-  const floorWidth = 70;
-  const floorHeight = 70;
+  const floorWidth = 60;
+  const floorHeight = 60;
 
-  for (let i = 0; i < 5; i++) {
-    const floor = generateFloor(resources, floorWidth, floorHeight);
+  for (let i = 0; i < numFloors; i++) {
+    const floor = generateFloor(scene, resources, floorWidth, floorHeight);
     dungeon.floors[i+1] = floor;
 
   }
@@ -151,7 +175,7 @@ function generateDungeon(resources: GameResources) {
 
 }
 
-function generateFloor(resources: GameResources, width: number, height: number) {
+function generateFloor(scene: DungeonScene, resources: GameResources, width: number, height: number) {
   let floor = new Floor;
 
   const generatedMap = generateDungeonFloor(width, height);
@@ -169,7 +193,43 @@ function generateFloor(resources: GameResources, width: number, height: number) 
     }
   })
 
-  //const portal = new Portal(tileToWorld(generatedMap.exitSpawn.x, generatedMap.exitSpawn.y));
+  for (let i = 0; i < floor.numEnemies; i++) {
+    
+
+    const enemy = new Demon(
+      scene.engine,
+      getRandomEnemySpawn(generatedMap),
+      scene.player,
+      100,
+      100,
+      resources,
+      scene.collisionGroups,
+    )
+
+    floor.enemies.push(enemy);
+  }
+
+  const portal = new Portal(tileToWorld(generatedMap.exitSpawn.x, generatedMap.exitSpawn.y), resources, "dungeon");
+
+  floor.portal = portal;
 
   return floor;
+}
+
+function randomInt(min: number, max: number) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function getRandomEnemySpawn(generatedMap: any) {
+    const room = generatedMap.rooms[
+        Math.floor(Math.random() * generatedMap.rooms.length)
+    ];
+
+    const tileX = randomInt(room.x + 1, room.x + room.w - 2);
+    const tileY = randomInt(room.y + 1, room.y + room.h - 2);
+
+    return ex.vec(
+        tileX * 64 + 32,
+        tileY * 64 + 32
+    );
 }

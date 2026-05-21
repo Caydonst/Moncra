@@ -39,7 +39,7 @@
     display: flex;
     justify-content: start;
     align-items: center;
-    background: #080808;
+    background: #101010;
     color: white;
     font-family: sans-serif;
     transform: translateX(-100%);
@@ -73,7 +73,9 @@
     flex-shrink: 0;
 }
 .inventory h3 {
-    font-size: 18px;
+    position: absolute;
+    top: 10px;
+    font-size: 10px;
     letter-spacing: 3px;
     color: #fff;
     text-shadow: 2px 2px #000;
@@ -94,7 +96,7 @@
 }
 .weaponSlotsWrapper {
     width: 100%;
-    height: 90px;
+    height: 120px;
     position: relative;
     display: flex;
     justify-content: center;
@@ -157,14 +159,13 @@
 .slot {
     width: var(--slot-size);
     height: var(--slot-size);
-    border: 3px solid rgba(255, 255, 255, 0.3);
+    border: 3px solid rgba(255, 255, 255, 0.2);
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 6px;
     position: relative;
     background: #1a1a1a;
-    box-shadow: inset 0 0 10px #000;
     
 }
 .slot.common {
@@ -172,26 +173,27 @@
 }
 .slot.rare {
     border-color: #0094FF;
+    background: #002C4C;
 }
 .slot.epic {
     border-color: #B200FF;
+    background: #33004C;
 }
 .slot.legendary {
     border-color: #FFAA00;
+    background: #4C3200;
 }
 .slot.artifact {
     border-color: #00FFF6;
+    background: #004C48;
 }
 .slot:hover {
-    background:
-        radial-gradient(circle at center, rgba(255,255,255,0.18), transparent 65%),
-        #202020;
     border-color: #fff;
     transform: translateY(-2px);
 }
 .slot .otherImg {
-    width: 80%;
-    height: 80%;
+    width: 100%;
+    height: 100%;
     transform: rotate(45deg);
     object-fit: contain;
     image-rendering: pixelated;
@@ -199,21 +201,24 @@
 }
 .slot .bowImg {
     position: absolute;
-    left: 15px;
-    top: 9px;
-    width: 50px;
-    height: 50px;
+    left: 10px;
+    top: 5px;
+    width: 60px;
+    height: 60px;
     transform: rotate(45deg);
     object-fit: contain;
     image-rendering: pixelated;
     filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
 }
 .slot .swordImg {
-    width: 80%;
-    height: 80%;
+    max-width: 60%;
+    max-height: 60%;
+    width: auto;
+    height: auto;
     object-fit: contain;
     image-rendering: pixelated;
     filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
+    transform: scale(2);
 }
 .slot p {
     position: absolute;
@@ -256,7 +261,7 @@
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    background: #080808;
+    background: #101010;
     position: relative;
 }
 .bgLight {
@@ -298,8 +303,8 @@
     filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
 }
 .itemIconContainer .selectedOtherImg {
-    max-height: 70%;
-    max-width: 70%;
+    max-height: 60%;
+    max-width: 60%;
     height: 100%;
     width: 100%;
     object-fit: contain;
@@ -315,7 +320,7 @@
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    background: #080808;
+    background: #101010;
     border-top: 3px solid rgba(255, 255, 255, 0.1);
     z-index: 2;
 }
@@ -376,13 +381,13 @@
     background: #101010;
     color: white;
     font-size: 12px;
-    box-shadow: 0 5px 0 #000;
+    box-shadow: 0 5px 0 #080808;
     font-size: 10px;
     letter-spacing: 2;
 }
 .equipBtn:hover {
     transform: translateY(4px);
-    box-shadow: 0 1px 0 #181818;
+    box-shadow: 0 1px 0 #080808;
 }
 .closeBtn {
     position: absolute;
@@ -398,7 +403,7 @@
     align-items: center;
     border-radius: 0;
     z-index: 2;
-    box-shadow: 0 5px 0 #000;
+    box-shadow: 0 5px 0 #080808;
 }
 .closeIcon {
     color: #fff;
@@ -407,7 +412,7 @@
 }
 .closeBtn:hover {
     transform: translateY(4px);
-    box-shadow: 0 1px 0 #000;
+    box-shadow: 0 1px 0 #080808;
 }
 
 /* ======================== CHEST ============================== */

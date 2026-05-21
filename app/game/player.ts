@@ -18,6 +18,7 @@ export class Player extends ex.Actor {
     public bobOffsetY = 0;
     private shadow: Shadow;
     public isDead: boolean = false;
+    private particleTimer!: ex.Timer;
 
     constructor(pos: ex.Vector, worldWidth: number, worldHeight: number, private resources: GameResources, private collisionGroups: any) {
         super({
@@ -76,7 +77,7 @@ export class Player extends ex.Actor {
 
         const random = new ex.Random(); // or pass a seed if you want reproducible randomness
 
-        const particleTimer = new ex.Timer({
+        this.particleTimer = new ex.Timer({
             interval: 0,             // base interval (ms)
             random,                    // Excalibur Random instance
             randomRange: [50, 200],    // add a random float between 50 and 200 ms
@@ -103,8 +104,8 @@ export class Player extends ex.Actor {
         });
 
 
-        engine.currentScene.add(particleTimer);
-        particleTimer.start();
+        engine.currentScene.add(this.particleTimer);
+        this.particleTimer.start();
     }
 
     onPreUpdate(engine: ex.Engine) {
@@ -181,5 +182,31 @@ export class Player extends ex.Actor {
         }
 
         scene.add(this.shadow);
+
+        if (this.particleTimer) {
+            this.particleTimer.cancel();
+        }
+
+        const random = new ex.Random();
+
+        this.particleTimer = new ex.Timer({
+            interval: 0,
+            random,
+            randomRange: [50, 200],
+            repeats: true,
+            action: () => {
+                if (this.move.magnitude <= 0) return;
+
+                const currentScene = this.scene as any;
+
+                currentScene.dustParticleManager?.spawnDust(
+                    this.pos.add(ex.vec(0, 18)),
+                    1
+                );
+            },
+        });
+
+        scene.add(this.particleTimer);
+        this.particleTimer.start();
     }
 }

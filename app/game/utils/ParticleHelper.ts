@@ -242,7 +242,7 @@ export class DustParticleManager extends ex.Actor {
         )),
         age: 0,
         life: 300,
-        size: 5,
+        size: 4,
       });
     }
   }

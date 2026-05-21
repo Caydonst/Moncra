@@ -49,6 +49,8 @@ import arrowImage from './assets/projectiles/arrow.png';
 import warHammer from "./assets/weapons/war_hammer/anime_war_hammer.png";
 import greatSword from "./assets/weapons/great_sword/anime_sword.png";
 import bow from "./assets/weapons/bow/bow.png";
+import spearImg from "./assets/weapons/spear_and_shield/spear1.png"
+import shieldImg from "./assets/weapons/spear_and_shield/shield1.png"
 /// --- MISC ---
 import coinSpritesheet from "./assets/currency/coin_spritesheet.png";
 import chestImage from "./assets/chest/chest.png"
@@ -95,6 +97,8 @@ export async function createResources() {
         warHammer: new ex.ImageSource(warHammer.src),
         greatSword: new ex.ImageSource(greatSword.src),
         bow: new ex.ImageSource(bow.src),
+        spear: new ex.ImageSource(spearImg.src),
+        shield: new ex.ImageSource(shieldImg.src),
         coinSheetImage: new ex.ImageSource(coinSpritesheet.src),
         chestSheetImage: new ex.ImageSource(chestSpritesheet.src),
         chest: new ex.ImageSource(chestImage.src),
