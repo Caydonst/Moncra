@@ -221,9 +221,26 @@ function randomInt(min: number, max: number) {
 }
 
 function getRandomEnemySpawn(generatedMap: any) {
-    const room = generatedMap.rooms[
-        Math.floor(Math.random() * generatedMap.rooms.length)
-    ];
+    let playerSpawn = true;
+    let room;
+    let  isPlayerSpawnRoom = true;
+
+    const spawn = generatedMap.playerSpawn;
+
+
+
+    while (isPlayerSpawnRoom) {
+      room = generatedMap.rooms[
+          Math.floor(Math.random() * generatedMap.rooms.length)
+      ];
+
+        isPlayerSpawnRoom =
+          spawn.x >= room.x &&
+          spawn.x < room.x + room.w &&
+          spawn.y >= room.y &&
+          spawn.y < room.y + room.h;
+    }
+    
 
     const tileX = randomInt(room.x + 1, room.x + room.w - 2);
     const tileY = randomInt(room.y + 1, room.y + room.h - 2);

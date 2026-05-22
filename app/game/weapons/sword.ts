@@ -37,7 +37,7 @@ export class GreatSword extends ex.Actor {
     private orbitAngle = 0;
     private side: 1 | -1 = 1; // 1 = one side of mouse, -1 = other side
 
-    private readonly ROT_OFFSET = Math.PI / 2; // tweak based on sprite art
+    private readonly ROT_OFFSET = Math.PI * 0.75; // tweak based on sprite art
 
     private shadow: Shadow;
     private swingHitSet = new Set<ex.Actor>();
@@ -84,9 +84,9 @@ export class GreatSword extends ex.Actor {
     ) {
         super({
             pos: player.pos.clone(),
-            anchor: ex.vec(0.5, 0.7),
-            width: resources.Images.greatSword.width * 2.3,
-            height: resources.Images.greatSword.height * 2.3,
+            anchor: ex.vec(0.75, 0.75), // exvec(0.5, 0.7)
+            width: resources.Images.greatSword.width * 3,
+            height: resources.Images.greatSword.height * 3,
             z: 4,
         });
 
@@ -191,7 +191,7 @@ export class GreatSword extends ex.Actor {
             this.swingStartAngle,
             this.swingEndAngle,
             this.swingDuration,
-            this.height * 0.75
+            this.height
         );
     }
     
@@ -241,12 +241,13 @@ export class GreatSword extends ex.Actor {
             }
             return;
         }
-
+        /*
         if (this.side === 1) {
             this.graphics.flipHorizontal = false;
         } else {
             this.graphics.flipHorizontal = true;
         }
+        */
 
         // -------------------------------
         //   IDLE LOGIC
@@ -279,7 +280,7 @@ export class GreatSword extends ex.Actor {
 
         // First hit this swing → apply damage
         this.swingHitSet.add(target);
-        this.engine.currentScene.camera.shake(8, 8, 60);
+        //this.engine.currentScene.camera.shake(8, 8, 60);
         target.takeDamage(this.damage);
     }
 

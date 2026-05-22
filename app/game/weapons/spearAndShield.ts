@@ -17,7 +17,7 @@ export class SpearAndShield extends ex.Actor {
     private spearBaseOffset = ex.vec(5, 0);
     private shieldOffset = ex.vec(5, 0);
 
-    private readonly SPEAR_ROT_OFFSET = Math.PI / 2;
+    private readonly SPEAR_ROT_OFFSET = Math.PI / 4;
     private readonly SHIELD_ROT_OFFSET = 0;
     private shadow!: Shadow;
 
@@ -44,8 +44,8 @@ export class SpearAndShield extends ex.Actor {
             name: "spear",
             pos: player.pos.clone(),
             anchor: ex.vec(0.5, 0.5),
-            width: spearImage.width * 2.7,
-            height: spearImage.height * 2.7,
+            width: spearImage.width * 2.3,
+            height: spearImage.height * 2.3,
             z: 3,
         });
 
