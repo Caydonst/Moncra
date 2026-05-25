@@ -47,10 +47,12 @@ import Tilesheet from "./assets/map/spritesheet.png";
 // --- WEAPONS ---
 import arrowImage from './assets/projectiles/arrow.png';
 import warHammer from "./assets/weapons/war_hammer/anime_war_hammer.png";
-import greatSword from "./assets/weapons/great_sword/new_gs1.png";
+import greatSword from "./assets/weapons/great_sword/new_gs2.png";
+import greatSword1 from "./assets/weapons/great_sword/new_gs3.png";
 import bow from "./assets/weapons/bow/bow.png";
 import spearImg from "./assets/weapons/spear_and_shield/spear1.png"
 import shieldImg from "./assets/weapons/spear_and_shield/shield1.png"
+import bowSpritesheetImg from "./assets/weapons/bow/bow_spritesheet.png"
 /// --- MISC ---
 import coinSpritesheet from "./assets/currency/coin_spritesheet.png";
 import chestImage from "./assets/chest/chest.png"
@@ -96,7 +98,9 @@ export async function createResources() {
         tileSheet: new ex.ImageSource(Tilesheet.src),
         warHammer: new ex.ImageSource(warHammer.src),
         greatSword: new ex.ImageSource(greatSword.src),
+        greatSword1: new ex.ImageSource(greatSword1.src),
         bow: new ex.ImageSource(bow.src),
+        bowSpritesheetImg: new ex.ImageSource(bowSpritesheetImg.src),
         spear: new ex.ImageSource(spearImg.src),
         shield: new ex.ImageSource(shieldImg.src),
         coinSheetImage: new ex.ImageSource(coinSpritesheet.src),
@@ -206,6 +210,16 @@ export async function createResources() {
             columns: 4,
             spriteWidth: 23,
             spriteHeight: 34,
+        }
+    });
+
+    const bowSpritesheet = ex.SpriteSheet.fromImageSource({
+        image: Images.bowSpritesheetImg,
+        grid: {
+            rows: 1,
+            columns: 4,
+            spriteWidth: 16,
+            spriteHeight: 16,
         }
     });
 
@@ -333,6 +347,7 @@ export async function createResources() {
         loader,
         tileSheet,
         chestSpriteSheet,
+        bowSpritesheet,
         CoinSpriteSheet,
         portalSpritesheet,
         portalSelectedSpritesheet,

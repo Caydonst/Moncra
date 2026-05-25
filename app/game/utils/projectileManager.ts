@@ -39,7 +39,7 @@ export class ProjectileManager extends ex.Actor {
 
     onInitialize() {
         this.arrowSprite = this.resources.Images.arrow.toSprite();
-        this.arrowSprite.scale = ex.vec(1, 1);
+        this.arrowSprite.scale = ex.vec(1.5, 1.5);
 
         this.graphics.onPostDraw = (ctx) => {
             for (const projectile of this.projectiles) {
@@ -55,7 +55,7 @@ export class ProjectileManager extends ex.Actor {
             pos: pos.clone(),
             previousPos: pos.clone(),
             vel: vel.clone(),
-            rotation: vel.toAngle() + Math.PI / 2,
+            rotation: vel.toAngle() + Math.PI / 4,
             damage,
             spawnTime: performance.now(),
             alive: true,
@@ -95,11 +95,14 @@ export class ProjectileManager extends ex.Actor {
         ctx.translate(localPos.x, localPos.y);
         ctx.rotate(projectile.rotation);
 
+        const drawWidth = this.resources.Images.arrow.width * this.arrowSprite.scale.x;
+        const drawHeight = this.resources.Images.arrow.height * this.arrowSprite.scale.y;
+
         // Center arrow image on projectile.pos
         this.arrowSprite.draw(
             ctx,
-            -this.resources.Images.arrow.width / 2,
-            -this.resources.Images.arrow.height / 2
+            -drawWidth / 2,
+            -drawHeight / 2
         );
 
         ctx.restore();

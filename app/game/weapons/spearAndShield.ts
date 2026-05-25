@@ -44,8 +44,8 @@ export class SpearAndShield extends ex.Actor {
             name: "spear",
             pos: player.pos.clone(),
             anchor: ex.vec(0.5, 0.5),
-            width: spearImage.width * 2.3,
-            height: spearImage.height * 2.3,
+            width: spearImage.width * 2.5,
+            height: spearImage.height * 2.5,
             z: 3,
         });
 

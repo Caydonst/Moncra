@@ -23,8 +23,13 @@ export class Bow extends ex.Actor {
     protected lastBulletTime = 0;
     protected isHolding = false;
 
-    private readonly ROT_OFFSET = Math.PI / 2;
+    private readonly ROT_OFFSET = Math.PI / 4;
     private readonly ARROW_SPAWN_DISTANCE_MULT = 0.5;
+
+    private bowIdleSprite!: ex.Sprite;
+    private bowDrawAnim!: ex.Animation;
+    private isDrawing = false;
+    private animationDuration = 120;
 
     private pointerDownHandler = () => {
         this.isHolding = true;
@@ -46,10 +51,10 @@ export class Bow extends ex.Actor {
         super({
             pos: player.pos.clone(),
             anchor: ex.vec(0.5, 0.5), // bottom-center pivot
-            width: weaponImg.width * 1.5,
-            height: weaponImg.height * 1.5,
+            width: weaponImg.width * 2.5,
+            height: weaponImg.height * 2.5,
             collisionType: ex.CollisionType.PreventCollision,
-            z: 3,
+            z: 4,
         });
 
         this.player = player;
@@ -58,14 +63,30 @@ export class Bow extends ex.Actor {
     }
 
     onInitialize(engine: ex.Engine) {
-        this.bowSprite = this.weaponImg.toSprite();
-        this.bowSprite.width = this.width;
-        this.bowSprite.height = this.height;
-        this.graphics.use(this.bowSprite);
+    this.bowIdleSprite = this.weaponImg.toSprite();
+    this.bowIdleSprite.width = this.width;
+    this.bowIdleSprite.height = this.height;
 
-        this.shadow = new Shadow(this);
-        engine.currentScene.add(this.shadow);
-    }
+    const bowFrames = this.resources.bowSpritesheet.sprites.map(sprite => {
+        const s = sprite.clone();        // clone so you can modify safely
+        s.scale = ex.vec(2.5, 2.5);
+        //s.width = 15 * 2;
+        //s.height = 23 * 2;
+
+        return {
+            graphic: s,
+            duration: this.animationDuration
+        };
+    });
+
+    this.bowDrawAnim = new ex.Animation({
+        frames: bowFrames
+    });
+    this.graphics.use(this.bowIdleSprite);
+
+    this.shadow = new Shadow(this);
+    engine.currentScene.add(this.shadow);
+}
 
     onPostUpdate(engine: ex.Engine, delta: number) {
         const pointer = engine.input.pointers.primary;
@@ -78,14 +99,14 @@ export class Bow extends ex.Actor {
         const worldPos = engine.screenToWorldCoordinates(pointer.lastScreenPos);
         const direction = worldPos.sub(this.player.pos);
 
-        if (direction.size === 0) return;
+        if (direction.magnitude === 0) return;
 
         const addBobbing = (offset: ex.Vector) => {
             return offset.add(ex.vec(0, this.player.bobOffsetY));
         };
 
         const distance = this.offset.x + 5;
-        const offsetVec = direction.normalize().scale(distance);
+        const offsetVec = direction.normalize().scale(distance).add(ex.vec(0, 5));
         const bobbedOffset = addBobbing(offsetVec);
 
         this.pos = this.player.pos.clone().add(bobbedOffset);
@@ -93,7 +114,7 @@ export class Bow extends ex.Actor {
         const angle = worldPos.sub(this.pos).toAngle();
 
         // Bow image points UP, so add 90 degrees
-        this.rotation = angle + Math.PI / 2;
+        this.rotation = angle + this.ROT_OFFSET;
 
         //const isLeft = direction.x < 0;
 
@@ -108,14 +129,31 @@ export class Bow extends ex.Actor {
 
     protected shoot() {
         const now = performance.now();
-        if (now - this.lastBulletTime < this.bulletCooldown) return;
-        this.lastBulletTime = now;
 
+        if (this.isDrawing) return;
+        if (now - this.lastBulletTime < this.bulletCooldown) return;
+
+        this.lastBulletTime = now;
+        this.isDrawing = true;
+
+        this.bowDrawAnim.reset();
+        this.graphics.use(this.bowDrawAnim);
+
+        const animationDuration = 4 * this.animationDuration; // frames * frame duration
+
+        setTimeout(() => {
+            this.fireArrow();
+
+            this.graphics.use(this.bowIdleSprite);
+            this.isDrawing = false;
+        }, animationDuration);
+    }
+
+    private fireArrow() {
         const pointer = this.engine.input.pointers.primary;
         if (!pointer.lastScreenPos) return;
 
         const target = this.engine.screenToWorldCoordinates(pointer.lastScreenPos);
-
         const direction = target.sub(this.pos).normalize();
 
         this.engine.currentScene.projectileManager.spawn(
@@ -123,8 +161,6 @@ export class Bow extends ex.Actor {
             direction.scale(1000),
             this.damage,
         );
-
-        window.dispatchEvent(new Event("inventory-updated"));
     }
 
     addListeners() {
@@ -144,5 +180,11 @@ export class Bow extends ex.Actor {
 
         this.shadow?.kill();
         this.kill();
+    }
+    public attachToScene(scene: ex.Scene) {
+        if (!this.shadow || this.shadow.isKilled()) {
+            this.shadow = new Shadow(this);
+        }
+        scene.add(this.shadow);
     }
 }

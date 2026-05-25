@@ -1,7 +1,12 @@
 @font-face {
     font-family: "PixelFont";
-    src: url("@/app/game/assets/fonts/Pixeled.ttf") format("truetype");
+    src: url("/fonts/Pixeled.ttf") format("truetype");
 }
+@font-face {
+    font-family: "BoxFont";
+    src: url("/fonts/FFFForward.ttf") format("truetype");
+}
+
 html,
 body {
     background-color: #483B3A;
@@ -10,12 +15,13 @@ body {
     height: 100%;
     -webkit-font-smoothing: none;   /* Chrome / Safari */
     -moz-osx-font-smoothing: grayscale; /* Firefox macOS */
+    box-sizing: border-box;
 }
 * {
     padding: 0;
     margin: 0;
     box-sizing: border-box;
-    font-family: "PixelFont", sans-serif;
+    font-family: "BoxFont", sans-serif;
 }
 body, canvas {
     cursor: url('@/app/game/assets/misc/cursor1.png') 16 16, auto;

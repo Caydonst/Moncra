@@ -10,7 +10,8 @@ export type Item = {
     name: string;
     type: "weapon" | "armor" | "misc";
     icon: string; // URL to image
-    rarity: "common" | "rare" | "epic" | "legendary" | "artifact";
+    rarity: "tempered" | "runed" | "exalted" | "ascendant" | "mythic" | "relic";
+    attackStyle: "Ranged" | "Melee"
     stats?: any;
     weapon?: GreatSword | WarHammer | Bow;
 
@@ -28,12 +29,12 @@ export type Item = {
 export type Weapon = {
     id: string;
     name: string;
-    type: "rifle" | "pistol" | "greatsword" | "bow";
+    type: "Great Sword" | "Bow";
     icon: string; // URL to image
-    rarity: "common" | "rare" | "epic" | "legendary" | "artifact";
+    rarity: "tempered" | "runed" | "exalted" | "ascendant" | "mythic" | "relic";
+    attackStyle: "Ranged" | "Melee"
     stats?: any;
     weapon?: Bow;
-    magazine: Ammunition | null;
 
     createWeapon?: () => ex.Actor & {
         addListeners?: () => void;

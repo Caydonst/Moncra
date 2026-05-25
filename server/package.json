@@ -1,0 +1,21 @@
+{
+  "name": "moncra-server",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@colyseus/core": "^0.17.43",
+    "@colyseus/schema": "^4.0.25",
+    "@colyseus/ws-transport": "^0.17.13",
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}

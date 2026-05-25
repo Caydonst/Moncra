@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev:web": "next dev",
+    "dev:server": "cd server && npm run dev",
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:server\""
   },
   "dependencies": {
+    "@colyseus/sdk": "^0.17.42",
     "@excaliburjs/plugin-tiled": "^0.32.0",
     "@heroicons/react": "^2.2.0",
     "excalibur": "^0.32.0",
@@ -20,6 +20,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
     "tsx": "^4.21.0",

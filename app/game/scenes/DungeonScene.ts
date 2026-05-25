@@ -41,7 +41,8 @@ export class DungeonScene extends ex.Scene {
     this.dungeon = generateDungeon(this, this.numFloors, this.resources);
 
     if (this.gameState.inventory.weapon) {
-      this.gameState.inventory.equipWeapon(this.gameState.inventory.weapon, this);
+      this.add(this.gameState.inventory.weapon.instance);
+      this.gameState.inventory.weapon.instance.attachToScene(this);
     }
 
     this.worldBounds = this.dungeon.worldBounds;

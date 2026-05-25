@@ -13,7 +13,8 @@ import { Bow } from '../weapons/bow';
 import { WarHammer } from '../weapons/warhammer';
 import { Chest } from "../chest"
 import warHammer from "../assets/weapons/war_hammer/anime_war_hammer.png";
-import greatSword from "../assets/weapons/great_sword/new_gs1.png";
+import greatSword from "../assets/weapons/great_sword/new_gs2.png";
+import greatSword1 from "../assets/weapons/great_sword/new_gs3.png";
 import SNSImg from "../assets/weapons/sword_and_shield/crystal_sns.png";
 import bow from "../assets/weapons/bow/bow.png";
 import { Inventory } from "../inventory/inventory";
@@ -157,61 +158,65 @@ export class HubScene extends ex.Scene {
 
             const GreatSword1: Weapon = {
                 id: "great_sword1",
-                name: "Great Sword",
-                type: "greatsword",
+                name: "Dark Sword of the Ruins",
+                type: "Great Sword",
                 icon: greatSword.src,
-                rarity: "legendary",
+                rarity: "mythic",
+                attackStyle: "Melee",
                 stats: {
-                    damage: 30,
+                    power: 130,
+                    damage: 40,
                 },
-                magazine: null,
                 createWeapon: () => new GreatSword(
                     this.player,
                     engine,
                     this.resources,
                     this.collisionGroups,
-                    GreatSword1.stats.damage
+                    GreatSword1.stats.damage,
+                    this.resources.Images.greatSword,
                 ),
             };
 
             this.gameState.inventory.addItem(GreatSword1);
 
-            const SNS: Weapon = {
+            const GreatSword2: Weapon = {
                 id: "great_sword1",
-                name: "Spear And Shield",
-                type: "greatsword",
-                icon: spearAndShieldImg.src,
-                rarity: "artifact",
+                name: "Sword",
+                type: "Great Sword",
+                icon: greatSword1.src,
+                rarity: "tempered",
+                attackStyle: "Melee",
                 stats: {
-                    damage: 30,
+                    power: 30,
+                    damage: 20,
                 },
-                magazine: null,
-                createWeapon: () => new SpearAndShield(
+                createWeapon: () => new GreatSword(
                     this.player,
                     engine,
                     this.resources,
-                    this.resources.Images.spear,
-                    this.resources.Images.shield,
-                    SNS.stats.damage
+                    this.collisionGroups,
+                    GreatSword2.stats.damage,
+                    this.resources.Images.greatSword1,
                 ),
             };
 
-            this.gameState.inventory.addItem(SNS);
+            this.gameState.inventory.addItem(GreatSword2);
 
             const Bow1: Weapon = {
                 id: "bow1",
-                name: "Bow",
-                type: "bow",
+                name: "Runed Bow",
+                type: "Bow",
                 icon: bow.src,
-                rarity: "epic",
+                rarity: "relic",
+                attackStyle: "Ranged",
                 stats: {
+                    power: 90,
                     damage: 30,
                 },
-                magazine: null,
                 createWeapon: () => new Bow(
                     this.player,
                     engine,
-                    ex.vec(10, 0),
+                    ex.vec(7, 0),
                     this.resources,
                     this.collisionGroups,
                     this.resources.Images.bow,

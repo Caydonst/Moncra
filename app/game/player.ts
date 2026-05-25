@@ -5,9 +5,11 @@ import {collidesWithWall8} from './utils/checkCollisions'
 import {Shadow} from "./utils/shadow";
 import {spawnParticles} from "@/app/ game/utils/ParticleHelper";
 import { GameScene } from "./scenes/GameScene";
+import { multiplayer } from "./network/multiplayer";
 
 export class Player extends ex.Actor {
     private speed: number = 250;
+    private normalSpeed = 250;
     public maxHp: number = 100;
     public hp: number = this.maxHp;
     private readonly worldWidth: number;
@@ -19,6 +21,15 @@ export class Player extends ex.Actor {
     private shadow: Shadow;
     public isDead: boolean = false;
     private particleTimer!: ex.Timer;
+
+    private isDashing = false;
+    private dashCooldown = 3000; // 3 seconds
+    private lastDashTime!: number;
+    private dashTime = 200; // 0.2 seconds
+    private dashSpeed = 1000;
+    private dashTracer!: DashTracer;
+
+    private lastNetworkSend = 0;
 
     constructor(pos: ex.Vector, worldWidth: number, worldHeight: number, private resources: GameResources, private collisionGroups: any) {
         super({
@@ -71,6 +82,9 @@ export class Player extends ex.Actor {
         this.graphics.add("idle", this.idleAnim);
         this.graphics.add("walk", this.walkAnim);
         this.graphics.use("idle");
+
+        this.dashTracer = new DashTracer(this);
+        engine.currentScene.add(this.dashTracer);
 
         this.shadow = new Shadow(this);
         engine.currentScene.add(this.shadow);
@@ -133,6 +147,8 @@ export class Player extends ex.Actor {
         if (engine.input.keyboard.isHeld(ex.Keys.A)) this.move = this.move.add(ex.vec(-1, 0));
         if (engine.input.keyboard.isHeld(ex.Keys.D)) this.move = this.move.add(ex.vec(1, 0));
 
+        if (engine.input.keyboard.wasPressed(ex.Keys.Space)) this.dash();
+
         // --- Normalize diagonal movement ---
         if (this.move.magnitude > 0) {
             this.graphics.use("walk");
@@ -144,6 +160,10 @@ export class Player extends ex.Actor {
             
         } else if (this.move.magnitude <= 0) {
             this.graphics.use("idle");
+        }
+
+        if (this.isDashing) {
+            this.updateDash();
         }
 
         const pointer = engine.input.pointers.primary;
@@ -162,6 +182,14 @@ export class Player extends ex.Actor {
             this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2));
         }
 
+        this.dashTracer?.updateTracer(engine, delta, this.isDashing);
+
+        multiplayer.sendPlayerMove({
+            x: this.pos.x,
+            y: this.pos.y,
+            rotation: this.rotation,
+        });
+
     }
     takeDamage(damage: number) {
         if (this.isDead) return;
@@ -176,12 +204,33 @@ export class Player extends ex.Actor {
         this.hp -= damage;
         window.dispatchEvent(new Event("player-damaged"));
     }
+    private dash() {
+        const now = performance.now()
+
+        if (now - this.lastDashTime < this.dashCooldown) return;
+
+        this.lastDashTime = now;
+        this.isDashing = true;
+        this.speed = this.dashSpeed;
+    }
+    private updateDash() {
+        const now = performance.now()
+
+        if (now - this.lastDashTime < this.dashTime) return;
+
+        this.speed = this.normalSpeed;
+        this.isDashing = false;
+    }
     public attachToScene(scene: ex.Scene) {
         if (!this.shadow || this.shadow.isKilled()) {
             this.shadow = new Shadow(this);
         }
-
         scene.add(this.shadow);
+
+        if (!this.dashTracer || this.dashTracer.isKilled()) {
+            this.dashTracer = new DashTracer(this);
+        }
+        scene.add(this.dashTracer);
 
         if (this.particleTimer) {
             this.particleTimer.cancel();
@@ -208,5 +257,67 @@ export class Player extends ex.Actor {
 
         scene.add(this.particleTimer);
         this.particleTimer.start();
+    }
+}
+
+export class DashTracer extends ex.Actor {
+    private points: { pos: ex.Vector; age: number }[] = [];
+    private maxAge = 180; // ms
+    private sampleTimer = 0;
+    private sampleRate = 20; // ms
+
+    constructor(private player: Player) {
+        super({
+            name: "dash-tracer",
+            pos: ex.vec(0, 0),
+            z: 2,
+            collisionType: ex.CollisionType.PreventCollision,
+        });
+
+        this.graphics.onPostDraw = (ctx) => {
+            if (this.points.length < 2) return;
+
+            for (let i = 0; i < this.points.length - 1; i++) {
+                const a = this.points[i];
+                const b = this.points[i + 1];
+
+                const alpha = 1 - a.age / this.maxAge;
+
+                ctx.save();
+                ctx.opacity = alpha * 0.6;
+
+                ctx.drawLine(
+                    a.pos.sub(this.pos),
+                    b.pos.sub(this.pos),
+                    ex.Color.White,
+                    12 * alpha
+                );
+
+                ctx.restore();
+            }
+        };
+    }
+
+    updateTracer(engine: ex.Engine, delta: number, isDashing: boolean) {
+        this.pos = engine.currentScene.camera.pos.clone();
+
+        for (const point of this.points) {
+            point.age += delta;
+        }
+
+        this.points = this.points.filter(point => point.age < this.maxAge);
+
+        if (!isDashing) return;
+
+        this.sampleTimer += delta;
+
+        if (this.sampleTimer >= this.sampleRate) {
+            this.sampleTimer = 0;
+
+            this.points.push({
+                pos: this.player.pos.clone(),
+                age: 0,
+            });
+        }
     }
 }

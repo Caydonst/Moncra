@@ -8,10 +8,10 @@ import type { TestScene } from "../scenes/TestScene";
 import type { DungeonScene } from "../scenes/DungeonScene";
 import {Inventory} from "@/app/game/inventory/inventory";
 import styles from "../page.module.css"
-import InventoryUI from "@/app/game/components/inventoryUI";
-import ChestUI from "@/app/game/components/chestUI";
-import DungeonMenu from "../components/dungeonMenu";
-import LandingPage from "../components/landingPage";
+import InventoryUI from "@/app/game/components/inventoryUI/inventoryUI";
+import ChestUI from "@/app/game/components/chestUI/chestUI";
+import DungeonMenu from "../components/dungeonMenu/dungeonMenu";
+import LandingPage from "../components/landingPage/landingPage";
 import { gameState } from "../gameState/gameState";
 
 type Scenes = GameScene | HubScene | MenuScene | TestScene | DungeonScene
@@ -146,7 +146,6 @@ export default function GameCanvas() {
             setChestItems(event.detail.items);
             setChestOpen(true);
             setChest(event.detail.chest)
-            setInventoryOpen(true);
         };
 
         window.addEventListener("chest-opened", handleChestOpened);
@@ -159,7 +158,6 @@ export default function GameCanvas() {
     useEffect(() => {
         const handleChestClosed = () => {
             setChestOpen(false);
-            setInventoryOpen(false);
             setChestItems(null);
             setChest(null);
         };
@@ -214,7 +212,7 @@ export default function GameCanvas() {
                                     <div className={styles.characterHp} style={{ width: `${characterHp}%` }}></div>
                                 </div>
                             </div>
-                            <InventoryUI inventoryOpen={inventoryOpen} inventory={inventory} itemPanelOpen={itemPanelOpen} setItemPanelOpen={setItemPanelOpen} selectedItem={selectedItem} setSelectedItem={setSelectedItem} scene={scene} />
+                            <InventoryUI inventoryOpen={inventoryOpen} inventory={inventory} setInventoryOpen={setInventoryOpen} itemPanelOpen={itemPanelOpen} setItemPanelOpen={setItemPanelOpen} selectedItem={selectedItem} setSelectedItem={setSelectedItem} engine={game} />
                             <ChestUI chest={chest} chestOpen={chestOpen} inventoryOpen={inventoryOpen} inventory={inventory} chestItems={chestItems} setChestItems={setChestItems} scene={scene} />
                             <div className={styles.spawnBtns}>
                                 <button id="spawn-enemy-btn" className={styles.spawnEnemyBtn} onClick={() => scene?.spawnEnemy()}>Spawn Enemy</button>

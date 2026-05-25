@@ -39,32 +39,51 @@ export class Inventory {
         if (mi !== -1) this.misc[mi] = null;
     }
 
-    equipWeapon(item: Weapon, scene: ex.Scene | null) {
+    equipWeapon(weapon: Weapon, engine: ex.Engine, miscIndex?: number) {
+        const scene = engine.currentScene;
+        const previousWeapon = this.weapon;
 
-        // Remove previous equipped weapon
-        if (this.weapon?.instance) {
-            this.weapon.instance.cleanup?.();
-            if (scene) {
-                scene.remove(this.weapon.instance);
-            }
-            this.weapon.instance = undefined;
-        }
+        // remove previous equipped actor
+        this.unequipWeapon(previousWeapon, scene);
 
-        if (!item.createWeapon) {
-            console.warn("Weapon item has no createWeapon function:", item);
+        if (!weapon.createWeapon) {
+            console.warn("Weapon item has no createWeapon function:", weapon);
             return;
         }
 
-        // Create a fresh weapon actor every time
-        const instance = item.createWeapon();
+        // remove newly equipped weapon from misc
+        if (miscIndex !== undefined && miscIndex >= 0) {
+            this.misc[miscIndex] = null;
+        }
+
+        const instance = weapon.createWeapon();
 
         if (scene) {
             scene.add(instance);
         }
+
         instance.addListeners?.();
 
-        item.instance = instance;
-        this.weapon = item;
+        weapon.instance = instance;
+        this.weapon = weapon;
+    }
+    unequipWeapon(weapon: Weapon | null, scene: ex.Scene | null) {
+        if (!weapon) return;
+
+        if (weapon?.instance) {
+            weapon.instance.cleanup?.();
+
+            if (scene) {
+                scene.remove(weapon.instance);
+            }
+
+            weapon.instance = undefined;
+        }
+
+        this.weapon = null;
+
+        const openSlot = this.misc.indexOf(null);
+        this.misc[openSlot] = weapon;
     }
 
     equipArmor(slotIndex: number, item: Item) {
