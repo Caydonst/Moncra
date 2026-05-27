@@ -1,11 +1,12 @@
 import * as ex from "excalibur";
 import {Engine, Resource} from "excalibur";
 import {GameResources} from "@/app/ game/resources";
-import {collidesWithWall8} from './utils/checkCollisions'
-import {Shadow} from "./utils/shadow";
+import {collidesWithWall8} from '../utils/checkCollisions'
+import {Shadow} from "../utils/shadow";
 import {spawnParticles} from "@/app/ game/utils/ParticleHelper";
-import { GameScene } from "./scenes/GameScene";
-import { multiplayer } from "./network/multiplayer";
+import { GameScene } from "../scenes/GameScene";
+import { multiplayer } from "../network/multiplayer";
+import { GameState } from "../gameState/gameState";
 
 export class Player extends ex.Actor {
     private speed: number = 250;
@@ -29,9 +30,9 @@ export class Player extends ex.Actor {
     private dashSpeed = 1000;
     private dashTracer!: DashTracer;
 
-    private lastNetworkSend = 0;
+    private spriteScale = 2;
 
-    constructor(pos: ex.Vector, worldWidth: number, worldHeight: number, private resources: GameResources, private collisionGroups: any) {
+    constructor(pos: ex.Vector, worldWidth: number, worldHeight: number, private resources: GameResources, private collisionGroups: any, private gameState: GameState) {
         super({
             name: "player",
             pos: pos,
@@ -51,7 +52,7 @@ export class Player extends ex.Actor {
     onInitialize(engine: Engine) {
         const walkFrames = this.resources.characterWalkSpritesheet.sprites.map(sprite => {
             const s = sprite.clone();        // clone so you can modify safely
-            s.scale = ex.vec(2, 2);
+            s.scale = ex.vec(this.spriteScale, this.spriteScale);
             //s.width = 15 * 2;
             //s.height = 23 * 2;
 
@@ -62,7 +63,7 @@ export class Player extends ex.Actor {
         });
         const idleFrames = this.resources.characterIdleSpritesheet.sprites.map(sprite => {
             const s = sprite.clone();        // clone so you can modify safely
-            s.scale = ex.vec(2, 2);
+            s.scale = ex.vec(this.spriteScale, this.spriteScale);
             //s.width = this.width;
             //s.height = this.height;
 
@@ -184,11 +185,32 @@ export class Player extends ex.Actor {
 
         this.dashTracer?.updateTracer(engine, delta, this.isDashing);
 
+        const aimAngle = worldPos.sub(this.pos).toAngle();
+
+        const equippedWeapon = this.gameState.inventory.weapon?.instance;
+
+        const isAttacking =
+        equippedWeapon && "getIsAttacking" in equippedWeapon
+            ? equippedWeapon.getIsAttacking()
+            : false;
+
+        const attackId =
+        equippedWeapon && "getAttackId" in equippedWeapon
+            ? equippedWeapon.getAttackId()
+            : 0;
+
         multiplayer.sendPlayerMove({
             x: this.pos.x,
             y: this.pos.y,
             rotation: this.rotation,
+            weaponId: this.gameState.inventory.weapon?.id ?? "",
+            aimAngle,
+            isAttacking,
+            attackId,
         });
+
+        // Player send
+        console.log("sending attackId", attackId, "isAttacking", isAttacking);
 
     }
     takeDamage(damage: number) {

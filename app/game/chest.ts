@@ -2,7 +2,7 @@ import type {Ammunition, Item, Weapon} from "@/app/game/items/ItemTypes";
 
 const ex = await import("excalibur");
 import {GameResources} from "./resources";
-import { Player } from "./player";
+import { Player } from "./player/player";
 import {Shadow} from "./utils/shadow";
 import {Coin} from "./coin";
 

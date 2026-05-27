@@ -7,6 +7,10 @@ type PlayerInput = {
   y: number;
   rotation: number;
   weaponId?: string;
+
+  aimAngle?: number;
+  isAttacking?: boolean;
+  attackId?: number;
 };
 
 export class HubRoom extends Room<GameState> {
@@ -15,21 +19,41 @@ export class HubRoom extends Room<GameState> {
 
   onCreate() {
 
-    this.onMessage("player_move", (client, data: PlayerInput) => {
-      const player = this.state.players.get(client.sessionId);
-      if (!player) return;
+  this.onMessage("player_move", (client, data: PlayerInput) => {
+    const player = this.state.players.get(client.sessionId);
+    if (!player) return;
 
-      player.x = data.x;
-      player.y = data.y;
-      player.rotation = data.rotation;
+    player.x = data.x;
+    player.y = data.y;
+    player.rotation = data.rotation;
 
-      if (data.weaponId) {
-        player.weaponId = data.weaponId;
-      }
+    player.aimAngle = data.aimAngle ?? player.aimAngle;
+    player.isAttacking = data.isAttacking ?? false;
+    player.attackId = data.attackId ?? player.attackId;
+
+    if (data.weaponId) {
+      player.weaponId = data.weaponId;
+    }
+    // Server
+    console.log("server attackId", data.attackId);
+  });
+
+    this.onMessage("weapon_attack", (client, data) => {
+      this.broadcast("weapon_attack", {
+        sessionId: client.sessionId,
+        ...data,
+      });
     });
 
-    this.onMessage("attack", (client, data) => {
-      this.broadcast("player_attack", {
+    this.onMessage("weapon_attack_start", (client, data) => {
+      this.broadcast("weapon_attack_start", {
+        sessionId: client.sessionId,
+        ...data,
+      });
+    });
+
+    this.onMessage("weapon_attack_release", (client, data) => {
+      this.broadcast("weapon_attack_release", {
         sessionId: client.sessionId,
         ...data,
       });
@@ -38,12 +62,15 @@ export class HubRoom extends Room<GameState> {
     this.onMessage("get_existing_players", (client) => {
         client.send("existing_players", {
             players: Array.from(this.state.players.entries()).map(([sessionId, p]) => ({
-            sessionId,
-            x: p.x,
-            y: p.y,
-            rotation: p.rotation,
-            hp: p.hp,
-            weaponId: p.weaponId,
+              sessionId,
+              x: p.x,
+              y: p.y,
+              rotation: p.rotation,
+              hp: p.hp,
+              weaponId: p.weaponId,
+              aimAngle: p.aimAngle,
+              isAttacking: p.isAttacking,
+              attackId: p.attackId,
             })),
         });
     });
@@ -57,17 +84,6 @@ export class HubRoom extends Room<GameState> {
     player.hp = 100;
 
     this.state.players.set(client.sessionId, player);
-
-    client.send("existing_players", {
-        players: Array.from(this.state.players.entries()).map(([sessionId, p]) => ({
-            sessionId,
-            x: p.x,
-            y: p.y,
-            rotation: p.rotation,
-            hp: p.hp,
-            weaponId: p.weaponId,
-        })),
-    });
 
     console.log(`${client.sessionId} joined`);
   }

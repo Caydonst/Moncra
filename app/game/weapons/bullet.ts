@@ -4,7 +4,7 @@ import {GameResources} from '../resources'
 import {collidesWithWall8} from '../utils/checkCollisions'
 import {spawnParticles, wallParticles} from "../utils/ParticleHelper";
 import {Shadow} from "../utils/shadow";
-import {Player} from "../player";
+import {Player} from "../player/player";
 import {DemonBoss} from "../enemies/bosses/DemonBoss";
 import { GameScene } from '../scenes/GameScene';
 

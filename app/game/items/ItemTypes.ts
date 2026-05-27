@@ -1,7 +1,7 @@
 import {WarHammer} from "../weapons/warhammer"
 import {Bow} from "../weapons/bow"
 import {GreatSword} from "../weapons/sword"
-import {Player} from "../player"
+import {Player} from "../player/player"
 export type ItemSlot = "weapon" | "armor" | "misc";
 import * as ex from 'excalibur'
 

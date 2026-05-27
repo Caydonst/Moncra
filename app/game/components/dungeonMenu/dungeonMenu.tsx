@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import styles from "./dungeon.module.css"
 import { GameScene } from "../../scenes/GameScene";
-import DungeonImg from "../../assets/misc/dungeon_icon.png"
+import DungeonImg from "../../assets/misc/dungeon_level5.png"
 import { changeScene } from "../../utils/sceneChanges"
+import DungeonCard from "./dungeonCard";
+import DungeonList from "./dungeonInfo"
 
-export default function DungeonMenu(scene: GameScene | null) {
+export default function DungeonMenu(scene: ex.Scene | null) {
     const [dungeonMenuOpen, setDungeonMenuOpen] = useState(false);
 
     useEffect(() => {
@@ -22,25 +24,9 @@ export default function DungeonMenu(scene: GameScene | null) {
     return (
         <div className={dungeonMenuOpen ? `${styles.dungeonMenuWrapper} ${styles.open}` : styles.dungeonMenuWrapper}>
             <div className={styles.dungeonMenuOuter}>
-                <div className={styles.dungeonMenuContainer}>
-                    <div className={styles.dungeonMenuContent}>
-                        <div className={styles.title}>
-                            <div className={styles.dungeonIconContainer}>
-                                <img src={DungeonImg.src} />
-                            </div>
-                            <h3>DUNGEON</h3>
-                        </div>
-                        <p>Enter the dungeon?</p>
-                        <div className={styles.buttonsContainer}>
-                            <button className={styles.enterBtn} onClick={() => {
-                                changeScene("dungeon")
-                                setDungeonMenuOpen(false);
-                                }}>ENTER DUNGEON</button>
-                            <button className={styles.cancelBtn} onClick={() => setDungeonMenuOpen(false)}>CANCEL</button>
-                        </div>
-                    </div>
-                    {/*<div className={styles.dungeonMenuBackground}></div>*/}
-                </div>
+                {DungeonList.map((dungeon, i) => (
+                    <DungeonCard key={i} scene={scene} setDungeonMenuOpen={setDungeonMenuOpen} dungeon={dungeon} />
+                ))}
             </div>
         </div>
     )

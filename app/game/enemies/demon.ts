@@ -1,7 +1,7 @@
 import {GameResources} from "@/app/game/resources";
 
 const ex = await import("excalibur");
-import { Player } from '../player'
+import { Player } from '../player/player'
 import {collidesWithWall8} from '../utils/checkCollisions'
 import {Shadow} from "../utils/shadow";
 import {HPBar} from "../utils/hpbar";

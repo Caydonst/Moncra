@@ -7,7 +7,7 @@ import {
     createSimpleMap,
     floorTilePositions,
 } from '../map';
-import { Player } from '../player';
+import { Player } from '../player/player';
 import { Demon } from '../enemies/demon';
 import { Bow } from '../weapons/bow';
 import { WarHammer } from '../weapons/warhammer';

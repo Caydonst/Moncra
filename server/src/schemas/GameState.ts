@@ -6,6 +6,9 @@ export class PlayerState extends Schema {
   @type("number") rotation: number = 0;
   @type("number") hp: number = 100;
   @type("string") weaponId: string = "";
+  @type("number") aimAngle: number = 0;
+  @type("boolean") isAttacking: boolean = false;
+  @type("number") attackId: number = 0;
 }
 
 export class GameState extends Schema {

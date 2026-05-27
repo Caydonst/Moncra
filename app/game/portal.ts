@@ -1,7 +1,7 @@
 import * as ex from "excalibur"
 import { GameResources } from "./resources";
 import { Shadow } from "./utils/shadow";
-import { Player } from "./player";
+import { Player } from "./player/player";
 import { GameScene } from "./scenes/GameScene";
 
 export class Portal extends ex.Actor {

@@ -7,7 +7,7 @@ import {
     createSimpleMap,
     floorTilePositions,
 } from '../map';
-import { Player } from '../player';
+import { Player } from '../player/player';
 import { Demon } from '../enemies/demon';
 import { Bow } from '../weapons/bow';
 import { WarHammer } from '../weapons/warhammer';
@@ -32,6 +32,7 @@ import { ProjectileManager } from "../utils/projectileManager";
 import { Portal } from "../portal";
 import { generateDungeonFloor, createTileMapFromDungeonFloor, tileToWorld } from "../utils/mapGenerator"
 import { GameState } from "../gameState/gameState";
+import { multiplayer } from "../network/multiplayer";
 
 type Maps = {
     layer1: number[][];
@@ -139,7 +140,7 @@ export class HubScene extends ex.Scene {
 
             this.add(this.projectileManager);
 
-            this.player = new Player(ex.vec(400, 400), 1920, 1080, this.resources, this.collisionGroups);
+            this.player = new Player(ex.vec(400, 400), 1920, 1080, this.resources, this.collisionGroups, this.gameState);
             this.gameState.player = this.player;
             this.add(this.player);
 
@@ -180,7 +181,7 @@ export class HubScene extends ex.Scene {
             this.gameState.inventory.addItem(GreatSword1);
 
             const GreatSword2: Weapon = {
-                id: "great_sword1",
+                id: "great_sword2",
                 name: "Sword",
                 type: "Great Sword",
                 icon: greatSword1.src,
@@ -272,6 +273,10 @@ export class HubScene extends ex.Scene {
         );
 
 
+    }
+
+    async onActivate() {
+        await multiplayer.connect(this.engine, this.resources);
     }
 
 

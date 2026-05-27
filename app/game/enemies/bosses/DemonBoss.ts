@@ -4,7 +4,7 @@ import {Shadow} from "../../utils/shadow";
 import {HPBar} from "../../utils/hpbar";
 import { Coin } from "../../coin";
 import {spawnParticles, wallParticles} from "../../utils/ParticleHelper";
-import {Player} from "../../player"
+import {Player} from "../../player/player"
 
 export class DemonBoss extends ex.Actor {
     private speed: number; // pixels per second

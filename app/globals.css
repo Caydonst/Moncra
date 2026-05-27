@@ -23,9 +23,11 @@ body {
     box-sizing: border-box;
     font-family: "BoxFont", sans-serif;
 }
+/*
 body, canvas {
     cursor: url('@/app/game/assets/misc/cursor1.png') 16 16, auto;
 }
+*/
 body {
     width: 100vw;
     height: 100vh;

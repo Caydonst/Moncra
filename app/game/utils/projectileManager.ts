@@ -62,6 +62,18 @@ export class ProjectileManager extends ex.Actor {
         });
     }
 
+    spawnRemoteProjectile(
+        pos: ex.Vector,
+        velocity: ex.Vector
+    ) {
+        this.spawn(
+            pos,
+            velocity,
+            0, // no damage
+            //true // remote visual
+        );
+    }
+
     onPostUpdate(engine: ex.Engine, delta: number) {
         const dt = delta / 1000;
 

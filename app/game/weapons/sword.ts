@@ -1,11 +1,12 @@
 const ex = await import("excalibur");
 import { GameResources } from '../resources';
-import { Player } from '../player';
+import { Player } from '../player/player';
 import {Shadow} from "../utils/shadow";
 import {Demon} from "../enemies/demon";
 import { Outline } from "../utils/swordOutline";
 import {DemonBoss} from "../enemies/bosses/DemonBoss";
 import { GameScene } from '../scenes/GameScene';
+import { multiplayer } from '../network/multiplayer';
 
 type AttackType = "slash" | "thrust";
 
@@ -247,6 +248,13 @@ export class GreatSword extends ex.Actor {
 
         const mouseAngle = this.getMouseAngle();
         if (mouseAngle === null) return;
+
+        multiplayer.sendWeaponAttack({
+            weaponId: "great_sword1",
+            x: this.pos.x,
+            y: this.pos.y,
+            aimAngle: mouseAngle,
+        });
 
         this.currentAttack = this.combo[this.comboIndex];
 

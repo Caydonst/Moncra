@@ -3,7 +3,7 @@ import { Portal } from "../portal";
 import { Chest } from "../chest";
 import { createTileMapFromDungeonFloor, generateDungeonFloor, tileToWorld } from "../utils/mapGenerator";
 import { GameResources } from "../resources";
-import { Player } from "../player";
+import { Player } from "../player/player";
 import { GameState } from "../gameState/gameState";
 import { ProjectileManager } from "../utils/projectileManager";
 import { DustParticleManager, ParticleManager } from "../utils/ParticleHelper";

@@ -9,15 +9,12 @@ import {createGame, destroyGame} from "@/app/game/gameInstance";
 import { HubScene } from "./scenes/HubScene";
 import { gameState } from "./gameState/gameState";
 import { DungeonScene } from "./scenes/DungeonScene";
-import { multiplayer } from "./network/multiplayer";
 
 export async function startGame(canvas: HTMLCanvasElement, onLoaded: () => void) {
     const resources = await createResources();
     const collisionGroups = await createCollisionGroups();
 
     const game = await createGame(canvas);
-
-    await multiplayer.connect(game);
     /*
     game.add("game", new GameScene(resources, collisionGroups, game));
     game.add("menu", new MenuScene(game));
@@ -44,8 +41,6 @@ export async function startGame(canvas: HTMLCanvasElement, onLoaded: () => void)
     
 
     await game.start(resources.loader);
-
-
 
     onLoaded();
 

@@ -1,9 +1,6 @@
-// gun.ts
-import {Ammunition, Weapon} from "@/app/game/items/ItemTypes";
-
 const ex = await import("excalibur");
 import {GameResources} from '../resources';
-import { Player } from '../player';
+import { Player } from '../player/player';
 import { Bullet } from './bullet';
 import { Shadow } from '../utils/shadow';
 import {spawnParticles, wallParticles} from "../utils/ParticleHelper";
@@ -11,6 +8,7 @@ import {Inventory} from "@/app/game/inventory/inventory";
 import {Demon} from "@/app/game/enemies/demon";
 import {GameScene} from "@/app/game/scenes/GameScene";
 import { dir } from "console";
+import { multiplayer } from '../network/multiplayer';
 
 export class Bow extends ex.Actor {
     public player: Player;
@@ -22,6 +20,7 @@ export class Bow extends ex.Actor {
     protected bulletCooldown = 300;
     protected lastBulletTime = 0;
     protected isHolding = false;
+    private attackId = 0;
 
     private readonly ROT_OFFSET = Math.PI / 4;
     private readonly ARROW_SPAWN_DISTANCE_MULT = 0.5;
@@ -135,14 +134,30 @@ export class Bow extends ex.Actor {
 
         this.lastBulletTime = now;
         this.isDrawing = true;
+        this.attackId++;
 
+        multiplayer.sendWeaponAttackStart({
+            weaponId: "bow1",
+            attackId: this.attackId,
+            aimAngle: this.rotation - this.ROT_OFFSET,
+        });
         this.bowDrawAnim.reset();
         this.graphics.use(this.bowDrawAnim);
 
         const animationDuration = 4 * this.animationDuration; // frames * frame duration
 
         setTimeout(() => {
-            this.fireArrow();
+            const arrowData = this.fireArrow();
+
+            if (arrowData) {
+                multiplayer.sendWeaponAttackRelease({
+                    weaponId: "bow1",
+                    attackId: this.attackId,
+                    x: arrowData.x,
+                    y: arrowData.y,
+                    aimAngle: arrowData.aimAngle,
+                });
+            }
 
             this.graphics.use(this.bowIdleSprite);
             this.isDrawing = false;
@@ -161,6 +176,20 @@ export class Bow extends ex.Actor {
             direction.scale(1000),
             this.damage,
         );
+
+        return {
+            x: this.pos.x,
+            y: this.pos.y,
+            aimAngle: direction.toAngle(),
+        };
+    }
+
+    public getIsAttacking() {
+        return this.isHolding;
+    }
+
+    public getAttackId() {
+        return this.attackId;
     }
 
     addListeners() {
