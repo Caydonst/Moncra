@@ -1,0 +1,29 @@
+{
+  "name": "moncra",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev:web": "next dev",
+    "dev:server": "cd server && npm run dev",
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:server\""
+  },
+  "dependencies": {
+    "@colyseus/sdk": "^0.17.42",
+    "@excaliburjs/plugin-tiled": "^0.32.0",
+    "@heroicons/react": "^2.2.0",
+    "excalibur": "^0.32.0",
+    "next": "^16.2.4",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "concurrently": "^9.2.1",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  }
+}

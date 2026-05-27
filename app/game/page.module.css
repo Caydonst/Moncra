@@ -1,0 +1,161 @@
+
+#game-wrapper * {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+#game {
+  width: 100%;
+  height: 100%;
+  display: block;
+  position: relative;
+}
+.gameWrapper {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+/*
+.gameWrapper::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 50px 50px rgba(0, 0, 0, 0.3);
+}
+    */
+
+#game {
+  box-shadow: inset 0 0 100px 100px rgba(0, 0, 0, 0.5);
+
+}
+.enemiesContainer {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.characterHpWrapper {
+  position: absolute;
+  top: 10px;
+  left: 20px;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  flex-direction: column;
+  width: 400px;
+  z-index: 2;
+}
+.characterHpContainer {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  background: #120000;
+  width: 100%;
+  height: 40px;
+  border: 4px solid #000;
+}
+.textContainer {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  font-size: 10px;
+}
+.characterHp {
+  width: 100%;
+  background: #ff2b2b;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.characterHpContainer p {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 10px;
+}
+.enemyCount {
+  font-size: 20px;
+  color: #fff;
+  font-family: sans-serif;
+}
+
+.spawnBtns {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+.spawnEnemyBtn {
+  width: 200px;
+  height: 60px;
+  background: #424242;
+  border: 4px solid gray;
+  cursor: pointer;
+  color: #fff;
+}
+#spawn-boss-btn {
+  width: 200px;
+  height: 60px;
+  background: #424242;
+  border: 4px solid gray;
+  cursor: pointer;
+  color: #fff;
+}
+
+
+.overlayFooter {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+
+}
+.overlayWeaponInfoContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  align-items: center;
+  height: 100%;
+  width: 200px;
+  color: #fff;
+}
+.overlayImgContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50%;
+  width: 100%;
+}
+.overlayImgContainer img {
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.overlayMagContainer {
+  height: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.overlayWeaponInfoContainer p {
+  height: 50%;
+  font-size: 8px;
+}
