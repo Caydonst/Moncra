@@ -32,22 +32,22 @@
     background: transparent;
     border: none;
     border-left: 3px solid transparent;
-    font-size: 12px;
+    font-size: 10px;
     letter-spacing: 2;
 }
 .selectorBtn:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.05); 
 }
 .selectorBtn img {
-    height: 50px;
+    height: 40px;
     image-rendering: pixelated;
 }
 .selected {
     background: rgba(255, 255, 255, 0.05);
 }
 .dungeonMenuOuter {
-    border: 3px solid #242424;
-    background: #242424;
+    border: 3px solid #424242;
+    background: #424242;
     box-shadow: 0 0 1000px #000;
     display: flex;
     justify-content: center;
@@ -68,19 +68,19 @@
     position: absolute;
     top: 0;
     left: 50%;
-    transform: translate(-50%, -50%);
-    width: 400px;
-    height: 300px;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 200px;
     z-index: 1;
     border-radius: 50%;
-    filter: blur(150px);
+    filter: blur(100px);
 }
 .dungeonMenuContainer {
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    background: #101010;
+    background: #080808;
     height: 100%;
     width: 100%;
     overflow: hidden;
@@ -89,7 +89,7 @@
 .dungeonMenuContent {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: start;
     flex-direction: column;
     width: 100%;
     height: 100%;
@@ -101,8 +101,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     border: 3px solid #F6362B;
     background: #141414;
 }
@@ -110,20 +110,31 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-direction: column;
     gap: 20px;
 }
 .title img {
     width: 60px;
     image-rendering: pixelated;
 }
-.title h3 {
-    color: #F6362B;
+
+.titleInner {
+    display: flex;
+    justify-content: center;
+    align-items: start;
+    flex-direction: column;
+    gap: 20px;
+}
+.titleInner h3 {
+    color: #fff;
     letter-spacing: 3;
-    font-size: 14px;
+    font-size: 20px;
     line-height: 1;
-    text-shadow: 3px 3px #000;
+    text-shadow: 5px 5px #000;
     font-weight: 300;
+}
+.titleInner p {
+    font-size: 12px;
+    letter-spacing: 2px;
 }
 .dungeonMenuContainer p {
     color: #fff;
@@ -131,9 +142,8 @@
 }
 .dungeonMenuContent .buttonsContainer {
     display: flex;
-    justify-content: center;
+    justify-content: start;
     align-items: center;
-    flex-direction: column;
     gap: 10px;
     width: 100%;
 }

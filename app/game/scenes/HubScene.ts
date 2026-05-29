@@ -14,7 +14,7 @@ import { WarHammer } from '../weapons/warhammer';
 import { Chest } from "../chest"
 import warHammer from "../assets/weapons/war_hammer/anime_war_hammer.png";
 import greatSword from "../assets/weapons/great_sword/new_gs2.png";
-import greatSword1 from "../assets/weapons/great_sword/new_gs3.png";
+import greatSword1 from "../assets/weapons/great_sword/new_gs1.png";
 import SNSImg from "../assets/weapons/sword_and_shield/crystal_sns.png";
 import bow from "../assets/weapons/bow/bow.png";
 import { Inventory } from "../inventory/inventory";

@@ -5,21 +5,21 @@ import AscendantDungeonImg from "../../assets/misc/dungeon_level4.png"
 import MythicDungeonImg from "../../assets/misc/dungeon_level5.png"
 
 export const colors = {
-    tempered: {
-        hex: "#32FF9C",
+    easy: {
+        hex: "#32FF7D",
         rgba: "rgba(50, 255, 156, 0.3)",
     },
-    runed: {
+    normal: {
         hex: "#FFE032",
         rgba: "rgba(255, 224, 50, 0.3)",
     },
-    exalted: {
+    hard: {
+        hex: "#FF6C32",
+        rgba: "rgba(255, 108, 50, 0.3)",
+    },
+    extreme: {
         hex: "#FF3232",
         rgba: "rgba(255, 50, 50, 0.3)",
-    },
-    ascendant: {
-        hex: "#F132FF",
-        rgba: "rgba(241, 50, 255, 0.3)",
     },
     mythic: {
         hex: "#32FFFF",
@@ -45,27 +45,27 @@ export type Dungeon = {
 
 const temperedDungeon: Dungeon = {
     icon: TemperedDungeonImg,
-    name: "Tempered",
-    difficulty: "tempered",
+    name: "Stable Rift",
+    difficulty: "easy",
 }
 const RunedDungeon: Dungeon = {
     icon: RunedDungeonImg,
-    name: "Runed",
-    difficulty: "runed",
+    name: "Arcane Ruins",
+    difficulty: "normal",
 }
 const ExaltedDungeon: Dungeon = {
     icon: ExaltedDungeonImg,
-    name: "Exalted",
-    difficulty: "exalted",
+    name: "Bloodkeep Depths",
+    difficulty: "hard",
 }
 const AscendantDungeon: Dungeon = {
     icon: AscendantDungeonImg,
-    name: "Ascendant",
-    difficulty: "ascendant",
+    name: "Voidspire",
+    difficulty: "extreme",
 }
 const MythicDungeon: Dungeon = {
     icon: MythicDungeonImg,
-    name: "Mythic",
+    name: "Celestial Abyss",
     difficulty: "mythic",
 }
 

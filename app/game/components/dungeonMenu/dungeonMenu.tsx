@@ -32,7 +32,19 @@ export default function DungeonMenu(scene: ex.Scene | null) {
                         <button 
                         key={i}
                         className={`${styles.selectorBtn} ${selectedIndex === i ? styles.selected : ""}`}
-                        style={{ color: `${selectedIndex === i ? colors[dungeon.difficulty.toLowerCase()].hex : "#c9c9c9"}`, borderColor: `${selectedIndex === i ? colors[dungeon.difficulty].hex : "transparent"}` }}
+                        style={{
+                            color: selectedIndex === i
+                                ? colors[dungeon.difficulty].hex
+                                : "#c9c9c9",
+
+                            borderColor: selectedIndex === i
+                                ? colors[dungeon.difficulty].hex
+                                : "transparent",
+
+                            background: selectedIndex === i
+                                ? `linear-gradient(to right, ${colors[dungeon.difficulty].rgba}, transparent)`
+                                : "transparent",
+                        }}
                         onClick={() => {setSelected(dungeon); setSelectedIndex(i);}}
                         >
                             <img src={dungeon.icon.src} />
