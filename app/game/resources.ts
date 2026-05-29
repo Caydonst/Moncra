@@ -6,7 +6,7 @@ import { TiledResource } from "@excaliburjs/plugin-tiled";
 const tiledMap = new TiledResource("/maps/hub.tmx");
 // --- CHARACTER ---
 import characterWalkSheetImage from "./assets/character/walk/walk_spritesheet2.png"
-import characterIdleSheetImage from "./assets/character/walk/idle_spritesheet1.png"
+import characterIdleSheetImage from "./assets/character/idle/idle_spritesheet.png"
 import characterWalk0 from "./assets/character/walk/walk0.png";
 import characterWalk1 from "./assets/character/walk/walk1.png";
 import characterWalk2 from "./assets/character/walk/walk2.png";
@@ -47,8 +47,8 @@ import Tilesheet from "./assets/map/spritesheet.png";
 // --- WEAPONS ---
 import arrowImage from './assets/projectiles/arrow.png';
 import warHammer from "./assets/weapons/war_hammer/anime_war_hammer.png";
-import greatSword from "./assets/weapons/great_sword/new_gs2.png";
-import greatSword1 from "./assets/weapons/great_sword/new_gs1.png";
+import greatSword from "./assets/weapons/great_sword/anime_sword.png";
+import greatSword1 from "./assets/weapons/great_sword/damaged_sword.png";
 import bow from "./assets/weapons/bow/bow.png";
 import spearImg from "./assets/weapons/spear_and_shield/spear1.png"
 import shieldImg from "./assets/weapons/spear_and_shield/shield1.png"
@@ -179,9 +179,9 @@ export async function createResources() {
         image: Images.characterWalkSheetImage,
         grid: {
             rows: 1,
-            columns: 5,
-            spriteWidth: 15,
-            spriteHeight: 23,
+            columns: 4,
+            spriteWidth: 11,
+            spriteHeight: 16,
         }
     });
 
@@ -190,8 +190,8 @@ export async function createResources() {
         grid: {
             rows: 1,
             columns: 4,
-            spriteWidth: 15,
-            spriteHeight: 23,
+            spriteWidth: 11,
+            spriteHeight: 16,
         }
     });
     const demonBossIdleSpritesheet = ex.SpriteSheet.fromImageSource({

@@ -37,8 +37,8 @@ export class Player extends ex.Actor {
             name: "player",
             pos: pos,
             anchor: ex.vec(0.5, 0.5),
-            width: 15 * 2,    // set desired width
-            height: 23 * 2,   // set desired height
+            width: 11 * 2,    // set desired width
+            height: 16 * 2,   // set desired height
             color: ex.Color.Yellow,  // optional, for debugging
             collisionType: ex.CollisionType.Active,
             z: 3,
@@ -125,7 +125,7 @@ export class Player extends ex.Actor {
 
     onPreUpdate(engine: ex.Engine) {
         let frame;
-        const bobWalk = [0, -4, -2, 0, -4];
+        const bobWalk = [0, 0, 0, 4];
         const bobIdle = [0, 2, 4, 2];
 
         // Example bob curve (tweak as needed):
@@ -171,7 +171,7 @@ export class Player extends ex.Actor {
 
         const worldPos = engine.screenToWorldCoordinates(pointer.lastScreenPos);
 
-        if (worldPos.x < this.pos.x) {
+        if (worldPos.x > this.pos.x) {
             this.walkAnim.flipHorizontal = true;
             this.idleAnim.flipHorizontal = true;
         } else {
@@ -180,7 +180,7 @@ export class Player extends ex.Actor {
         }
 
         if (this.shadow) {
-            this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2));
+            this.shadow.pos = this.pos.add(ex.vec(0, (this.height / 2) + 3));
         }
 
         this.dashTracer?.updateTracer(engine, delta, this.isDashing);
