@@ -14,7 +14,7 @@ import { WarHammer } from '../weapons/warhammer';
 import { Chest } from "../chest"
 import warHammer from "../assets/weapons/war_hammer/anime_war_hammer.png";
 import greatSword from "../assets/weapons/great_sword/anime_sword.png";
-import greatSword1 from "../assets/weapons/great_sword/damaged_sword.png";
+import greatSword1 from "../assets/weapons/great_sword/holy_sword.png";
 import SNSImg from "../assets/weapons/sword_and_shield/crystal_sns.png";
 import bow from "../assets/weapons/bow/bow.png";
 import { Inventory } from "../inventory/inventory";
@@ -185,7 +185,7 @@ export class HubScene extends ex.Scene {
                 name: "Sword",
                 type: "Great Sword",
                 icon: greatSword1.src,
-                rarity: "tempered",
+                rarity: "runed",
                 attackStyle: "Melee",
                 stats: {
                     power: 30,

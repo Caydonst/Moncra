@@ -115,14 +115,14 @@ export class GreatSword extends ex.Actor {
         super({
             pos: player.pos.clone(),
             anchor: ex.vec(0.5, 0.5), // exvec(0.5, 0.7)
-            width: resources.Images.greatSword.width * 2.5,
-            height: resources.Images.greatSword.height * 2.5,
+            width: image.width * 2.7,
+            height: image.height * 2.7,
             z: 4,
         });
 
         this.player = player;
         this.engine = engine;
-        this.offset = ex.vec(42, 0);
+        this.offset = ex.vec(45, 0);
     }
 
     onInitialize(engine: ex.Engine) {
@@ -485,7 +485,7 @@ export class SwingTracer extends ex.Actor {
                 //const outer = this.radius * 1.15;
 
                 const inner = this.radius * 0.3;
-                const outer = this.radius * 1;
+                const outer = this.radius * 1.1;
 
                 const p1 = this.player.pos.add(ex.Vector.fromAngle(a).scale(inner)).sub(this.pos).add(ex.vec(0, 5));
                 const p2 = this.player.pos.add(ex.Vector.fromAngle(a).scale(outer)).sub(this.pos).add(ex.vec(0, 5));

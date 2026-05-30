@@ -48,7 +48,7 @@ import Tilesheet from "./assets/map/spritesheet.png";
 import arrowImage from './assets/projectiles/arrow.png';
 import warHammer from "./assets/weapons/war_hammer/anime_war_hammer.png";
 import greatSword from "./assets/weapons/great_sword/anime_sword.png";
-import greatSword1 from "./assets/weapons/great_sword/damaged_sword.png";
+import greatSword1 from "./assets/weapons/great_sword/holy_sword.png";
 import bow from "./assets/weapons/bow/bow.png";
 import spearImg from "./assets/weapons/spear_and_shield/spear1.png"
 import shieldImg from "./assets/weapons/spear_and_shield/shield1.png"
