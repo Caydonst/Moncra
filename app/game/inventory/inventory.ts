@@ -1,11 +1,12 @@
+import { Armor } from "../armor/armor";
 import type {Ammunition, Item, Weapon} from "../items/ItemTypes";
 
 export class Inventory {
     weapon: Weapon | null = null;
-    armor: (Item | null)[] = [null, null, null]; // 3 armor slots
-    misc: (Item | Weapon | Ammunition | null)[] = Array(24).fill(null);
+    armor: Armor | null = null;
+    misc: (Item | Weapon | Armor | null)[] = Array(24).fill(null);
 
-    addItem(item: Item | Weapon | Ammunition): boolean {
+    addItem(item: Item | Weapon | Armor): boolean {
 
         const slot = this.misc.indexOf(null);
         if (slot === -1) return false;
@@ -29,14 +30,35 @@ export class Inventory {
         return true;
     }
 
-    removeItem(item: Item | Weapon | Ammunition) {
-        if (this.weapon?.id === item.id) this.weapon = null;
+    removeItem(item: Item | Weapon | Armor) {
+        if (this.weapon?.id === item.id) {
+            this.weapon = null;
+        }
 
-        const ai = this.armor.findIndex(a => a?.id === item.id);
-        if (ai !== -1) this.armor[ai] = null;
+        if (this.armor?.id === item.id) {
+            this.armor = null;
+        }
 
         const mi = this.misc.findIndex(m => m?.id === item.id);
-        if (mi !== -1) this.misc[mi] = null;
+        if (mi !== -1) {
+            this.misc[mi] = null;
+        }
+    }
+
+    equip(item: Weapon | Armor, engine: ex.Engine, miscIndex?: number) {
+        if (item.type === "Armor") {
+            this.equipArmor(item, miscIndex);
+        } else {
+            this.equipWeapon(item, engine, miscIndex);
+        }
+    }
+
+    unequip(item: Weapon | Armor, engine: ex.Engine | null) {
+        if (item.type === "Armor") {
+            this.unequipArmor(item);
+        } else {
+            this.unequipWeapon(item, engine?.currentScene);
+        }
     }
 
     equipWeapon(weapon: Weapon, engine: ex.Engine, miscIndex?: number) {
@@ -70,7 +92,7 @@ export class Inventory {
     unequipWeapon(weapon: Weapon | null, scene: ex.Scene | null) {
         if (!weapon) return;
 
-        if (weapon?.instance) {
+        if (weapon.instance) {
             weapon.instance.cleanup?.();
 
             if (scene) {
@@ -80,14 +102,35 @@ export class Inventory {
             weapon.instance = undefined;
         }
 
-        this.weapon = null;
-
         const openSlot = this.misc.indexOf(null);
+
+        if (openSlot === -1) {
+            console.warn("No open slot to unequip weapon");
+            return;
+        }
+
+        this.weapon = null;
         this.misc[openSlot] = weapon;
     }
 
-    equipArmor(slotIndex: number, item: Item) {
-        if (item.type !== "armor") return;
-        this.armor[slotIndex] = item;
+    equipArmor(armor: Armor, miscIndex: number) {
+        if (armor.type !== "Armor") return;
+        this.armor = armor;
+
+        if (miscIndex !== undefined && miscIndex >= 0) {
+            this.misc[miscIndex] = null;
+        }
+    }
+
+    unequipArmor(armor: Armor) {
+        const openSlot = this.misc.indexOf(null);
+
+        if (openSlot === -1) {
+            console.warn("No open slot to unequip armor");
+            return;
+        }
+
+        this.armor = null;
+        this.misc[openSlot] = armor;
     }
 }

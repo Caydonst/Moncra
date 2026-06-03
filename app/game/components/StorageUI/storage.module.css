@@ -1,7 +1,3 @@
-:root {
-    --min-slot-size: 100px;
-    --max-slot-size: 160px;
-}
 .tempered {
     color: #32FF9C;
     border-color: #32FF9C;
@@ -26,7 +22,8 @@
     color: #FF4E32;
     border-color: #662414;
 }
-.inventoryWrapper {
+
+.storageWrapper {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -38,43 +35,41 @@
     z-index: 3;
     visibility: hidden;
 }
-.inventoryWrapper.open {
+.storageWrapper.open {
     visibility: visible;
 }
-.inventoryContainer {
+.storageContainer {
     width: 100%;
     height: 100%;
     display: flex;
-    justify-content: start;
+    justify-content: center;
     align-items: center;
-    /*background: linear-gradient(to bottom, #141414, #030303);*/
-    background: #080808;
-    color: white;
-    font-family: sans-serif;
     transform: translateY(100%);
     transition: 0.2s;
-    overflow: hidden;
-    gap: 50px;
-    padding: 80px 0;
+    background: #080808;
+    padding: 30px;
 }
-.wrapperh3 {
-    position: absolute;
-    left: 30px;
-    top: 30px;
-    color: #fff;
-    font-weight: 300;
+.storageInner {
+    width: 100%;
+    height: 100%;
+    max-width: 1920px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
 }
-.bottomShadowContainer {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 30px;
-    background: linear-gradient(to top, #080808, transparent);
-    z-index: 5;
-}
-.inventoryWrapper.open .inventoryContainer {
+.storageContainer.open {
     transform: translateY(0);
+}
+.storage {
+    width: 30%;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
+    height: 100%;
+    gap: 20px;
+    position: relative
 }
 .inventory {
     display: flex;
@@ -85,12 +80,15 @@
     height: 100%;
     position: relative;
 }
-.inventory h3 {
-    font-size: 20px;
+.inventory h3,
+.storage h3 {
+    font-size: 16px;
     letter-spacing: 3px;
     color: #fff;
     text-shadow: 2px 2px #000;
     font-weight: 300;
+    align-self: start;
+    margin-bottom: 20px;
 }
 .itemFilterContainer {
     width: 100%;
@@ -133,6 +131,15 @@
     height: 2px;
     background: #fff;
 }
+.bottomShadowContainer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(to top, #080808, transparent);
+    z-index: 5;
+}
 .inventoryInner {
     display: flex;
     justify-content: start;
@@ -165,72 +172,6 @@
         #2a2a2a
     );
 }
-.selected {
-    outline: 3px solid #fff;
-}
-.gearContainer,
-.inventory,
-.itemInfoPanel {
-  min-width: 0;
-}
-.gearContainer {
-    display: flex;
-    justify-content: center;
-    align-items: start;
-    gap: 10px;
-    width: calc(75% / 2);
-    height: 100%;
-    padding-top: 80px;
-}
-.weaponSlotWrapper {
-    width: 100%;
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: start;
-    flex-direction: column;
-    gap: 10px;
-    padding-left: 30px;
-}
-.weaponSlot {
-    position: relative;
-    width: 100%;
-    height: 120px;
-    padding: 14px 20px;
-    display: flex;
-    justify-content: start;
-    align-items: center;
-    gap: 20px;
-}
-.weaponSlot:hover {
-    outline: 3px solid #fff;
-}
-.weaponSlot .gearImg {
-    height: 100%;
-    object-fit: contain;
-    image-rendering: pixelated;
-    filter: drop-shadow(-10px 10px rgba(0, 0, 0, 0.3));
-}
-.equippedWeaponInfoContainer {
-    display: flex;
-    justify-content: center;
-    align-items: start;
-    flex-direction: column;
-    gap: 5px;
-}
-.equippedWeaponInfoContainer h3 {
-    font-weight: 300;
-    text-shadow: 5px 5px rgba(0, 0, 0, 0.3);
-}
-.equippedWeaponInfoContainer p {
-    font-size: 13px;
-}
-.armorSlots {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-}
 .miscGrid {
     display: grid;
     grid-template-columns: repeat(
@@ -250,7 +191,6 @@
     padding: 6px;
     position: relative;
     background: #0A0A0A;
-    
 }
 .slot.tempered,
 .weaponSlot.tempered {
@@ -292,19 +232,6 @@
     image-rendering: pixelated;
     filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
 }
-.slot p {
-    position: absolute;
-    bottom: 0;
-    right: 3px;
-    font-size: 8px;
-}
-.slot .magEmpty {
-    color: #ff1414;
-}
-.slot .magNotEmpty {
-    color: #fff;
-}
-
 /* ------------------------------- ITEM PANEL ---------------------------------- */
 .itemInfoPanel {
     position: relative;
@@ -324,7 +251,7 @@
 }
 .itemIconContainer {
     position: absolute;
-    top: 40px;
+    top: 80px;
     right: 100px;
     width: 180px;
     height: 400px;
@@ -481,9 +408,12 @@
 #item-info-stats p {
     font-size: 12px;
 }
+.selected {
+    outline: 3px solid #fff;
+}
 .equipBtnContainer {
     position: absolute;
-    bottom: 5px;
+    bottom: 30px;
     left: 0;
     right: 30px;
     display: flex;
@@ -491,7 +421,10 @@
     align-items: center;
 }
 .equipBtn {
-    width: 100%;
+    position: absolute;
+    bottom: 30px;
+    left: 0;
+    right: 30px;
     height: 45px;
     border: 3px solid #70ff8d;
     background: #3b8249;
@@ -507,6 +440,7 @@
 }
 .unequipBtn {
     width: 100%;
+    max-width: 300px;
     height: 45px;
     border: 3px solid #ff5e5e;
     background: #913434;
@@ -553,8 +487,8 @@
 }
 @media (max-width: 1400px) {
     .itemIconContainer {
+        top: 180px;
         right: 30px;
-        width: 150px;
     }
 }
 @media (max-width: 1300px) {
@@ -572,20 +506,5 @@
     }
     .weaponSlot {
         height: 100px;
-    }
-}
-@media (max-width: 1140px) {
-    .inventory {
-        width: 350px;
-    }
-    .miscGrid {
-        display: grid;
-        grid-template-columns: repeat(
-            2,
-            minmax(var(--min-slot-size), 1fr)
-        );
-        gap: 16px;
-        width: 100%;
-        padding: 30px 30px 30px 3px;
     }
 }

@@ -3,8 +3,6 @@ import { Player } from "../player/player";
 
 export class GameState {
   inventory: Inventory;
-  playerHp = 100;
-  playerMaxHp = 100;
   player?: Player;
 
   constructor() {

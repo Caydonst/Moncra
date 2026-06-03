@@ -1,5 +1,5 @@
 "use client";
-import {useEffect, useRef, useState} from "react";
+import {use, useEffect, useRef, useState} from "react";
 import { getGame } from "../gameInstance";
 import type { GameScene } from "../scenes/GameScene";
 import type { HubScene } from "../scenes/HubScene";
@@ -13,6 +13,8 @@ import ChestUI from "@/app/game/components/chestUI/chestUI";
 import DungeonMenu from "../components/dungeonMenu/dungeonMenu";
 import LandingPage from "../components/landingPage/landingPage";
 import { gameState } from "../gameState/gameState";
+import StorageUI from "../components/StorageUI/StorageUI";
+import BlacksmithUI from "../components/BlacksmithUI/BlacksmithUI";
 
 type Scenes = GameScene | HubScene | MenuScene | TestScene | DungeonScene
 type SceneKey = "menu" | "hub" | "game" | "dungeon" | "test";
@@ -31,6 +33,9 @@ export default function GameCanvas() {
     const [chestItems, setChestItems] = useState(null);
     const [chestOpen, setChestOpen] = useState(false);
     const [chest, setChest] = useState(null);
+    const [storageOpen, setStorageOpen] = useState(false);
+    const [storage, setStorage] = useState(null);
+    const [blacksmithOpen, setBlacksmithOpen] = useState(false);
 
     useEffect(() => {
         let cleanup: (() => void) | undefined;
@@ -77,7 +82,8 @@ export default function GameCanvas() {
         setInventory(gameState.inventory);
 
         if (gameState.player) {
-            setCharacterHp((gameState.player.hp / gameState.player.maxHp) * 100);
+            console.log("Player stats: ", gameState.player.getStats())
+            setCharacterHp((gameState.player.getStats().hp / gameState.player.getStats().maxHp) * 100);
         } else {
             setCharacterHp(0);
         }
@@ -107,7 +113,7 @@ export default function GameCanvas() {
     useEffect(() => {
         const handler = () => {
             if (scene && scene.player) {
-                const hpPercent = (scene?.player.hp / scene?.player.maxHp) * 100;
+                const hpPercent = (scene?.player.stats.hp / scene?.player.stats.maxHp) * 100;
                 setCharacterHp(hpPercent)
             }
         };
@@ -135,7 +141,7 @@ export default function GameCanvas() {
 
     useEffect(() => {
         if (scene && scene.player) {
-            setCharacterHp((scene.player.hp / scene.player.maxHp) * 100);
+            setCharacterHp((scene.player.stats.hp / scene.player.stats.maxHp) * 100);
         }
     }, [scene]);
 
@@ -166,6 +172,58 @@ export default function GameCanvas() {
 
         return () => {
             window.removeEventListener("chest-closed", handleChestClosed);
+        };
+    }, []);
+
+    useEffect(() => {
+        const handleStorageOpened = (e: Event) => {
+            const event = e as CustomEvent;
+
+            setStorageOpen(true);
+            setStorage(event.detail.storage)
+        };
+
+        window.addEventListener("storage-opened", handleStorageOpened);
+
+        return () => {
+            window.removeEventListener("storage-opened", handleStorageOpened);
+        };
+    }, []);
+
+    useEffect(() => {
+        const handleStorageClosed = () => {
+            setStorageOpen(false);
+            setStorage(null);
+        };
+
+        window.addEventListener("storage-closed", handleStorageClosed);
+
+        return () => {
+            window.removeEventListener("storage-closed", handleStorageClosed);
+        };
+    }, []);
+
+    useEffect(() => {
+        const handleBlacksmithOpened = () => {
+            setBlacksmithOpen(true);
+        };
+
+        window.addEventListener("blacksmith-opened", handleBlacksmithOpened);
+
+        return () => {
+            window.removeEventListener("blacksmith-opened", handleBlacksmithOpened);
+        };
+    }, []);
+
+    useEffect(() => {
+        const handleBlacksmithClosed = () => {
+            setBlacksmithOpen(false);
+        };
+
+        window.addEventListener("blacksmith-closed", handleBlacksmithClosed);
+
+        return () => {
+            window.removeEventListener("blacksmith-closed", handleBlacksmithClosed);
         };
     }, []);
 
@@ -206,7 +264,7 @@ export default function GameCanvas() {
                             <div className={styles.characterHpWrapper}>
                                 <div className={styles.textContainer}>
                                     <p>HP</p>
-                                    <p>{scene?.player?.hp} / {scene?.player?.maxHp}</p>
+                                    <p>{scene?.player?.getStats().hp} / {scene?.player?.getStats().maxHp}</p>
                                 </div>
                                 <div className={styles.characterHpContainer}>
                                     <div className={styles.characterHp} style={{ width: `${characterHp}%` }}></div>
@@ -214,6 +272,8 @@ export default function GameCanvas() {
                             </div>
                             <InventoryUI inventoryOpen={inventoryOpen} inventory={inventory} setInventoryOpen={setInventoryOpen} itemPanelOpen={itemPanelOpen} setItemPanelOpen={setItemPanelOpen} selectedItem={selectedItem} setSelectedItem={setSelectedItem} engine={game} />
                             <ChestUI chest={chest} chestOpen={chestOpen} inventoryOpen={inventoryOpen} inventory={inventory} chestItems={chestItems} setChestItems={setChestItems} scene={scene} />
+                            <StorageUI storageOpen={storageOpen} inventory={inventory} storage={storage} />
+                            <BlacksmithUI blacksmithOpen={blacksmithOpen} inventory={inventory} />
                             <div className={styles.spawnBtns}>
                                 <button id="spawn-enemy-btn" className={styles.spawnEnemyBtn} onClick={() => scene?.spawnEnemy()}>Spawn Enemy</button>
                                 <button id="spawn-boss-btn" className={styles.spawnEnemyBtn} onClick={() => scene?.spawnBoss()}>Spawn Boss</button>
@@ -226,15 +286,6 @@ export default function GameCanvas() {
                                                 <div className={styles.overlayImgContainer}>
                                                     <img src={inventory.weapon.icon} />
                                                 </div>
-                                                {inventory.weapon.magazine ? (
-                                                    <div className={styles.overlayMagContainer}>
-                                                        <p>{inventory.weapon.magazine?.amount} / {inventory.weapon.magazine?.maxAmount}</p>
-                                                    </div>
-                                                ) : (
-                                                    <div className={styles.overlayMagContainer}>
-                                                        <p>No Magazine</p>
-                                                    </div>
-                                                )}
                                             </>
                                         ) : (
                                             <p>No Weapon Equipped</p>

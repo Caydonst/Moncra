@@ -1,0 +1,196 @@
+.blacksmithWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 3;
+    visibility: hidden;
+}
+.blacksmithWrapper.open {
+    visibility: visible;
+}
+.blacksmithContainer {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform: translateY(100%);
+    transition: 0.2s;
+    background: linear-gradient(to bottom, #141414, #030303);
+}
+.blacksmithContainer.open {
+    transform: translateY(0);
+}
+.blacksmithInner {
+    width: 100%;
+    height: 100%;
+    max-width: 1920px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.inventory {
+    width: 30%;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
+    height: 100%;
+    padding: 50px 80px 0 80px;
+    gap: 20px;
+    border-right: 3px solid rgba(255, 255, 255, 0.1)
+}
+.inventory h3,
+.storage h3 {
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: #fff;
+    text-shadow: 2px 2px #000;
+    font-weight: 300;
+}
+.itemFilterContainer {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.filterBtn {
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    height: 60px;
+    padding-bottom: 15px;
+    position: relative;
+    color: #626262;
+    gap: 8px;
+    font-size: 8px;
+    color: transparent;
+}
+.filterBtn img {
+    width: 20px;
+}
+.filterBtn:hover img {
+    color: #fff;
+}
+.filterBtn.selected {
+    color: #fff;
+}
+.filterBtn.selected::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: #fff;
+}
+.inventoryInner {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+}
+.inventoryInner::-webkit-scrollbar {
+    width: 12px;
+}
+
+.inventoryInner::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.inventoryInner::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+        to bottom,
+        #3a3a3a,
+        #1f1f1f
+    );
+}
+
+.inventoryInner::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+        to bottom,
+        #4a4a4a,
+        #2a2a2a
+    );
+}
+.miscGrid {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(var(--min-slot-size), 1fr)
+    );
+    gap: 16px;
+    width: 100%;
+    padding: 0 16px 16px 0;
+}
+.slot {
+    aspect-ratio: 1 / 1;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 6px;
+    position: relative;
+    background: #0A0A0A;
+}
+.slot.tempered,
+.weaponSlot.tempered {
+    border-color: #32FF9C;
+    background: #13633C;
+}
+.slot.runed,
+.weaponSlot.runed {
+    border-color: #FFE032;
+    background: #665814;
+}
+.slot.exalted,
+.weaponSlot.exalted {
+    border-color: #FF3232;
+    background: #661414;
+}
+.slot.ascendant,
+.weaponSlot.ascendant {
+    border-color: #F132FF;
+    background: #5D1466;
+}
+.slot.mythic,
+.weaponSlot.mythic {
+    border-color: #32FFFF;
+    background: #146666;
+}
+.slot.relic,
+.weaponSlot.relic {
+    border-color: #FF4E32;
+    background: #662414;
+}
+.slot:hover {
+    outline: 3px solid #fff;
+}
+.slot .slotImg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
+}
+.upgradeContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 70%;
+    height: 100%;
+    background: #080808;
+}

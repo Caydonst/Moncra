@@ -48,21 +48,30 @@ import Tilesheet from "./assets/map/spritesheet.png";
 import arrowImage from './assets/projectiles/arrow.png';
 import warHammer from "./assets/weapons/war_hammer/anime_war_hammer.png";
 import greatSword from "./assets/weapons/great_sword/anime_sword.png";
-import greatSword1 from "./assets/weapons/great_sword/holy_sword.png";
+import greatSword1 from "./assets/weapons/great_sword/obsidian_sword.png";
 import bow from "./assets/weapons/bow/bow.png";
 import spearImg from "./assets/weapons/spear_and_shield/spear1.png"
 import shieldImg from "./assets/weapons/spear_and_shield/shield1.png"
 import bowSpritesheetImg from "./assets/weapons/bow/bow_spritesheet.png"
-/// --- MISC ---
+// --- ARMOR ---
+import obsidianArmorImg from "./assets/armor/obsidian_armor.png"
+// --- MISC ---
 import coinSpritesheet from "./assets/currency/coin_spritesheet.png";
 import chestImage from "./assets/chest/chest.png"
 import chestSelected from "./assets/chest/chest_selected.png"
 import chestOpen from "./assets/chest/chest_open.png"
 import chestSpritesheet from "./assets/chest/chest_spritesheet.png"
+import storageChestImage from "./assets/chest/storage_chest.png"
+import storageChestSelectedImage from "./assets/chest/storage_chest_selected.png"
+import storageChestOpenImage from "./assets/chest/storage_chest_opened.png"
 import portalSpritesheetImage from "./assets/misc/portal_spritesheet.png"
 import portalSelectedSpritesheetImage from "./assets/misc/portal_selected_spritesheet.png"
 import {CustomLoader} from "@/app/game/utils/customLoader";
 import mapSpritesheet64 from "./assets/map/map_spritesheet_64.png"
+
+// --- NPC ---
+import blacksmithSpritesheetImage from "./assets/npc/blacksmith/idle_spritesheet.png"
+import blacksmithSelectedSpritesheetImage from "./assets/npc/blacksmith/selected_spritesheet.png"
 
 type ImageGroups = {
     walk: Record<string, any>;
@@ -103,11 +112,17 @@ export async function createResources() {
         bowSpritesheetImg: new ex.ImageSource(bowSpritesheetImg.src),
         spear: new ex.ImageSource(spearImg.src),
         shield: new ex.ImageSource(shieldImg.src),
+        obsidianArmor: new ex.ImageSource(obsidianArmorImg.src),
         coinSheetImage: new ex.ImageSource(coinSpritesheet.src),
         chestSheetImage: new ex.ImageSource(chestSpritesheet.src),
         chest: new ex.ImageSource(chestImage.src),
         chestSelected: new ex.ImageSource(chestSelected.src),
         chestOpen: new ex.ImageSource(chestOpen.src),
+        storageChest: new ex.ImageSource(storageChestImage.src),
+        storageChestSelected: new ex.ImageSource(storageChestSelectedImage.src),
+        storageChestOpen: new ex.ImageSource(storageChestOpenImage.src),
+        blacksmithSheetImage: new ex.ImageSource(blacksmithSpritesheetImage.src),
+        blacksmithSelectedSheetImage: new ex.ImageSource(blacksmithSelectedSpritesheetImage.src),
         demonBossIdleSheetImage: new ex.ImageSource(demonBossIdleSheetImage.src),
         demonBossHurt: new ex.ImageSource(demonBossHurt.src),
         demonBossWalkSheetImage: new ex.ImageSource(demonBossWalkSheetImage.src),
@@ -263,6 +278,26 @@ export async function createResources() {
         }
     })
 
+    const blacksmithSpritesheet = ex.SpriteSheet.fromImageSource({
+        image: Images.blacksmithSheetImage,
+        grid: {
+            rows: 1,
+            columns: 4,
+            spriteWidth: 22,
+            spriteHeight: 26,
+        }
+    })
+
+    const blacksmithSelectedSpritesheet = ex.SpriteSheet.fromImageSource({
+        image: Images.blacksmithSelectedSheetImage,
+        grid: {
+            rows: 1,
+            columns: 4,
+            spriteWidth: 24,
+            spriteHeight: 28,
+        }
+    })
+
     const mapSpritesheet = ex.SpriteSheet.fromImageSource({
         image: Images.mapSpritesheetImage,
         grid: {
@@ -351,6 +386,8 @@ export async function createResources() {
         CoinSpriteSheet,
         portalSpritesheet,
         portalSelectedSpritesheet,
+        blacksmithSpritesheet,
+        blacksmithSelectedSpritesheet,
         mapSpritesheet,
         tiledMap,
     };

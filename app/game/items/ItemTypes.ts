@@ -57,28 +57,6 @@ export type Ammunition = {
     maxAmount: number;
 }
 
-/*
-export interface BaseItem {
-    id: string;               // unique ID
-    name: string;
-    icon: string;             // image source
-    type: ItemSlot;
-}
-
-export interface WeaponItem extends BaseItem {
-    type: "weapon";
-    damage: number;
-}
-
-export interface ArmorItem extends BaseItem {
-    type: "armor";
-    defense: number;
-}
-
-export interface MiscItem extends BaseItem {
-    type: "misc";
-    description: string;
-}
-*/
+export const equippableItems = ["Great Sword", "Bow", "Armor"];
 
 export type InventoryItem = Item;

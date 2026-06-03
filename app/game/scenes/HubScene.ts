@@ -14,25 +14,29 @@ import { WarHammer } from '../weapons/warhammer';
 import { Chest } from "../chest"
 import warHammer from "../assets/weapons/war_hammer/anime_war_hammer.png";
 import greatSword from "../assets/weapons/great_sword/anime_sword.png";
-import greatSword1 from "../assets/weapons/great_sword/holy_sword.png";
+import greatSword1 from "../assets/weapons/great_sword/obsidian_sword.png";
 import SNSImg from "../assets/weapons/sword_and_shield/crystal_sns.png";
 import bow from "../assets/weapons/bow/bow.png";
 import { Inventory } from "../inventory/inventory";
-import type {Ammunition, Item, Weapon} from "../items/ItemTypes";
-import {GreatSword} from "../weapons/sword";
+import type { Ammunition, Item, Weapon } from "../items/ItemTypes";
+import { GreatSword } from "../weapons/sword";
+import { Armor } from "../armor/armor"
 import {SpearAndShield} from "../weapons/spearAndShield"
 import spearAndShieldImg from "../assets/weapons/spear_and_shield/spear_and_shield1.png"
 //import { spawnWallsInto } from "../map";
-import {DemonBoss} from "../enemies/bosses/DemonBoss";
+import { DemonBoss } from "../enemies/bosses/DemonBoss";
 import type { GameResources } from "../resources";
 import { DustParticleManager, ParticleManager } from "../utils/ParticleHelper";
-import {getSpawnPointsFromTiledMap} from "./helperFunctions"
+import { getSpawnPointsFromTiledMap } from "./helperFunctions"
 import { EnemyPlayer } from "../enemies/enemyPlayer"
 import { ProjectileManager } from "../utils/projectileManager";
 import { Portal } from "../portal";
 import { generateDungeonFloor, createTileMapFromDungeonFloor, tileToWorld } from "../utils/mapGenerator"
 import { GameState } from "../gameState/gameState";
 import { multiplayer } from "../network/multiplayer";
+import { StorageChest } from "../HubSystems/StorageChest";
+import { Blacksmith } from "../HubSystems/blacksmith";
+import obsidianArmorImg from "../assets/armor/obsidian_armor.png"
 
 type Maps = {
     layer1: number[][];
@@ -48,6 +52,8 @@ export class HubScene extends ex.Scene {
     enemyCount!: number;
     enemyTag!: HTMLElement;
     enemies!: []
+    storageChest!: StorageChest;
+    blacksmith: Blacksmith;
     chest1!: Chest;
     chest2!: Chest;
     chest3!: Chest;
@@ -162,7 +168,7 @@ export class HubScene extends ex.Scene {
                 name: "Dark Sword of the Ruins",
                 type: "Great Sword",
                 icon: greatSword.src,
-                rarity: "mythic",
+                rarity: "exalted",
                 attackStyle: "Melee",
                 stats: {
                     power: 130,
@@ -175,6 +181,7 @@ export class HubScene extends ex.Scene {
                     this.collisionGroups,
                     GreatSword1.stats.damage,
                     this.resources.Images.greatSword,
+                    true,
                 ),
             };
 
@@ -185,7 +192,7 @@ export class HubScene extends ex.Scene {
                 name: "Sword",
                 type: "Great Sword",
                 icon: greatSword1.src,
-                rarity: "runed",
+                rarity: "tempered",
                 attackStyle: "Melee",
                 stats: {
                     power: 30,
@@ -198,10 +205,35 @@ export class HubScene extends ex.Scene {
                     this.collisionGroups,
                     GreatSword2.stats.damage,
                     this.resources.Images.greatSword1,
+                    false,
                 ),
             };
 
             this.gameState.inventory.addItem(GreatSword2);
+
+            const ObsidianSword: Weapon = {
+                id: "obsidian_sword",
+                name: "Obsidian Sword",
+                type: "Great Sword",
+                icon: greatSword1.src,
+                rarity: "exalted",
+                attackStyle: "Melee",
+                stats: {
+                    power: 130,
+                    damage: 40,
+                },
+                createWeapon: () => new GreatSword(
+                    this.player,
+                    engine,
+                    this.resources,
+                    this.collisionGroups,
+                    GreatSword2.stats.damage,
+                    this.resources.Images.greatSword1,
+                    false,
+                ),
+            };
+
+            this.gameState.inventory.addItem(ObsidianSword);
 
             const Bow1: Weapon = {
                 id: "bow1",
@@ -226,6 +258,22 @@ export class HubScene extends ex.Scene {
             };
 
             this.gameState.inventory.addItem(Bow1);
+
+            const ObsidianArmor = new Armor({
+                id: "obsidian_armor",
+                name: "Obsidian Armor",
+                description: "A sturdy iron chestplate.",
+                icon: obsidianArmorImg.src,
+                type: "Armor",
+                rarity: "exalted",
+                stats: {
+                    hp: 50,
+                    defense: 15,
+                    power: 130,
+                }
+            })
+
+            this.gameState.inventory.addItem(ObsidianArmor);
 
             function getRandomItems() {
                 const itemsList = [GreatSword1, Bow1]
@@ -256,6 +304,12 @@ export class HubScene extends ex.Scene {
 
             this.chest3 = new Chest(ex.vec(1400, 200), this.resources, getRandomItems());
             this.add(this.chest3);
+
+            this.storageChest = new StorageChest(ex.vec(this.worldBounds.width / 2, 200), this.resources, getRandomItems());
+            this.add(this.storageChest);
+
+            this.blacksmith = new Blacksmith(ex.vec(200, this.worldBounds.height / 2), this.resources, getRandomItems());
+            this.add(this.blacksmith);
 
             // --- Camera setup ---
             //engine.currentScene.camera.strategy.lockToActor(this.player);
@@ -343,8 +397,8 @@ export class HubScene extends ex.Scene {
             this.worldBounds.height,
             this.player,
             200,
-            5000,
-            5000,
+            1000,
+            1000,
             this.resources,
             this.collisionGroups,
         );

@@ -7,19 +7,36 @@ import {spawnParticles} from "@/app/ game/utils/ParticleHelper";
 import { GameScene } from "../scenes/GameScene";
 import { multiplayer } from "../network/multiplayer";
 import { GameState } from "../gameState/gameState";
+import { Inventory } from "../inventory/inventory";
+
+type Stats = {
+    speed: number;
+    baseSpeed: number;
+    damage: number;
+    maxHp: number;
+    hp: number;
+    armor: number;
+    crit: number;
+}
 
 export class Player extends ex.Actor {
-    private speed: number = 250;
-    private normalSpeed = 250;
-    public maxHp: number = 100;
-    public hp: number = this.maxHp;
+    private stats: Stats = {
+        speed: 250,
+        baseSpeed: 250,
+        damage: 0,
+        maxHp: 100,
+        hp: 100,
+        armor: 0,
+        crit: 0,
+    }
+    private inventory!: Inventory;
     private readonly worldWidth: number;
     private readonly worldHeight: number;
-    private walkAnim: ex.Animation;
-    private idleAnim: ex.Animation;
+    private walkAnim!: ex.Animation;
+    private idleAnim!: ex.Animation;
     public move: ex.Vector;
     public bobOffsetY = 0;
-    private shadow: Shadow;
+    private shadow!: Shadow;
     public isDead: boolean = false;
     private particleTimer!: ex.Timer;
 
@@ -154,7 +171,7 @@ export class Player extends ex.Actor {
         if (this.move.magnitude > 0) {
             this.graphics.use("walk");
             const dir = this.move.normalize();
-            const step = dir.scale(this.speed * (delta / 1000));
+            const step = dir.scale(this.stats.speed * (delta / 1000));
 
             this.pos.x += step.x;
             this.pos.y += step.y;
@@ -209,21 +226,18 @@ export class Player extends ex.Actor {
             attackId,
         });
 
-        // Player send
-        console.log("sending attackId", attackId, "isAttacking", isAttacking);
-
     }
     takeDamage(damage: number) {
         if (this.isDead) return;
 
-        if (this.hp <= damage) {
-            this.hp = 0;
+        if (this.stats.hp <= damage) {
+            this.stats.hp = 0;
             window.dispatchEvent(new Event("player-damaged"));
             this.isDead = true;
             return;
         }
 
-        this.hp -= damage;
+        this.stats.hp -= damage;
         window.dispatchEvent(new Event("player-damaged"));
     }
     private dash() {
@@ -233,15 +247,18 @@ export class Player extends ex.Actor {
 
         this.lastDashTime = now;
         this.isDashing = true;
-        this.speed = this.dashSpeed;
+        this.stats.speed = this.dashSpeed;
     }
     private updateDash() {
         const now = performance.now()
 
         if (now - this.lastDashTime < this.dashTime) return;
 
-        this.speed = this.normalSpeed;
+        this.stats.speed = this.stats.baseSpeed;
         this.isDashing = false;
+    }
+    public getStats() {
+        return this.stats;
     }
     public attachToScene(scene: ex.Scene) {
         if (!this.shadow || this.shadow.isKilled()) {

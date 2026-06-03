@@ -36,6 +36,6 @@ export class Shadow extends ex.Actor {
         );
 
         // Squash using scaling like your original code
-        this.scale = ex.vec(1.5, 0.6);
+        this.scale = ex.vec(1.5, 0.8);
     }
 }

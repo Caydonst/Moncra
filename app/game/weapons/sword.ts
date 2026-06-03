@@ -3,7 +3,7 @@ import { GameResources } from '../resources';
 import { Player } from '../player/player';
 import {Shadow} from "../utils/shadow";
 import {Demon} from "../enemies/demon";
-import { Outline } from "../utils/swordOutline";
+import { Outline, EnchantEffect, EnchantedGlowEffect } from "../utils/swordOutline";
 import {DemonBoss} from "../enemies/bosses/DemonBoss";
 import { GameScene } from '../scenes/GameScene';
 import { multiplayer } from '../network/multiplayer';
@@ -19,6 +19,7 @@ type Attack = {
     // slash only
     startOffset?: number;
     endOffset?: number;
+    swingFlip?: boolean;
 
     // thrust only
     thrustDistance?: number;
@@ -62,6 +63,9 @@ export class GreatSword extends ex.Actor {
     private thrusting = false;
     private thrustTracer!: ThrustTracer;
 
+    private isBlocking = false;
+    public blockDamageMultiplier = 0.5;
+
     private combo: Attack[] = [
         {
             type: "slash",
@@ -70,6 +74,7 @@ export class GreatSword extends ex.Actor {
             damageMultiplier: 1,
             startOffset: Math.PI / 1.5,
             endOffset: -Math.PI / 1.5,
+            swingFlip: false,
         },
         {
             type: "slash",
@@ -78,6 +83,7 @@ export class GreatSword extends ex.Actor {
             damageMultiplier: 1,
             startOffset: -Math.PI / 1.5,
             endOffset: Math.PI / 1.5,
+            swingFlip: true,
         },
         {
             type: "slash",
@@ -86,6 +92,7 @@ export class GreatSword extends ex.Actor {
             damageMultiplier: 1.2,
             startOffset: -Math.PI / 1.5,
             endOffset: Math.PI / 1.5,
+            swingFlip: true,
         },
         {
             type: "thrust",
@@ -96,12 +103,24 @@ export class GreatSword extends ex.Actor {
         }
     ];
 
-    private pointerDownHandler = () => {
-        this.isHolding = true;
+    private pointerDownHandler = (evt: ex.PointerEvent) => {
+        if (evt.button === ex.PointerButton.Left) {
+            this.isHolding = true;
+        }
+
+        if (evt.button === ex.PointerButton.Right) {
+            this.startBlock();
+        }
     };
 
-    private pointerUpHandler = () => {
-        this.isHolding = false;
+    private pointerUpHandler = (evt: ex.PointerEvent) => {
+        if (evt.button === ex.PointerButton.Left) {
+            this.isHolding = false;
+        }
+
+        if (evt.button === ex.PointerButton.Right) {
+            this.stopBlock();
+        }
     };
 
     constructor(
@@ -110,7 +129,8 @@ export class GreatSword extends ex.Actor {
         private resources: GameResources,
         private collisionGroups: any,
         private damage: number,
-        private image: ex.ImageSource
+        private image: ex.ImageSource,
+        private glow: boolean,
     ) {
         super({
             pos: player.pos.clone(),
@@ -141,8 +161,13 @@ export class GreatSword extends ex.Actor {
         this.thrustTracer = new ThrustTracer();
         engine.currentScene.add(this.thrustTracer);
 
-        //const outline = new Outline(engine);
-        //this.graphics.material = outline.outlineMaterial;
+        /*if (this.glow) {
+            const outline = new Outline(engine);
+            this.graphics.material = outline.outlineMaterial;
+        }*/
+
+        const effect = new EnchantedGlowEffect(engine);
+        this.graphics.material = effect.material;
     }
 
     onPostUpdate(_engine: ex.Engine, delta: number) {
@@ -163,6 +188,31 @@ export class GreatSword extends ex.Actor {
 
         if (this.thrusting) {
             this.updateThrust(delta);
+            return;
+        }
+
+        if (this.isBlocking) {
+            const blockDistance = 34;
+
+            const blockDirection = ex.Vector.fromAngle(mouseAngle);
+            const blockOffset = blockDirection.scale(blockDistance);
+            const bobbedOffset = addBobbing(blockOffset);
+
+            this.pos = this.player.pos.clone().add(bobbedOffset);
+
+            // Angle the sword across the player's body
+            const guardTilt = Math.PI / 4; // 45 degrees
+
+            const isAimingLeft = blockDirection.x < 0;
+
+            this.rotation = mouseAngle + Math.PI / 2 + (isAimingLeft ? guardTilt : -guardTilt);
+
+            this.graphics.flipHorizontal = isAimingLeft;
+
+            if (this.shadow) {
+                this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2.5));
+            }
+
             return;
         }
 
@@ -201,12 +251,6 @@ export class GreatSword extends ex.Actor {
             return;
         }
         
-        if (this.side === 1) {
-            this.graphics.flipHorizontal = false;
-        } else {
-            this.graphics.flipHorizontal = true;
-        }
-        
 
         // -------------------------------
         //   IDLE LOGIC
@@ -237,6 +281,8 @@ export class GreatSword extends ex.Actor {
     }
 
     startSwing() {
+        if (this.isBlocking) return;
+
         const now = performance.now();
 
         if (this.swinging || this.thrusting) return;
@@ -272,7 +318,8 @@ export class GreatSword extends ex.Actor {
                 this.swingStartAngle,
                 this.swingEndAngle,
                 this.swingDuration,
-                this.height
+                this.offset.x,
+                () => this.player.pos.clone().add(ex.vec(0, this.player.bobOffsetY)),
             );
         } else {
             this.startThrust(mouseAngle);
@@ -284,6 +331,8 @@ export class GreatSword extends ex.Actor {
     private startSlash(mouseAngle: number) {
         this.swinging = true;
         this.swingProgress = 0;
+
+        this.graphics.flipHorizontal = this.currentAttack.swingFlip ?? false;
 
         this.swingStartAngle = mouseAngle + this.currentAttack.startOffset!;
         this.swingEndAngle = mouseAngle + this.currentAttack.endOffset!;
@@ -351,37 +400,23 @@ export class GreatSword extends ex.Actor {
             this.swingProgress = 0;
         }
     }
-    /*
-    startSwing() {
-        const now = performance.now();
 
-        if (now - this.lastSwingTime < this.swingCooldown) return;
-        if (this.swinging) return;
+    private startBlock() {
+        this.isHolding = false;
 
-        const mouseAngle = this.getMouseAngle();
-        if (mouseAngle === null) return;
+        if (this.swinging || this.thrusting) {
+            return;
+        }
 
-        this.lastSwingTime = now;
-        this.swinging = true;
-        this.swingProgress = 0;
-
-        // Reset hit cache
-        this.swingHitSet.clear();
-
-        this.orbitAngle = mouseAngle + this.side * (Math.PI / 1.5);
-        this.swingStartAngle = this.orbitAngle;
-
-        this.swingEndAngle = mouseAngle - this.side * (Math.PI / 1.5);
-
-        this.swingTracer.start(
-            this.player,
-            this.swingStartAngle,
-            this.swingEndAngle,
-            this.swingDuration,
-            this.height
-        );
+        this.isBlocking = true;
     }
-        */
+
+    private stopBlock() {
+        this.isBlocking = false;
+
+        //this.player.isBlocking = false;
+        //this.player.damageMultiplier = 1;
+    }
 
     onPreCollisionResolve(_self: ex.Collider, other: ex.Collider) {
         const target = other.owner;
@@ -397,7 +432,7 @@ export class GreatSword extends ex.Actor {
         this.swingHitSet.add(target);
         //this.engine.currentScene.camera.shake(8, 8, 60);
         
-        target.takeDamage(this.damage * this.combo[this.comboIndex].damageMultiplier);
+        target.takeDamage(this.damage * this.currentAttack.damageMultiplier);
     }
 
 
@@ -445,7 +480,8 @@ export class SwingTracer extends ex.Actor {
     private progress = 0;
     private duration = 10;
     private radius = 160;
-    private visualOffset = ex.vec(0, 5);
+    private getOrigin!: () => ex.Vector;
+    private bladeLength = 34;
 
     constructor() {
         super({
@@ -457,6 +493,8 @@ export class SwingTracer extends ex.Actor {
 
         this.graphics.onPostDraw = (ctx) => {
             if (!this.active || !this.player) return;
+
+            const origin = this.getOrigin();
 
             const t = Math.min(this.progress / this.duration, 1);
             const eased = t * t * (3 - 2 * t);
@@ -484,11 +522,16 @@ export class SwingTracer extends ex.Actor {
                 //const inner = this.radius * 0.45;
                 //const outer = this.radius * 1.15;
 
-                const inner = this.radius * 0.3;
-                const outer = this.radius * 1.1;
+                const inner = this.radius * 0.7;
+                const outer = this.radius + 40;
 
-                const p1 = this.player.pos.add(ex.Vector.fromAngle(a).scale(inner)).sub(this.pos).add(ex.vec(0, 5));
-                const p2 = this.player.pos.add(ex.Vector.fromAngle(a).scale(outer)).sub(this.pos).add(ex.vec(0, 5));
+                const p1 = origin
+                    .add(ex.Vector.fromAngle(a).scale(inner))
+                    .sub(this.pos);
+
+                const p2 = origin
+                    .add(ex.Vector.fromAngle(a).scale(outer))
+                    .sub(this.pos);
 
                 ctx.save();
                 ctx.opacity = alpha;
@@ -498,12 +541,13 @@ export class SwingTracer extends ex.Actor {
         };
     }
 
-    start(player: ex.Actor, startAngle: number, endAngle: number, duration: number, radius: number) {
+    start(player: ex.Actor, startAngle: number, endAngle: number, duration: number, radius: number, getOrigin: () => ex.Vector,) {
         this.player = player;
         this.startAngle = startAngle;
         this.endAngle = endAngle;
         this.duration = duration;
         this.radius = radius;
+        this.getOrigin = getOrigin;
         this.progress = 0;
         this.active = true;
     }

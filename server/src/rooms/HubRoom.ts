@@ -34,8 +34,6 @@ export class HubRoom extends Room<GameState> {
     if (data.weaponId) {
       player.weaponId = data.weaponId;
     }
-    // Server
-    console.log("server attackId", data.attackId);
   });
 
     this.onMessage("weapon_attack", (client, data) => {

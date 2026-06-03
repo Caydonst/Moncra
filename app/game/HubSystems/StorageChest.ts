@@ -1,27 +1,29 @@
-import type {Ammunition, Item, Weapon} from "@/app/game/items/ItemTypes";
+import type {Item, Weapon} from "@/app/game/items/ItemTypes";
 
 const ex = await import("excalibur");
-import {GameResources} from "./resources";
-import { Player } from "./player/player";
-import {Shadow} from "./utils/shadow";
-import {Coin} from "./coin";
+import {GameResources} from "../resources";
+import { Player } from "../player/player";
+import {Shadow} from "../utils/shadow";
+import {Coin} from "../coin";
 
 
 
-export class Chest extends ex.Actor {
+export class StorageChest extends ex.Actor {
     private player!: Player;
     private open: boolean = false;
     private chestAnim!: ex.Animation;
     private shadow!: Shadow;
     private engine!: ex.Engine;
     private animationDone = false;
+    private selectDistance = 140;
+    private slots: (Item | Weapon | null)[] = Array(36).fill(null);
 
-    constructor(pos: ex.Vector, private resources: GameResources, public items: (Item | Weapon | Ammunition | null)[]) {
+    constructor(pos: ex.Vector, private resources: GameResources) {
         super({
             pos: pos,
             anchor: ex.vec(0.5, 0.5),
-            height: resources.Images.chest.height * 3,
-            width: resources.Images.chest.width * 3,
+            height: resources.Images.storageChest.height * 6,
+            width: resources.Images.storageChest.width * 6,
             collisionType: ex.CollisionType.Fixed,
             z: 2,
         })
@@ -30,13 +32,13 @@ export class Chest extends ex.Actor {
     onInitialize(engine: ex.Engine) {
         this.engine = engine;
 
-        const chestSprite = this.resources.Images.chest.toSprite();
+        const chestSprite = this.resources.Images.storageChest.toSprite();
         chestSprite.width = this.width;
         chestSprite.height = this.height;
-        const chestSelectedSprite = this.resources.Images.chestSelected.toSprite();
-        chestSelectedSprite.width = this.resources.Images.chestSelected.width * 3;
-        chestSelectedSprite.height = this.resources.Images.chestSelected.height * 3;
-        const chestOpenSprite = this.resources.Images.chestOpen.toSprite();
+        const chestSelectedSprite = this.resources.Images.storageChestSelected.toSprite();
+        chestSelectedSprite.width = this.resources.Images.storageChestSelected.width * 6;
+        chestSelectedSprite.height = this.resources.Images.storageChestSelected.height * 6;
+        const chestOpenSprite = this.resources.Images.storageChestOpen.toSprite();
         chestOpenSprite.width = this.width;
         chestOpenSprite.height = this.height;
 
@@ -70,11 +72,11 @@ export class Chest extends ex.Actor {
         engine.input.keyboard.on("press", (evt) => {
             if (evt.key === ex.Keys.F) {
                 if (this.open) {
-                    window.dispatchEvent(new Event("chest-closed"));
+                    window.dispatchEvent(new Event("storage-closed"));
                     this.open = false;
                     this.chestAnim.reset();
                 } else {
-                    if (this.pos.distance(this.player.pos) < 60) {
+                    if (this.pos.distance(this.player.pos) < this.selectDistance) {
                         this.openChest();
                     }
                 }
@@ -90,7 +92,7 @@ export class Chest extends ex.Actor {
         const dist = this.pos.distance(this.player.pos);
 
         if (!this.open) {
-            if (dist < 60) {
+            if (dist < this.selectDistance) {
                 this.graphics.use("selected");
             } else {
                 this.graphics.use("closed");
@@ -98,26 +100,26 @@ export class Chest extends ex.Actor {
             }
         }
 
-        if (dist > 200) {
+        if (dist > 220) {
             if (this.open) {
-                window.dispatchEvent(new Event("chest-closed"));
+                window.dispatchEvent(new Event("storage-closed"));
                 this.open = false;
             }
         }
 
         if (this.shadow) {
-            this.shadow.pos = this.pos.add(ex.vec(0, this.height/2));
+            this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2 - 10));
         }
     }
 
     openChest() {
-        this.graphics.use("openAnim");
+        this.graphics.use("open");
         this.open = true;
         window.dispatchEvent(
-            new CustomEvent("chest-opened", {
+            new CustomEvent("storage-opened", {
                 detail: {
-                    items: this.items,
-                    chest: this,
+                    items: this.slots,
+                    storage: this,
                 },
             })
         );
@@ -128,15 +130,17 @@ export class Chest extends ex.Actor {
             this.engine.currentScene.add(coin);
         }
     }
-    removeItem(index: number) {
-        this.items[index] = null;
+    addItem(item: Item | Weapon): boolean {
 
-        window.dispatchEvent(
-            new CustomEvent("chest-items-updated", {
-                detail: {
-                    items: [...this.items],
-                },
-            })
-        );
+        const slot = this.slots.indexOf(null);
+        this.slots[slot] = item;
+        return true;
+    }
+    removeItem(item: Item | Weapon) {
+        const slotIndex = this.slots.findIndex(m => m?.id === item.id);
+        if (slotIndex !== -1) this.slots[slotIndex] = null;
+    }
+    getItems() {
+        return this.slots;
     }
 }
