@@ -13,7 +13,7 @@ import { Bow } from '../weapons/bow';
 import { WarHammer } from '../weapons/warhammer';
 import { Chest } from "../chest"
 import warHammer from "../assets/weapons/war_hammer/anime_war_hammer.png";
-import greatSword from "../assets/weapons/great_sword/anime_sword.png";
+import greatSword from "../assets/weapons/great_sword/cataclysm.png";
 import greatSword1 from "../assets/weapons/great_sword/obsidian_sword.png";
 import SNSImg from "../assets/weapons/sword_and_shield/crystal_sns.png";
 import bow from "../assets/weapons/bow/bow.png";
@@ -37,6 +37,7 @@ import { multiplayer } from "../network/multiplayer";
 import { StorageChest } from "../HubSystems/StorageChest";
 import { Blacksmith } from "../HubSystems/blacksmith";
 import obsidianArmorImg from "../assets/armor/obsidian_armor.png"
+import { CriticalHit, ChainLightning } from "@/app/game/enchantments/enchantments";
 
 type Maps = {
     layer1: number[][];
@@ -165,7 +166,7 @@ export class HubScene extends ex.Scene {
 
             const GreatSword1: Weapon = {
                 id: "great_sword1",
-                name: "Dark Sword of the Ruins",
+                name: "Cataclysm",
                 type: "Great Sword",
                 icon: greatSword.src,
                 rarity: "exalted",
@@ -174,6 +175,7 @@ export class HubScene extends ex.Scene {
                     power: 130,
                     damage: 40,
                 },
+                enchantments: [CriticalHit, ChainLightning],
                 createWeapon: () => new GreatSword(
                     this.player,
                     engine,
@@ -182,6 +184,7 @@ export class HubScene extends ex.Scene {
                     GreatSword1.stats.damage,
                     this.resources.Images.greatSword,
                     true,
+                    GreatSword1,
                 ),
             };
 

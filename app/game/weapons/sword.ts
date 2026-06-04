@@ -7,6 +7,8 @@ import { Outline, EnchantEffect, EnchantedGlowEffect } from "../utils/swordOutli
 import {DemonBoss} from "../enemies/bosses/DemonBoss";
 import { GameScene } from '../scenes/GameScene';
 import { multiplayer } from '../network/multiplayer';
+import { damageEnemy } from '../combat/CombatSystem';
+import { Weapon } from '../items/ItemTypes';
 
 type AttackType = "slash" | "thrust";
 
@@ -131,6 +133,7 @@ export class GreatSword extends ex.Actor {
         private damage: number,
         private image: ex.ImageSource,
         private glow: boolean,
+        private weaponItem: Weapon,
     ) {
         super({
             pos: player.pos.clone(),
@@ -432,7 +435,8 @@ export class GreatSword extends ex.Actor {
         this.swingHitSet.add(target);
         //this.engine.currentScene.camera.shake(8, 8, 60);
         
-        target.takeDamage(this.damage * this.currentAttack.damageMultiplier);
+        //target.takeDamage(this.damage * this.currentAttack.damageMultiplier);
+        damageEnemy(this.player, target, this.weaponItem, this.scene as GameScene);
     }
 
 
@@ -592,7 +596,7 @@ export class ThrustTracer extends ex.Actor {
             const dir = localEnd.sub(localStart).normalize();
             const perp = ex.vec(-dir.y, dir.x);
 
-            const offset = 20;
+            const offset = 10;
 
             const shiftedStart = localStart.add(
                 dir.scale(offset)

@@ -12,6 +12,7 @@ import { Demon } from "../enemies/demon";
 export class DungeonScene extends ex.Scene {
   private currentFloorIndex: number = 1;
   private currentFloor!: Floor | null;
+  public currentEnemies: any;
   private numFloors = 5;
     private worldBounds!: {
       width: number;
@@ -87,7 +88,7 @@ export class DungeonScene extends ex.Scene {
       camera.pos = ex.vec(clampedX, clampedY);
 
       if (this.currentFloor?.portal.interacted) {
-        if (this.currentFloorIndex === 5) {
+        if (this.currentFloorIndex >= this.numFloors) {
           engine.goToScene("hub");
         }
 
@@ -107,6 +108,8 @@ export class DungeonScene extends ex.Scene {
     this.player.pos = tileToWorld(this.currentFloor?.tileLayer.playerSpawn.x, this.currentFloor?.tileLayer.playerSpawn.y);
 
     this.currentFloorIndex++;
+
+    this.currentEnemies = this.currentFloor?.enemies;
 
     console.log("Dungeon Loaded");
   }
@@ -135,23 +138,29 @@ class Floor {
   public tileMap!: ex.TileMap;
   public numEnemies = 30;
 
+  private isDrawn = false;
+
   constructor() {
 
   }
 
   draw(scene: ex.Scene) {
     scene.add(this.tileMap);
-    this.chests.forEach(chest => scene.add(chest))
+    this.chests.forEach(chest => scene.add(chest));
     scene.add(this.portal);
-    this.enemies.forEach(enemy => scene.add(enemy))
+    this.enemies.forEach(enemy => scene.add(enemy));
+
+    this.isDrawn = true;
   }
 
   kill() {
     this.tileMap?.kill();
 
     this.chests.forEach(chest => chest.kill());
-    this.enemies.forEach(enemy => enemy.kill());
+    this.enemies.forEach(enemy => enemy.destroyEnemy());
     this.portal?.kill();
+
+    this.isDrawn = false;
   }
 }
 
@@ -222,7 +231,6 @@ function randomInt(min: number, max: number) {
 }
 
 function getRandomEnemySpawn(generatedMap: any) {
-    let playerSpawn = true;
     let room;
     let  isPlayerSpawnRoom = true;
 

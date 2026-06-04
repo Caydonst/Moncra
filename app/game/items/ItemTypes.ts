@@ -4,6 +4,7 @@ import {GreatSword} from "../weapons/sword"
 import {Player} from "../player/player"
 export type ItemSlot = "weapon" | "armor" | "misc";
 import * as ex from 'excalibur'
+import type { Enchantment } from "../enchantments/enchantments"
 
 export type Item = {
     id: string;
@@ -34,6 +35,7 @@ export type Weapon = {
     rarity: "tempered" | "runed" | "exalted" | "ascendant" | "mythic" | "relic";
     attackStyle: "Ranged" | "Melee"
     stats?: any;
+    enchantments?: Enchantment[]
     weapon?: Bow;
 
     createWeapon?: () => ex.Actor & {

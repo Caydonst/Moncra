@@ -68,7 +68,6 @@
     justify-content: start;
     align-items: center;
     height: 100%;
-    gap: 20px;
     position: relative
 }
 .inventory {
@@ -487,7 +486,6 @@
 }
 @media (max-width: 1400px) {
     .itemIconContainer {
-        top: 180px;
         right: 30px;
     }
 }

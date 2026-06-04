@@ -22,8 +22,8 @@ type Props = {
     inventory: Inventory | null;
     itemPanelOpen: boolean;
     setItemPanelOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    selectedItem: Item | Weapon | null;
-    setSelectedItem: React.Dispatch<React.SetStateAction<Item | Weapon | Ammunition | null>>;
+    selectedItem: Weapon | Armor | null;
+    setSelectedItem: React.Dispatch<React.SetStateAction<Weapon | Armor | null>>;
     engine: ex.Engine | null;
 }
 
@@ -256,8 +256,8 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                             </>
                         )}
                     </div>
-                    <div className={styles.itemInfoContainer}>
-                        {selectedItem && (
+                    {selectedItem && (
+                        <div className={styles.itemInfoContainer}>
                         <div className={styles.nameContainer}>
                             <div className={styles.header}>
                                 <p><img src={powerIconImg.src}/> {selectedItem.stats.power}</p>
@@ -286,7 +286,23 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                 )}
                             </div>
                         </div>
-                        )}
+                        
+                        <div className={styles.enchantmentsContainer}>
+                            <p>Enchantments</p>
+                            {selectedItem.enchantments ? (
+                                <div className={styles.enchantments}>
+                                    {selectedItem.enchantments.map(enchantment => (
+                                        <div key={enchantment.id} className={styles.enchantment}>
+                                            <div className={styles.enchantmentIconContainer}></div>
+                                            <p className={styles.enchantmentName}>{enchantment.name}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p>None</p>
+                            )}
+                            
+                        </div>
                         <div className={styles.itemDescContainer}>
                             <div id="item-info-text">
                                 <h1 id="item-info-name"></h1>
@@ -294,7 +310,7 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                             </div>
                             <p id="item-info-description"></p>
                             <div id="item-info-stats"></div>
-                            {selectedItem && equippableItems.includes(selectedItem.type) && (
+                            {equippableItems.includes(selectedItem.type) && (
                                 <div id="button-container" className={styles.equipBtnContainer}>
                                     {selectedItem !== inventory?.weapon && selectedItem !== inventory?.armor ? (
                                         <button id="equip-btn" className={styles.equipBtn} onClick={() => {
@@ -315,6 +331,7 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                             )}
                         </div>
                     </div>
+                    )}
                 </div>
             </div>
         </div>

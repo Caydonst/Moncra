@@ -136,8 +136,7 @@ export class Demon extends ex.Actor {
 
         // When misc finishes, clean up once
         if (this.miscAnim.done) {
-            this.kill();
-            this.shadow.kill();
+            this.destroyEnemy();
             return;
         }
 
@@ -193,7 +192,7 @@ export class Demon extends ex.Actor {
         this.hpBar.setHP(this.hp);
 
         if (this.hp <= 0) {
-            this.handleDeath();
+            this.killEnemy();
             return;
         }
 
@@ -225,12 +224,19 @@ export class Demon extends ex.Actor {
         revertTimer.start();
 
     }
-    handleDeath() {
-        this.body.collisionType = ex.CollisionType.PreventCollision;
-        this.collider.clear();
-        this.hpBar.kill();
+    killEnemy() {
+        if (this.isDead) return;
+
         this.vel = ex.vec(0, 0);
+        this.collider.clear();
+        this.hpBar?.kill();
+
         this.isDead = true;
+    }
+    destroyEnemy() {
+        this.hpBar?.kill();
+        this.shadow?.kill();
+        this.kill();
     }
     onCollisionStart(_self: ex.Collider, other: ex.Collider) {
         if (other.owner instanceof Player) {

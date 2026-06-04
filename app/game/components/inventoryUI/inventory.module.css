@@ -54,7 +54,7 @@
     transform: translateY(100%);
     transition: 0.2s;
     overflow: hidden;
-    gap: 50px;
+    gap: 30px;
     padding: 80px 0;
 }
 .wrapperh3 {
@@ -325,9 +325,9 @@
 .itemIconContainer {
     position: absolute;
     top: 40px;
-    right: 100px;
+    right: 150px;
     width: 180px;
-    height: 400px;
+    height: 360px;
     min-width: 100px;
     min-height: 100px;
     transform: rotate(30deg);
@@ -377,8 +377,8 @@
     justify-content: center;
     align-items: start;
     flex-direction: column;
-    background: transparent;
     z-index: 2;
+    gap: 180px;
 }
 .nameContainer {
     display: flex;
@@ -461,6 +461,49 @@
 }
 .hpIcon {
     width: 16px;
+    transform: rotate(45deg);
+}
+.enchantmentsContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    gap: 30px;
+}
+.enchantmentsContainer p:first-child {
+    font-size: 12px;
+}
+.enchantments {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap: 60px;
+}
+.enchantment {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    gap: 30px;
+    height: 100%;
+    max-height: 400px;
+    width: 80px;
+}
+.enchantmentName {
+    font-size: 10px;
+}
+.enchantmentIconContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    aspect-ratio: 1;
+    border: 3px solid gray;
+    background: #141414;
+    text-align: center;
     transform: rotate(45deg);
 }
 .itemDescContainer {
@@ -560,6 +603,14 @@
 @media (max-width: 1300px) {
     .nameContainer h3 {
         max-width: 150px;
+    }
+}
+@media (max-width: 1200px) {
+    .enchantments {
+        gap: 40px;
+    }
+    .enchantment {
+        width: 60px;
     }
 }
 @media (max-width: 1140px) {

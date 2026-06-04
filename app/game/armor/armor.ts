@@ -1,6 +1,7 @@
 // armor.ts
 
 import * as ex from "excalibur";
+import { Enchantment } from "../enchantments/enchantments";
 
 type Stats = {
     hp: number,
@@ -16,6 +17,7 @@ export class Armor {
     public type: string;
     public rarity: string;
     public stats: Stats;
+    public enchantments?: Enchantment[]
 
     constructor({
         id,
