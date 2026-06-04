@@ -1,10 +1,10 @@
 @font-face {
     font-family: "PixelFont";
-    src: url("/fonts/Pixeled.TTF") format("truetype");
+    src: url("/fonts/Pixeled.ttf") format("truetype");
 }
 @font-face {
     font-family: "BoxFont";
-    src: url("/fonts/FFFForward.ttf") format("truetype");
+    src: url("/fonts/FFFForward.TTF") format("truetype");
 }
 
 html,
