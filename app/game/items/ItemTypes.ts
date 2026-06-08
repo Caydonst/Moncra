@@ -14,6 +14,7 @@ export type Item = {
     rarity: "tempered" | "runed" | "exalted" | "ascendant" | "mythic" | "relic";
     attackStyle: "Ranged" | "Melee"
     stats?: any;
+    level?: number;
     weapon?: GreatSword | WarHammer | Bow;
 
     createWeapon?: () => ex.Actor & {
@@ -35,6 +36,7 @@ export type Weapon = {
     rarity: "tempered" | "runed" | "exalted" | "ascendant" | "mythic" | "relic";
     attackStyle: "Ranged" | "Melee"
     stats?: any;
+    level?: number;
     enchantments?: Enchantment[]
     weapon?: Bow;
 

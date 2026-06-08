@@ -1,12 +1,10 @@
 import { Inventory } from "../../inventory/inventory";
 import styles from "./blacksmith.module.css"
-import allIcon from "@/app/game/assets/icons/all_icon.png"
-import weaponIcon from "@/app/game/assets/icons/weapon_icon.png"
-import armorIcon from "@/app/game/assets/icons/armor_icon.png"
-import allIconSelected from "@/app/game/assets/icons/all_icon_selected.png"
-import weaponIconSelected from "@/app/game/assets/icons/weapon_icon_selected.png"
-import armorIconSelected from "@/app/game/assets/icons/armor_icon_selected.png"
+
 import { useState } from "react";
+import { Item, Weapon } from "../../items/ItemTypes";
+import Evolving from "./evolving"
+import Upgrading from "./upgrading";
 
 type Props = {
     blacksmithOpen: boolean;
@@ -41,65 +39,38 @@ const colors = {
 }
 
 export default function BlacksmithUI({ blacksmithOpen, inventory }: Props) {
-    const [selectedFilter, setSelectedFilter] = useState("all");
-    const [hoveredFilter, setHoveredFilter] = useState<string | null>(null);
+    const [selectedItem, setSelectedItem] = useState(-1);
+    const [itemPanelOpen, setItemPanelOpen] = useState(false);
+    const [miscItems, setMiscItems] = useState<(Item | Weapon | null)[]>(
+        inventory?.misc ?? Array(24).fill(null)
+    );
+    const [inventorySelected, setInventorySelected] = useState<number>(-1);
+    const [storageSelected, setStorageSelected] = useState<number>(-1);
+
+    const [inventoryFilter, setInventoryFilter] = useState("all");
+    const [storageFilter, setStorageFilter] = useState("all");
+
+    const [hoveredInventoryFilter, setHoveredInventoryFilter] = useState<string | null>(null);
+    const [hoveredStorageFilter, setHoveredStorageFilter] = useState<string | null>(null);
+
+    const [selectedFilter, setSelectedFilter] = useState("crafting");
 
     return (
         <div className={`${styles.blacksmithWrapper} ${blacksmithOpen ? styles.open : ""}`}>
             <div className={`${styles.blacksmithContainer} ${blacksmithOpen ? styles.open : ""}`}>
                 <div className={styles.blacksmithInner}>
-                    <div className={styles.inventory}>
-                        <h3>INVENTORY</h3>
-                        <div className={styles.itemFilterContainer}>
-                            <button 
-                                onClick={() => setSelectedFilter("all")} className={`${styles.filterBtn} ${selectedFilter === "all" ? styles.selected : ""}`}
-                                onMouseEnter={() => setHoveredFilter("all")}
-                                onMouseLeave={() => setHoveredFilter(null)}
-                            >
-                                All<img src={
-                                    selectedFilter === "all" || hoveredFilter === "all"
-                                            ? allIconSelected.src
-                                            : allIcon.src
-                                        } 
-                                    />
-                            </button>
-                            <button 
-                                onClick={() => setSelectedFilter("weapons")} className={`${styles.filterBtn} ${selectedFilter === "weapons" ? styles.selected : ""}`}
-                                onMouseEnter={() => setHoveredFilter("weapons")}
-                                onMouseLeave={() => setHoveredFilter(null)}
-                            >
-                                Weapons<img src={
-                                    selectedFilter === "weapons" || hoveredFilter === "weapons"
-                                            ? weaponIconSelected.src
-                                            : weaponIcon.src
-                                        } 
-                                    />
-                            </button>
-                            <button 
-                                onClick={() => setSelectedFilter("armor")} className={`${styles.filterBtn} ${selectedFilter === "armor" ? styles.selected : ""}`}
-                                onMouseEnter={() => setHoveredFilter("armor")}
-                                onMouseLeave={() => setHoveredFilter(null)}
-                            >
-                                Armor<img src={
-                                    selectedFilter === "armor" || hoveredFilter === "armor"
-                                            ? armorIconSelected.src
-                                            : armorIcon.src
-                                        } 
-                                    />
-                            </button>
-                        </div>
-                        <div className={styles.inventoryInner}>
-                            <div id="misc-grid" className={styles.miscGrid}>
-                                {inventory?.misc.map((slot, i) => (
-                                    <div key={i} id={`misc-slot-${i}`} className={`${styles.slot} ${slot ? styles[slot.rarity] : ""}`}>
-                                        {slot && <img src={slot.icon} className={styles.slotImg} />}
-
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                    <div className={styles.buttonsContainer}>
+                        <button className={selectedFilter === "crafting" ? styles.selectedFilter : ""} onClick={() => setSelectedFilter("crafting")}>Crafting</button>
+                        <button className={selectedFilter === "upgrading" ? styles.selectedFilter : ""} onClick={() => setSelectedFilter("upgrading")}>Upgrading</button>
+                        <button className={selectedFilter === "evolving" ? styles.selectedFilter : ""} onClick={() => setSelectedFilter("evolving")}>Evolving</button>
                     </div>
-                    <div className={styles.upgradeContainer}></div>
+                    {selectedFilter === "upgrading" && (
+                        <Upgrading blacksmithOpen={blacksmithOpen} inventory={inventory}  />
+                    )}
+                    {selectedFilter === "evolving" && (
+                        <Evolving blacksmithOpen={blacksmithOpen} inventory={inventory}  />
+                    )}
+                    
                 </div>
             </div>
         </div>

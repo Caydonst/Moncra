@@ -228,7 +228,12 @@ export default function StorageUI({ storageOpen, inventory, storage }: Props) {
                                             setInventorySelected(-1);
                                         }}
                                     >
-                                        {slot && <img src={slot.icon} className={styles.slotImg} />}
+                                        {slot?.icon && (
+                                            <img src={slot.icon} className={styles.slotImg} />
+                                        )}
+                                        {slot?.level !== undefined && (
+                                            <p className={styles.weaponLevel} style={{ color: `${slot?.level === 10 ? "#FFE500" : "#fff"}` }}>+{slot?.level}</p>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -301,7 +306,12 @@ export default function StorageUI({ storageOpen, inventory, storage }: Props) {
                                             setStorageSelected(-1);
                                         }}
                                     >
-                                        {slot && <img src={slot.icon} className={styles.slotImg} />}
+                                        {slot?.icon && (
+                                            <img src={slot.icon} className={styles.slotImg} />
+                                        )}
+                                        {slot?.level !== undefined && (
+                                            <p className={styles.weaponLevel} style={{ color: `${slot?.level === 10 ? "#FFE500" : "#fff"}` }}>+{slot?.level}</p>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -332,6 +342,11 @@ export default function StorageUI({ storageOpen, inventory, storage }: Props) {
                                         <p className={styles.attackStyleName}>{selectedItem.attackStyle}</p>
                                     )}
                                 </div>
+                                {selectedItem?.level !== undefined && (
+                                    <>
+                                        <p className={styles.selectedWeaponLevel} style={{ color: `${selectedItem?.level === 10 ? "#FFE500" : "#fff"}` }}>Level +{selectedItem?.level}</p>
+                                    </>
+                                )}
                                 <div className={styles.itemStatsContainer}>
                                     {selectedItem.stats.damage && (
                                         <div className={styles.statContainer}>

@@ -236,7 +236,7 @@ export class EnchantedGlowEffect {
             float spriteMask = smoothstep(0.01, 0.8, base.a);
             float glowMask = glow * (1.0 - spriteMask);
 
-            vec3 glowColor = vec3(1.0, 0.698, 0.0);
+            vec3 glowColor = vec3(1.0, 1.0, 1.0);
             float glowAlpha = 0.7;
 
             vec4 glowLayer = vec4(glowColor, glowAlpha * glowMask);

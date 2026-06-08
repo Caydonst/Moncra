@@ -13,8 +13,18 @@ import { Bow } from '../weapons/bow';
 import { WarHammer } from '../weapons/warhammer';
 import { Chest } from "../chest"
 import warHammer from "../assets/weapons/war_hammer/anime_war_hammer.png";
-import greatSword from "../assets/weapons/great_sword/cataclysm.png";
-import greatSword1 from "../assets/weapons/great_sword/obsidian_sword.png";
+import greatSword from "../assets/weapons/great_sword/vampire_sword.png";
+import greatSword1 from "../assets/weapons/great_sword/ruby_sword.png";
+import greatSword2 from "../assets/weapons/great_sword/diamond_sword.png";
+import greatSword3 from "../assets/weapons/great_sword/iron_sword.png";
+import greatSword4 from "../assets/weapons/great_sword/gold_sword.png";
+import greatSword5 from "../assets/weapons/great_sword/emerald_sword.png";
+import greatSword6 from "../assets/weapons/great_sword/cataclysm2.png";
+import greatSword7 from "../assets/weapons/great_sword/oblivion2.png";
+import greatSword8 from "../assets/weapons/great_sword/ascension.png";
+import greatSword9 from "../assets/weapons/great_sword/verdict.png";
+import greatSword10 from "../assets/weapons/great_sword/tidal.png";
+import greatSword11 from "../assets/weapons/great_sword/starfall.png";
 import SNSImg from "../assets/weapons/sword_and_shield/crystal_sns.png";
 import bow from "../assets/weapons/bow/bow.png";
 import { Inventory } from "../inventory/inventory";
@@ -166,7 +176,7 @@ export class HubScene extends ex.Scene {
 
             const GreatSword1: Weapon = {
                 id: "great_sword1",
-                name: "Cataclysm",
+                name: "Sword",
                 type: "Great Sword",
                 icon: greatSword.src,
                 rarity: "exalted",
@@ -175,6 +185,7 @@ export class HubScene extends ex.Scene {
                     power: 130,
                     damage: 40,
                 },
+                level: 0,
                 enchantments: [CriticalHit, ChainLightning],
                 createWeapon: () => new GreatSword(
                     this.player,
@@ -194,29 +205,31 @@ export class HubScene extends ex.Scene {
                 id: "great_sword2",
                 name: "Sword",
                 type: "Great Sword",
-                icon: greatSword1.src,
+                icon: greatSword2.src,
                 rarity: "tempered",
                 attackStyle: "Melee",
                 stats: {
                     power: 30,
                     damage: 20,
                 },
+                level: 0,
                 createWeapon: () => new GreatSword(
                     this.player,
                     engine,
                     this.resources,
                     this.collisionGroups,
                     GreatSword2.stats.damage,
-                    this.resources.Images.greatSword1,
+                    this.resources.Images.greatSword2,
                     false,
+                    GreatSword2,
                 ),
             };
 
             this.gameState.inventory.addItem(GreatSword2);
 
-            const ObsidianSword: Weapon = {
+            const GreatSword3: Weapon = {
                 id: "obsidian_sword",
-                name: "Obsidian Sword",
+                name: "Excalibur",
                 type: "Great Sword",
                 icon: greatSword1.src,
                 rarity: "exalted",
@@ -225,6 +238,8 @@ export class HubScene extends ex.Scene {
                     power: 130,
                     damage: 40,
                 },
+                level: 0,
+                enchantments: [CriticalHit, ChainLightning],
                 createWeapon: () => new GreatSword(
                     this.player,
                     engine,
@@ -233,34 +248,254 @@ export class HubScene extends ex.Scene {
                     GreatSword2.stats.damage,
                     this.resources.Images.greatSword1,
                     false,
+                    GreatSword3,
                 ),
             };
 
-            this.gameState.inventory.addItem(ObsidianSword);
+            this.gameState.inventory.addItem(GreatSword3);
 
-            const Bow1: Weapon = {
-                id: "bow1",
-                name: "Runed Bow",
-                type: "Bow",
-                icon: bow.src,
-                rarity: "relic",
-                attackStyle: "Ranged",
+            const GreatSword4: Weapon = {
+                id: "great_sword4",
+                name: "Sword",
+                type: "Great Sword",
+                icon: greatSword3.src,
+                rarity: "exalted",
+                attackStyle: "Melee",
                 stats: {
-                    power: 90,
-                    damage: 30,
+                    power: 130,
+                    damage: 40,
                 },
-                createWeapon: () => new Bow(
+                level: 0,
+                enchantments: [CriticalHit, ChainLightning],
+                createWeapon: () => new GreatSword(
                     this.player,
                     engine,
-                    ex.vec(7, 0),
                     this.resources,
                     this.collisionGroups,
-                    this.resources.Images.bow,
-                    Bow1.stats.damage
+                    GreatSword2.stats.damage,
+                    this.resources.Images.greatSword3,
+                    false,
+                    GreatSword4,
                 ),
             };
 
-            this.gameState.inventory.addItem(Bow1);
+            this.gameState.inventory.addItem(GreatSword4);
+
+            const GreatSword5: Weapon = {
+                id: "great_sword5",
+                name: "Sword",
+                type: "Great Sword",
+                icon: greatSword4.src,
+                rarity: "exalted",
+                attackStyle: "Melee",
+                stats: {
+                    power: 130,
+                    damage: 40,
+                },
+                level: 0,
+                enchantments: [CriticalHit, ChainLightning],
+                createWeapon: () => new GreatSword(
+                    this.player,
+                    engine,
+                    this.resources,
+                    this.collisionGroups,
+                    GreatSword2.stats.damage,
+                    this.resources.Images.greatSword4,
+                    false,
+                    GreatSword5,
+                ),
+            };
+
+            this.gameState.inventory.addItem(GreatSword5);
+
+            const GreatSword6: Weapon = {
+                id: "great_sword6",
+                name: "Sword",
+                type: "Great Sword",
+                icon: greatSword5.src,
+                rarity: "exalted",
+                attackStyle: "Melee",
+                stats: {
+                    power: 130,
+                    damage: 40,
+                },
+                level: 0,
+                enchantments: [CriticalHit, ChainLightning],
+                createWeapon: () => new GreatSword(
+                    this.player,
+                    engine,
+                    this.resources,
+                    this.collisionGroups,
+                    GreatSword2.stats.damage,
+                    this.resources.Images.greatSword5,
+                    false,
+                    GreatSword6,
+                ),
+            };
+
+            this.gameState.inventory.addItem(GreatSword6);
+
+            const GreatSword7: Weapon = {
+                id: "great_sword7",
+                name: "Cataclysm",
+                type: "Great Sword",
+                icon: greatSword6.src,
+                rarity: "exalted",
+                attackStyle: "Melee",
+                stats: {
+                    power: 130,
+                    damage: 40,
+                },
+                level: 0,
+                enchantments: [CriticalHit, ChainLightning],
+                createWeapon: () => new GreatSword(
+                    this.player,
+                    engine,
+                    this.resources,
+                    this.collisionGroups,
+                    GreatSword2.stats.damage,
+                    this.resources.Images.greatSword6,
+                    false,
+                    GreatSword7,
+                ),
+            };
+
+            this.gameState.inventory.addItem(GreatSword7);
+
+            const GreatSword8: Weapon = {
+                id: "great_sword8",
+                name: "Oblivion",
+                type: "Great Sword",
+                icon: greatSword7.src,
+                rarity: "exalted",
+                attackStyle: "Melee",
+                stats: {
+                    power: 130,
+                    damage: 40,
+                },
+                level: 0,
+                enchantments: [CriticalHit, ChainLightning],
+                createWeapon: () => new GreatSword(
+                    this.player,
+                    engine,
+                    this.resources,
+                    this.collisionGroups,
+                    GreatSword2.stats.damage,
+                    this.resources.Images.greatSword7,
+                    false,
+                    GreatSword7,
+                ),
+            };
+
+            this.gameState.inventory.addItem(GreatSword8);
+
+            const GreatSword9: Weapon = {
+                id: "great_sword9",
+                name: "Ascension",
+                type: "Great Sword",
+                icon: greatSword8.src,
+                rarity: "exalted",
+                attackStyle: "Melee",
+                stats: {
+                    power: 130,
+                    damage: 40,
+                },
+                level: 0,
+                enchantments: [CriticalHit, ChainLightning],
+                createWeapon: () => new GreatSword(
+                    this.player,
+                    engine,
+                    this.resources,
+                    this.collisionGroups,
+                    GreatSword2.stats.damage,
+                    this.resources.Images.greatSword8,
+                    false,
+                    GreatSword7,
+                ),
+            };
+
+            this.gameState.inventory.addItem(GreatSword9);
+
+            const GreatSword10: Weapon = {
+                id: "great_sword10",
+                name: "Verdict",
+                type: "Great Sword",
+                icon: greatSword9.src,
+                rarity: "exalted",
+                attackStyle: "Melee",
+                level: 4,
+                stats: {
+                    power: 130,
+                    damage: 40,
+                },
+                enchantments: [CriticalHit, ChainLightning],
+                createWeapon: () => new GreatSword(
+                    this.player,
+                    engine,
+                    this.resources,
+                    this.collisionGroups,
+                    GreatSword2.stats.damage,
+                    this.resources.Images.greatSword9,
+                    false,
+                    GreatSword7,
+                ),
+            };
+
+            this.gameState.inventory.addItem(GreatSword10);
+
+            const GreatSword11: Weapon = {
+                id: "great_sword11",
+                name: "Tidal",
+                type: "Great Sword",
+                icon: greatSword10.src,
+                rarity: "exalted",
+                attackStyle: "Melee",
+                stats: {
+                    power: 130,
+                    damage: 40,
+                },
+                level: 7,
+                enchantments: [CriticalHit, ChainLightning],
+                createWeapon: () => new GreatSword(
+                    this.player,
+                    engine,
+                    this.resources,
+                    this.collisionGroups,
+                    GreatSword2.stats.damage,
+                    this.resources.Images.greatSword10,
+                    false,
+                    GreatSword7,
+                ),
+            };
+
+            this.gameState.inventory.addItem(GreatSword11);
+
+            const GreatSword12: Weapon = {
+                id: "great_sword12",
+                name: "Starfall",
+                type: "Great Sword",
+                icon: greatSword11.src,
+                rarity: "exalted",
+                attackStyle: "Melee",
+                stats: {
+                    power: 130,
+                    damage: 40,
+                },
+                level: 10,
+                enchantments: [CriticalHit, ChainLightning],
+                createWeapon: () => new GreatSword(
+                    this.player,
+                    engine,
+                    this.resources,
+                    this.collisionGroups,
+                    GreatSword2.stats.damage,
+                    this.resources.Images.greatSword11,
+                    false,
+                    GreatSword7,
+                ),
+            };
+
+            this.gameState.inventory.addItem(GreatSword12);
 
             const ObsidianArmor = new Armor({
                 id: "obsidian_armor",
@@ -273,13 +508,14 @@ export class HubScene extends ex.Scene {
                     hp: 50,
                     defense: 15,
                     power: 130,
-                }
+                },
+                level: 0,
             })
 
             this.gameState.inventory.addItem(ObsidianArmor);
 
             function getRandomItems() {
-                const itemsList = [GreatSword1, Bow1]
+                const itemsList = [GreatSword1]
                 const chestItems: (Item | Weapon | Ammunition | null)[] = Array(12).fill(null);
 
                 const randomFour = itemsList.sort(() => 0.5 - Math.random()).slice(0, 4);

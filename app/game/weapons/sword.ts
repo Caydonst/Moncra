@@ -138,8 +138,8 @@ export class GreatSword extends ex.Actor {
         super({
             pos: player.pos.clone(),
             anchor: ex.vec(0.5, 0.5), // exvec(0.5, 0.7)
-            width: image.width * 2.7,
-            height: image.height * 2.7,
+            width: image.width * 2.5,
+            height: image.height * 2.5,
             z: 4,
         });
 

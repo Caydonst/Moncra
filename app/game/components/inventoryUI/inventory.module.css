@@ -196,7 +196,7 @@
     position: relative;
     width: 100%;
     height: 120px;
-    padding: 14px 20px;
+    padding: 10px 20px;
     display: flex;
     justify-content: start;
     align-items: center;
@@ -247,10 +247,20 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 6px;
+    padding: 0;
     position: relative;
     background: #0A0A0A;
     
+}
+.weaponLevel {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 10px;
+    text-shadow: 2px 2px rgba(0, 0, 0, 0.3);
+}
+.selectedWeaponLevel {
+    font-size: 12px;
 }
 .slot.tempered,
 .weaponSlot.tempered {
@@ -291,12 +301,6 @@
     object-fit: contain;
     image-rendering: pixelated;
     filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
-}
-.slot p {
-    position: absolute;
-    bottom: 0;
-    right: 3px;
-    font-size: 8px;
 }
 .slot .magEmpty {
     color: #ff1414;
@@ -444,7 +448,7 @@
     justify-content: center;
     font-size: 12px;
     gap: 15px;
-    color: rgba(255, 255, 255, 0.6);
+    color: #fff;
     margin-top: 20px;
 }
 .statIconContainer {
@@ -594,7 +598,7 @@
         max-width: 250px;
     }
 }
-@media (max-width: 1400px) {
+@media (max-width: 1500px) {
     .itemIconContainer {
         right: 30px;
         width: 150px;

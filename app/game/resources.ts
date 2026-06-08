@@ -46,9 +46,20 @@ import miscDead11 from "./assets/enemies/misc/dead11.png";
 import Tilesheet from "./assets/map/spritesheet.png";
 // --- WEAPONS ---
 import arrowImage from './assets/projectiles/arrow.png';
-import warHammer from "./assets/weapons/war_hammer/anime_war_hammer.png";
-import greatSword from "./assets/weapons/great_sword/cataclysm.png";
-import greatSword1 from "./assets/weapons/great_sword/obsidian_sword.png";
+
+import greatSword from "./assets/weapons/great_sword/vampire_sword.png";
+import greatSword1 from "./assets/weapons/great_sword/ruby_sword.png";
+import greatSword2 from "./assets/weapons/great_sword/diamond_sword.png";
+import greatSword3 from "./assets/weapons/great_sword/iron_sword.png";
+import greatSword4 from "./assets/weapons/great_sword/gold_sword.png";
+import greatSword5 from "./assets/weapons/great_sword/emerald_sword.png";
+import greatSword6 from "./assets/weapons/great_sword/cataclysm2.png";
+import greatSword7 from "./assets/weapons/great_sword/oblivion2.png";
+import greatSword8 from "./assets/weapons/great_sword/ascension.png";
+import greatSword9 from "./assets/weapons/great_sword/verdict.png";
+import greatSword10 from "./assets/weapons/great_sword/tidal.png";
+import greatSword11 from "./assets/weapons/great_sword/starfall.png";
+
 import bow from "./assets/weapons/bow/bow.png";
 import spearImg from "./assets/weapons/spear_and_shield/spear1.png"
 import shieldImg from "./assets/weapons/spear_and_shield/shield1.png"
@@ -105,9 +116,18 @@ export async function createResources() {
         mapSpritesheetImage: new ex.ImageSource(mapSpritesheet64.src),
         arrow: new ex.ImageSource(arrowImage.src),
         tileSheet: new ex.ImageSource(Tilesheet.src),
-        warHammer: new ex.ImageSource(warHammer.src),
         greatSword: new ex.ImageSource(greatSword.src),
         greatSword1: new ex.ImageSource(greatSword1.src),
+        greatSword2: new ex.ImageSource(greatSword2.src),
+        greatSword3: new ex.ImageSource(greatSword3.src),
+        greatSword4: new ex.ImageSource(greatSword4.src),
+        greatSword5: new ex.ImageSource(greatSword5.src),
+        greatSword6: new ex.ImageSource(greatSword6.src),
+        greatSword7: new ex.ImageSource(greatSword7.src),
+        greatSword8: new ex.ImageSource(greatSword8.src),
+        greatSword9: new ex.ImageSource(greatSword9.src),
+        greatSword10: new ex.ImageSource(greatSword10.src),
+        greatSword11: new ex.ImageSource(greatSword11.src),
         bow: new ex.ImageSource(bow.src),
         bowSpritesheetImg: new ex.ImageSource(bowSpritesheetImg.src),
         spear: new ex.ImageSource(spearImg.src),

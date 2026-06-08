@@ -240,7 +240,12 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                         setSelected(realIndex + 2);
                                     }}
                                 >
-                                    {slot && <img src={slot.icon} className={styles.slotImg} />}
+                                    {slot?.icon && (
+                                        <img src={slot.icon} className={styles.slotImg} />
+                                    )}
+                                    {slot?.level !== undefined && (
+                                        <p className={styles.weaponLevel} style={{ color: `${slot?.level === 10 ? "#FFE500" : "#fff"}` }}>+{slot?.level}</p>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -271,6 +276,11 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                     <p className={styles.attackStyleName}>{selectedItem.attackStyle}</p>
                                 )}
                             </div>
+                            {selectedItem?.level !== undefined && (
+                                <>
+                                    <p className={styles.selectedWeaponLevel} style={{ color: `${selectedItem?.level === 10 ? "#FFE500" : "#fff"}` }}>Level +{selectedItem?.level}</p>
+                                </>
+                            )}
                             <div className={styles.itemStatsContainer}>
                                 {selectedItem.stats.damage && (
                                     <div className={styles.statContainer}>

@@ -36,8 +36,8 @@ export class WarHammer extends ex.Actor {
         super({
             pos: player.pos.clone().add(offset),
             anchor: ex.vec(0.5, 0.5),
-            width: resources.Images.warHammer.width * 2.8,
-            height: resources.Images.warHammer.height * 2.8,
+            //width: resources.Images.warHammer.width * 2.8,
+            //height: resources.Images.warHammer.height * 2.8,
             z: 4
         });
 
@@ -48,11 +48,11 @@ export class WarHammer extends ex.Actor {
     }
 
     onInitialize(engine: ex.Engine) {
-        const base = this.resources.Images.warHammer.toSprite();
-        base.width = this.width;
-        base.height = this.height;
+        //const base = this.resources.Images.warHammer.toSprite();
+        //base.width = this.width;
+        //base.height = this.height;
 
-        this.graphics.use(base);
+        //this.graphics.use(base);
 
         this.shadow = new Shadow(this);
         engine.currentScene.add(this.shadow);

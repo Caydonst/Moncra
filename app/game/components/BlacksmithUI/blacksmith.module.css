@@ -21,7 +21,7 @@
     align-items: center;
     transform: translateY(100%);
     transition: 0.2s;
-    background: linear-gradient(to bottom, #141414, #030303);
+    background: #080808;
 }
 .blacksmithContainer.open {
     transform: translateY(0);
@@ -31,33 +31,146 @@
     height: 100%;
     max-width: 1920px;
     display: flex;
+    justify-content: start;
+    align-items: center;
+    flex-direction: column;
+}
+.evolvingContainer {
+    width: 100%;
+    height: calc(100% - 60px);
+    display: flex;
     justify-content: center;
     align-items: center;
 }
+.selectedItemContainer {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 80px;
+    color: #fff;
+    position: relative;
+}
+.upgradingInfoContainer {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: #fff;
+    gap: 30px;
+    font-size: 24px;
+    text-shadow: 0 5px #000;
+}
+.itemIconContainer {
+    width: 250px;
+    height: 250px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+.itemIconContainer img {
+    height: 100%;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 30px rgba(0, 0, 0, 0.3));
+}
+.nameContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 10px;
+}
+.nameContainer p:nth-child(2) {
+    font-size: 16px;
+}
+.statsDisplayContainer {
+    display: flex;
+    justify-content: center;
+    align-items: start;
+    width: 100%;
+    gap: 100px;
+}
+.currentLevelContainer,
+.nextLevelContainer {
+    display: flex;
+    justify-content: center;
+    align-items: start;
+    flex-direction: column;
+    gap: 40px;
+}
+.level {
+    font-size: 18px;
+}
+.stats {
+    font-size: 12px;
+}
+.damageIncreaseContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+}
+.damageIncreaseContainer p:nth-child(2) {
+    color: #05ff8f;
+}
+.bgLight {
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    filter: blur(100px);
+    background: #000;
+    z-index: -1;
+}
+.bgLight.tempered {
+    background: #fff;
+}
+.bgLight.runed {
+    background: #0094FF;
+}
+.bgLight.epic {
+    background: #B200FF;
+}
+.bgLight.legendary {
+    background: #FFAA00;
+}
+.bgLight.artifact {
+    background: #00FFF6;
+}
 .inventory {
-    width: 30%;
     display: flex;
     flex-direction: column;
     justify-content: start;
     align-items: center;
+    width: 30%;
     height: 100%;
-    padding: 50px 80px 0 80px;
-    gap: 20px;
-    border-right: 3px solid rgba(255, 255, 255, 0.1)
+    position: relative;
+    padding: 30px;
 }
 .inventory h3,
 .storage h3 {
-    font-size: 20px;
+    font-size: 16px;
     letter-spacing: 3px;
     color: #fff;
     text-shadow: 2px 2px #000;
     font-weight: 300;
+    align-self: start;
+    margin-bottom: 20px;
 }
 .itemFilterContainer {
     width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
+    
 }
 .filterBtn {
     display: flex;
@@ -71,10 +184,9 @@
     height: 60px;
     padding-bottom: 15px;
     position: relative;
-    color: #626262;
+    color: transparent;
     gap: 8px;
     font-size: 8px;
-    color: transparent;
 }
 .filterBtn img {
     width: 20px;
@@ -82,10 +194,10 @@
 .filterBtn:hover img {
     color: #fff;
 }
-.filterBtn.selected {
+.filterBtn.filterSelected {
     color: #fff;
 }
-.filterBtn.selected::after {
+.filterBtn.filterSelected::after {
     content: "";
     position: absolute;
     bottom: 0;
@@ -93,6 +205,15 @@
     width: 100%;
     height: 2px;
     background: #fff;
+}
+.bottomShadowContainer {
+    position: absolute;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(to top, #080808, transparent);
+    z-index: 5;
 }
 .inventoryInner {
     display: flex;
@@ -134,7 +255,7 @@
     );
     gap: 16px;
     width: 100%;
-    padding: 0 16px 16px 0;
+    padding: 30px 30px 30px 3px;
 }
 .slot {
     aspect-ratio: 1 / 1;
@@ -145,6 +266,19 @@
     padding: 6px;
     position: relative;
     background: #0A0A0A;
+}
+.selected {
+    outline: 3px solid #fff;
+}
+.weaponLevel {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 10px;
+    text-shadow: 2px 2px rgba(0, 0, 0, 0.3);
+}
+.selectedWeaponLevel {
+    font-size: 12px;
 }
 .slot.tempered,
 .weaponSlot.tempered {
@@ -186,11 +320,39 @@
     image-rendering: pixelated;
     filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
 }
-.upgradeContainer {
+.blacksmithFunctionContainer {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    flex-direction: column;
+    width: 70%;
+    height: 100%;
+    background: #141414;
+}
+.buttonsContainer {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 70%;
-    height: 100%;
-    background: #080808;
+    width: 100%;
+}
+.buttonsContainer button {
+    width: 100%;
+    height: 60px;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 14px;
+    position: relative;
+}
+.buttonsContainer button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+.buttonsContainer button.selectedFilter::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 3px;
+    background: #fff;
 }

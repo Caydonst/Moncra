@@ -51,9 +51,6 @@ export default function GameCanvas() {
                 return;
             }
 
-            const { setupInventoryUI } = await import("../inventory/updateInventoryUI");
-            setupInventoryUI();
-
             const { startGame } = await import("../startGame");
             cleanup = await startGame(canvasRef.current!, () => {
                 setGameLoaded(true);

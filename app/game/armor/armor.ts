@@ -17,6 +17,7 @@ export class Armor {
     public type: string;
     public rarity: string;
     public stats: Stats;
+    public level?: number;
     public enchantments?: Enchantment[]
 
     constructor({
@@ -27,6 +28,7 @@ export class Armor {
         type,
         rarity,
         stats,
+        level,
     }: {
         id: string;
         name: string;
@@ -35,6 +37,7 @@ export class Armor {
         type: string;
         rarity: string;
         stats: Stats;
+        level: number;
     }) {
         this.id = id;
         this.name = name;
@@ -43,5 +46,6 @@ export class Armor {
         this.type = type;
         this.rarity = rarity;
         this.stats = stats;
+        this.level = level;
     }
 }
