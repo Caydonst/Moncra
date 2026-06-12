@@ -12,6 +12,7 @@ import armorIcon from "@/app/game/assets/icons/armor_icon.png"
 import allIconSelected from "@/app/game/assets/icons/all_icon_selected.png"
 import weaponIconSelected from "@/app/game/assets/icons/weapon_icon_selected.png"
 import armorIconSelected from "@/app/game/assets/icons/armor_icon_selected.png"
+import { colors } from "../../utils/uiUtils"
 
 type Props = {
     storageOpen: boolean;
@@ -19,33 +20,6 @@ type Props = {
     inventory: Inventory | null;
     storageItems: (Item | Weapon | null)[];
     storage: StorageChest | null;
-}
-
-const colors = {
-    tempered: {
-        hex: "#32FF9C",
-        rgba: "rgba(50, 255, 156, 0.3)",
-    },
-    runed: {
-        hex: "#FFE032",
-        rgba: "rgba(255, 224, 50, 0.3)",
-    },
-    exalted: {
-        hex: "#FF3232",
-        rgba: "rgba(255, 50, 50, 0.3)",
-    },
-    ascendant: {
-        hex: "#F132FF",
-        rgba: "rgba(241, 50, 255, 0.3)",
-    },
-    mythic: {
-        hex: "#32FFFF",
-        rgba: "rgba(50, 255, 255, 0.3)",
-    },
-    relic: {
-        hex: "#FF4E32",
-        rgba: "rgba(255, 78, 50, 0.3)",
-    },
 }
 
 export default function StorageUI({ storageOpen, inventory, storage }: Props) {

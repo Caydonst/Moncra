@@ -43,15 +43,16 @@
     align-items: center;
 }
 .selectedItemContainer {
-    width: 100%;
+    width: 65%;
     height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    gap: 80px;
+    gap: 50px;
     color: #fff;
     position: relative;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 .upgradingInfoContainer {
     width: 100%;
@@ -62,11 +63,10 @@
     color: #fff;
     gap: 30px;
     font-size: 24px;
-    text-shadow: 0 5px #000;
 }
 .itemIconContainer {
-    width: 250px;
-    height: 250px;
+    width: 200px;
+    height: 200px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -84,8 +84,13 @@
     flex-direction: column;
     gap: 10px;
 }
+.nameContainer h3 {
+    font-size: 20px;
+    font-weight: 300;
+    text-shadow: 0 5px #000;
+}
 .nameContainer p:nth-child(2) {
-    font-size: 16px;
+    font-size: 12px;
 }
 .statsDisplayContainer {
     display: flex;
@@ -93,6 +98,17 @@
     align-items: start;
     width: 100%;
     gap: 100px;
+}
+.maxLevelContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 10px;
+    color: #FFE500;
+}
+.maxLevelContainer h3 {
+    font-weight: 300;
 }
 .currentLevelContainer,
 .nextLevelContainer {
@@ -118,6 +134,48 @@
 .damageIncreaseContainer p:nth-child(2) {
     color: #05ff8f;
 }
+.materialsContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px
+}
+.material {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 10px;
+}
+.materialIcon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 70px;
+    height: 70px;
+    padding: 10px;
+    position: relative;
+}
+.materialIcon img {
+    width: 100%;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 1));
+}
+.material p {
+    font-size: 12px;
+}
+.materialBgLight {
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    filter: blur(25px);
+    background: #fff;
+    z-index: -1;
+}
 .bgLight {
     position: absolute;
     bottom: 50%;
@@ -126,7 +184,7 @@
     width: 200px;
     height: 200px;
     border-radius: 50%;
-    filter: blur(100px);
+    filter: blur(150px);
     background: #000;
     z-index: -1;
 }
@@ -150,7 +208,7 @@
     flex-direction: column;
     justify-content: start;
     align-items: center;
-    width: 30%;
+    width: 35%;
     height: 100%;
     position: relative;
     padding: 30px;
@@ -170,7 +228,6 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    
 }
 .filterBtn {
     display: flex;
@@ -203,7 +260,7 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 2px;
+    height: 3px;
     background: #fff;
 }
 .bottomShadowContainer {
@@ -233,60 +290,64 @@
 }
 
 .inventoryInner::-webkit-scrollbar-thumb {
-    background: linear-gradient(
-        to bottom,
-        #3a3a3a,
-        #1f1f1f
-    );
+    background: #3a3a3a;
 }
 
 .inventoryInner::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(
-        to bottom,
-        #4a4a4a,
-        #2a2a2a
-    );
+    background: #4a4a4a;
 }
 .miscGrid {
-    display: grid;
-    grid-template-columns: repeat(
-        auto-fit,
-        minmax(var(--min-slot-size), 1fr)
-    );
-    gap: 16px;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    flex-direction: column;
     width: 100%;
-    padding: 30px 30px 30px 3px;
+    padding: 30px 15px 30px 3px;
+    gap: 6px;
 }
 .slot {
-    aspect-ratio: 1 / 1;
-    border: 3px solid rgba(255, 255, 255, 0.2);
+    width: 100%;
+    height: 100px;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    position: relative;
+    gap: 10px;
+    padding: 8px;
+    font-size: 14px;
+    border: 3px solid transparent;
+}
+.slot p:nth-child(1) {
+    font-size: 10px;
+}
+.miscItemNameContainer {
     display: flex;
     justify-content: center;
-    align-items: center;
-    padding: 6px;
-    position: relative;
-    background: #0A0A0A;
+    align-items: start;
+    flex-direction: column;
+    color: #fff;
+    gap: 5px;
 }
 .selected {
     outline: 3px solid #fff;
 }
 .weaponLevel {
     position: absolute;
-    top: 5px;
-    right: 5px;
+    top: 8px;
+    right: 8px;
     font-size: 10px;
     text-shadow: 2px 2px rgba(0, 0, 0, 0.3);
 }
 .selectedWeaponLevel {
     font-size: 12px;
 }
-.slot.tempered,
-.weaponSlot.tempered {
+.slot.uncommon,
+.weaponSlot.uncommon {
     border-color: #32FF9C;
     background: #13633C;
 }
-.slot.runed,
-.weaponSlot.runed {
+.slot.legendary,
+.weaponSlot.legendary {
     border-color: #FFE032;
     background: #665814;
 }
@@ -295,13 +356,13 @@
     border-color: #FF3232;
     background: #661414;
 }
-.slot.ascendant,
-.weaponSlot.ascendant {
+.slot.epic,
+.weaponSlot.epic {
     border-color: #F132FF;
     background: #5D1466;
 }
-.slot.mythic,
-.weaponSlot.mythic {
+.slot.rare,
+.weaponSlot.rare {
     border-color: #32FFFF;
     background: #146666;
 }
@@ -313,12 +374,18 @@
 .slot:hover {
     outline: 3px solid #fff;
 }
+.miscSlotIconContainer {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    aspect-ratio: 1;
+}
 .slot .slotImg {
-    width: 100%;
     height: 100%;
     object-fit: contain;
     image-rendering: pixelated;
-    filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
+    filter: drop-shadow(-5px 5px rgba(0,0,0,0.3));
 }
 .blacksmithFunctionContainer {
     display: flex;
@@ -334,6 +401,8 @@
     justify-content: center;
     align-items: center;
     width: 100%;
+    background: #080808;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 .buttonsContainer button {
     width: 100%;
@@ -355,4 +424,20 @@
     width: 100%;
     height: 3px;
     background: #fff;
+}
+.upgradeBtn {
+    width: 100%;
+    max-width: 500px;
+    height: 45px;
+    border: 3px solid #70ff8d;
+    background: #3b8249;
+    color: white;
+    font-size: 12px;
+    box-shadow: 0 5px 0 #1d4024;
+    font-size: 10px;
+    letter-spacing: 2;
+}
+.upgradeBtn:hover {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #1d4024;
 }

@@ -4,6 +4,7 @@ import {Ammunition, Item, Weapon} from "../../items/ItemTypes";
 import React, {SetStateAction} from "react";
 import type { GameScene } from "../../scenes/GameScene";
 import {XMarkIcon} from "@heroicons/react/24/solid"
+import { colors } from "../../utils/uiUtils"
 
 type Props = {
     chest: any;
@@ -13,33 +14,6 @@ type Props = {
     chestItems: (Item | Weapon | Ammunition | null)[];
     setChestItems: React.Dispatch<SetStateAction<(Item | Weapon | Ammunition | null)[]>>;
     scene: GameScene | null;
-}
-
-const colors = {
-    tempered: {
-        hex: "#32FF9C",
-        rgba: "rgba(50, 255, 156, 0.3)",
-    },
-    runed: {
-        hex: "#FFE032",
-        rgba: "rgba(255, 224, 50, 0.3)",
-    },
-    exalted: {
-        hex: "#FF3232",
-        rgba: "rgba(255, 50, 50, 0.3)",
-    },
-    ascendant: {
-        hex: "#F132FF",
-        rgba: "rgba(241, 50, 255, 0.3)",
-    },
-    mythic: {
-        hex: "#32FFFF",
-        rgba: "rgba(50, 255, 255, 0.3)",
-    },
-    relic: {
-        hex: "#FF4E32",
-        rgba: "rgba(255, 78, 50, 0.3)",
-    },
 }
 
 export default function ChestUI({ chest, chestOpen, inventoryOpen, inventory, chestItems, setChestItems, scene }: Props) {

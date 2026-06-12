@@ -15,6 +15,7 @@ import weaponIconSelected from "@/app/game/assets/icons/weapon_icon_selected.png
 import armorIconSelected from "@/app/game/assets/icons/armor_icon_selected.png"
 import { equippableItems } from "../../items/ItemTypes";
 import { Armor } from "../../armor/armor";
+import { colors } from "../../utils/uiUtils"
 
 type Props = {
     inventoryOpen: boolean;
@@ -25,33 +26,6 @@ type Props = {
     selectedItem: Weapon | Armor | null;
     setSelectedItem: React.Dispatch<React.SetStateAction<Weapon | Armor | null>>;
     engine: ex.Engine | null;
-}
-
-const colors = {
-    tempered: {
-        hex: "#32FF9C",
-        rgba: "rgba(50, 255, 156, 0.3)",
-    },
-    runed: {
-        hex: "#FFE032",
-        rgba: "rgba(255, 224, 50, 0.3)",
-    },
-    exalted: {
-        hex: "#FF3232",
-        rgba: "rgba(255, 50, 50, 0.3)",
-    },
-    ascendant: {
-        hex: "#F132FF",
-        rgba: "rgba(241, 50, 255, 0.3)",
-    },
-    mythic: {
-        hex: "#32FFFF",
-        rgba: "rgba(50, 255, 255, 0.3)",
-    },
-    relic: {
-        hex: "#FF4E32",
-        rgba: "rgba(255, 78, 50, 0.3)",
-    },
 }
 
 export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory, itemPanelOpen, setItemPanelOpen, selectedItem, setSelectedItem, engine }: Props) {
@@ -121,8 +95,8 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                     ${colors[inventory?.weapon?.rarity]?.rgba ?? "rgba(255,255,255,0.1)"},
                                     transparent
                                 )`,
-                                borderLeft: `3px solid ${
-                                    colors[inventory?.weapon?.rarity]?.hex ?? "#808080"
+                                borderColor: `${
+                                    colors[inventory?.weapon?.rarity]?.hex ?? "#606060"
                                 }`
                             }} 
                             onClick={() => {
@@ -132,7 +106,9 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                             
                             {inventory?.weapon ? (
                                 <>
-                                <img src={inventory.weapon.icon} className={styles.gearImg} />
+                                <div className={styles.gearSlotIconContainer}>
+                                    <img src={inventory.weapon.icon} className={styles.gearImg} />
+                                </div>
                                 <div className={styles.equippedWeaponInfoContainer}>
                                     <p style={{ color: `${colors[inventory?.weapon?.rarity]?.hex}` }}>{inventory?.weapon?.rarity.toUpperCase()}</p>
                                     <h3>{inventory?.weapon?.name.toUpperCase()}</h3>
@@ -158,8 +134,8 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                     ${colors[inventory?.armor?.rarity]?.rgba ?? "rgba(255,255,255,0.1)"},
                                     transparent
                                 )`,
-                                borderLeft: `3px solid ${
-                                    colors[inventory?.armor?.rarity]?.hex ?? "#808080"
+                                borderColor: `${
+                                    colors[inventory?.armor?.rarity]?.hex ?? "#606060"
                                 }`
                             }} 
                             onClick={() => {
@@ -169,7 +145,9 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                             
                             {inventory?.armor ? (
                                 <>
-                                <img src={inventory.armor?.icon} className={styles.gearImg} />
+                                <div className={styles.gearSlotIconContainer}>
+                                    <img src={inventory.armor?.icon} className={styles.gearImg} />
+                                </div>
                                 <div className={styles.equippedWeaponInfoContainer}>
                                     <p style={{ color: `${colors[inventory?.armor?.rarity]?.hex}` }}>{inventory?.armor?.rarity.toUpperCase()}</p>
                                     <h3>{inventory?.armor?.name.toUpperCase()}</h3>

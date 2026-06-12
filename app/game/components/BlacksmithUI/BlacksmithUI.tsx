@@ -1,7 +1,7 @@
 import { Inventory } from "../../inventory/inventory";
 import styles from "./blacksmith.module.css"
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Item, Weapon } from "../../items/ItemTypes";
 import Evolving from "./evolving"
 import Upgrading from "./upgrading";
@@ -54,6 +54,12 @@ export default function BlacksmithUI({ blacksmithOpen, inventory }: Props) {
     const [hoveredStorageFilter, setHoveredStorageFilter] = useState<string | null>(null);
 
     const [selectedFilter, setSelectedFilter] = useState("crafting");
+
+    useEffect(() => {
+        if (!blacksmithOpen) {
+            setSelectedFilter("crafting");
+        }
+    })
 
     return (
         <div className={`${styles.blacksmithWrapper} ${blacksmithOpen ? styles.open : ""}`}>

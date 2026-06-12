@@ -1,5 +1,5 @@
 "use client";
-import {use, useEffect, useRef, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import { getGame } from "../gameInstance";
 import type { GameScene } from "../scenes/GameScene";
 import type { HubScene } from "../scenes/HubScene";

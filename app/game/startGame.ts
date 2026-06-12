@@ -1,20 +1,27 @@
 
-import { GameScene } from "./scenes/GameScene";
-import { MenuScene } from "./scenes/MenuScene";
-import { createResources } from "./resources";
-//import { loadMapData } from "./map";
+
 import * as ex from "excalibur";
-import {createCollisionGroups} from "@/app/game/utils/collisionGroups";
 import {createGame, destroyGame} from "@/app/game/gameInstance";
-import { HubScene } from "./scenes/HubScene";
 import { gameState } from "./gameState/gameState";
-import { DungeonScene } from "./scenes/DungeonScene";
 
 export async function startGame(canvas: HTMLCanvasElement, onLoaded: () => void) {
+    const ex = await import("excalibur");
+
+    const { GameScene } = await import("./scenes/GameScene");
+    const { MenuScene } = await import("./scenes/MenuScene");
+    const { HubScene } = await import("./scenes/HubScene");
+    const { DungeonScene } = await import("./scenes/DungeonScene");
+    const { createResources } = await import("./resources");
+    const { createCollisionGroups } = await import("@/app/game/utils/collisionGroups");
+    const { createGameItems } = await import("./items/GameItems");
+
     const resources = await createResources();
     const collisionGroups = await createCollisionGroups();
 
     const game = await createGame(canvas);
+    gameState.engine = game;
+    createGameItems()
+
     /*
     game.add("game", new GameScene(resources, collisionGroups, game));
     game.add("menu", new MenuScene(game));

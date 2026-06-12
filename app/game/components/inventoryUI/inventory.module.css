@@ -2,23 +2,27 @@
     --min-slot-size: 100px;
     --max-slot-size: 160px;
 }
-.tempered {
+.common {
+    color: #fff;
+    border-color: #fff;
+}
+.uncommon {
     color: #32FF9C;
     border-color: #32FF9C;
 }
-.runed {
-    color: #FFE032;
-    border-color: #FFE032;
+.legendary {
+    color: #FFA500;
+    border-color: #FFA500;
 }
 .exalted {
     color: #FF3232;
     border-color: #FF3232;
 }
-.ascendant {
+.epic {
     color: #F132FF;
     border-color: #F132FF;
 }
-.mythic {
+.rare {
     color: #32FFFF;
     border-color: #32FFFF;
 }
@@ -55,7 +59,7 @@
     transition: 0.2s;
     overflow: hidden;
     gap: 30px;
-    padding: 80px 0;
+    padding: 50px 0;
 }
 .wrapperh3 {
     position: absolute;
@@ -151,19 +155,11 @@
 }
 
 .inventoryInner::-webkit-scrollbar-thumb {
-    background: linear-gradient(
-        to bottom,
-        #3a3a3a,
-        #1f1f1f
-    );
+    background: #3a3a3a;
 }
 
 .inventoryInner::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(
-        to bottom,
-        #4a4a4a,
-        #2a2a2a
-    );
+    background: #4a4a4a;
 }
 .selected {
     outline: 3px solid #fff;
@@ -196,11 +192,19 @@
     position: relative;
     width: 100%;
     height: 120px;
-    padding: 10px 20px;
+    padding: 10px;
     display: flex;
     justify-content: start;
     align-items: center;
-    gap: 20px;
+    gap: 10px;
+    border: 3px solid #606060;
+}
+.gearSlotIconContainer {
+    height: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 .weaponSlot:hover {
     outline: 3px solid #fff;
@@ -209,7 +213,7 @@
     height: 100%;
     object-fit: contain;
     image-rendering: pixelated;
-    filter: drop-shadow(-10px 10px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(-5px 5px rgba(0, 0, 0, 0.3));
 }
 .equippedWeaponInfoContainer {
     display: flex;
@@ -262,28 +266,33 @@
 .selectedWeaponLevel {
     font-size: 12px;
 }
-.slot.tempered,
-.weaponSlot.tempered {
+.slot.common,
+.weaponSlot.common {
+    border-color: #fff;
+    background: #666666;
+}
+.slot.uncommon,
+.weaponSlot.uncommon {
     border-color: #32FF9C;
     background: #13633C;
 }
-.slot.runed,
-.weaponSlot.runed {
-    border-color: #FFE032;
-    background: #665814;
+.slot.legendary,
+.weaponSlot.legendary {
+    border-color: #FFA500;
+    background: #663E00;
 }
 .slot.exalted,
 .weaponSlot.exalted {
     border-color: #FF3232;
     background: #661414;
 }
-.slot.ascendant,
-.weaponSlot.ascendant {
+.slot.epic,
+.weaponSlot.epic {
     border-color: #F132FF;
     background: #5D1466;
 }
-.slot.mythic,
-.weaponSlot.mythic {
+.slot.rare,
+.weaponSlot.rare {
     border-color: #32FFFF;
     background: #146666;
 }
@@ -331,10 +340,10 @@
     top: 40px;
     right: 150px;
     width: 180px;
-    height: 360px;
+    height: 460px;
     min-width: 100px;
     min-height: 100px;
-    transform: rotate(30deg);
+    /*transform: rotate(30deg);*/
     border: 5px solid transparent;
     display: flex;
     justify-content: center;
@@ -469,11 +478,15 @@
 }
 .enchantmentsContainer {
     display: flex;
-    justify-content: center;
+    justify-content: start;
     align-items: center;
     flex-direction: column;
     width: 100%;
-    gap: 30px;
+    gap: 40px;
+    min-height: 300px;
+    padding-top: 10px;
+    box-shadow: 0 -100px 130px #080808;
+    background: #080808;
 }
 .enchantmentsContainer p:first-child {
     font-size: 12px;
@@ -600,8 +613,8 @@
 }
 @media (max-width: 1500px) {
     .itemIconContainer {
-        right: 30px;
-        width: 150px;
+        right: 0;
+        width: 180px;
     }
 }
 @media (max-width: 1300px) {

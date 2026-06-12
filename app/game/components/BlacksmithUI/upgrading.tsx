@@ -8,41 +8,21 @@ import armorIcon from "@/app/game/assets/icons/armor_icon.png"
 import allIconSelected from "@/app/game/assets/icons/all_icon_selected.png"
 import weaponIconSelected from "@/app/game/assets/icons/weapon_icon_selected.png"
 import armorIconSelected from "@/app/game/assets/icons/armor_icon_selected.png"
+import goldIcon from "@/app/game/assets/currency/gold_icon.png"
+import { colors } from "../../utils/uiUtils"
+import { Armor } from "../../armor/armor";
+import { upgrade } from "./helperFunctions"
+import { getUpgradeCost } from "../../items/UpgradeCosts";
 
 type Props = {
     blacksmithOpen: boolean;
     inventory: Inventory;
 }
 
-const colors = {
-    tempered: {
-        hex: "#32FF9C",
-        rgba: "rgba(50, 255, 156, 0.3)",
-    },
-    runed: {
-        hex: "#FFE032",
-        rgba: "rgba(255, 224, 50, 0.3)",
-    },
-    exalted: {
-        hex: "#FF3232",
-        rgba: "rgba(255, 50, 50, 0.3)",
-    },
-    ascendant: {
-        hex: "#F132FF",
-        rgba: "rgba(241, 50, 255, 0.3)",
-    },
-    mythic: {
-        hex: "#32FFFF",
-        rgba: "rgba(50, 255, 255, 0.3)",
-    },
-    relic: {
-        hex: "#FF4E32",
-        rgba: "rgba(255, 78, 50, 0.3)",
-    },
-}
-
 export default function Upgrading({ blacksmithOpen, inventory }: Props) {
-    const [selectedItem, setSelectedItem] = useState(-1);
+    const [selectedItem, setSelectedItem] = useState<Weapon | Armor | null>(null);
+    const [selectedItemIndex, setSelectedItemIndex] = useState(-1);
+    const [realItemIndex, setRealItemIndex] = useState(-1);
     const [itemPanelOpen, setItemPanelOpen] = useState(false);
     const [miscItems, setMiscItems] = useState<(Item | Weapon | null)[]>(
         inventory?.misc ?? Array(24).fill(null)
@@ -73,24 +53,38 @@ export default function Upgrading({ blacksmithOpen, inventory }: Props) {
     }
 
     const filteredInventoryItems = (() => {
-        const matchingItems = miscItems
+        const allItems = [inventory.weapon, inventory.armor, ...inventory.misc]
+        const matchingItems = allItems
             .map((item, realIndex) => ({ item, realIndex }))
             .filter(({ item }) => itemMatchesFilter(item, inventoryFilter));
 
-        const emptySlots = Array(24 - matchingItems.length)
-            .fill(null)
-            .map(() => ({
-                item: null,
-                realIndex: -1,
-            }));
-
-        return [...matchingItems, ...emptySlots];
+        return [...matchingItems];
     })();
+
+    function upgradeItem() {
+        if (!selectedItem) return;
+
+        const upgradedItem = upgrade(selectedItem);
+        if (!upgradedItem) return;
+
+        setSelectedItem(upgradedItem);
+        //filteredInventoryItems[selectedItemIndex] = upgradedItem;
+        
+        if (selectedItem === inventory.weapon) {
+            inventory.weapon = upgradedItem as Weapon;
+        } else if (selectedItem === inventory.armor) {
+            inventory.armor = upgradedItem as Armor;
+        } else {
+            inventory.misc[realItemIndex - 2] = upgradedItem;
+        }
+        
+
+        //filteredInventoryItems[selectedItemIndex] = upgradedItem;
+    }
 
     return (
         <div className={styles.evolvingContainer}>
             <div className={styles.inventory}>
-                <h3>INVENTORY</h3>
                 <div className={styles.itemFilterContainer}>
                     <button 
                         onClick={() => setInventoryFilter("all")} className={`${styles.filterBtn} ${inventoryFilter === "all" ? styles.filterSelected : ""}`}
@@ -134,57 +128,113 @@ export default function Upgrading({ blacksmithOpen, inventory }: Props) {
                         {filteredInventoryItems.map(({ item: slot, realIndex }, displayIndex) => (
                             <div
                                 key={displayIndex}
-                                className={`${styles.slot} ${slot ? styles[slot.rarity] : ""} ${
-                                    slot && selectedItem === realIndex ? styles.selected : ""
+                                className={`${styles.slot} ${
+                                    slot && selectedItemIndex === displayIndex ? styles.selected : ""
                                 }`}
                                 onClick={() => {
                                     if (!slot) return;
-                                    setSelectedItem(realIndex);
+                                    setSelectedItem(slot);
+                                    setSelectedItemIndex(displayIndex)
+                                    setRealItemIndex(realIndex)
                                 }}
+                                style={{ 
+                                    background: `linear-gradient(
+                                            to right,
+                                            ${colors[slot?.rarity]?.rgba ?? "rgba(255,255,255,0.1)"},
+                                            transparent
+                                        )`,
+                                    borderColor: `${colors[slot?.rarity]?.hex}` }}
                             >
                                 {slot?.icon && (
-                                    <img src={slot.icon} className={styles.slotImg} />
+                                    <div className={styles.miscSlotIconContainer}>
+                                        <img src={slot.icon} className={styles.slotImg} />
+                                    </div>
                                 )}
+                                <div className={styles.miscItemNameContainer}>
+                                    <p style={{ color: `${colors[slot?.rarity]?.hex}` }}>{slot?.rarity.toUpperCase()}</p>
+                                    <p>{slot?.name.toUpperCase()}</p>
+                                </div>
                                 {slot?.level !== undefined && (
                                     <p className={styles.weaponLevel} style={{ color: `${slot?.level === 10 ? "#FFE500" : "#fff"}` }}>+{slot?.level}</p>
                                 )}
                             </div>
+                            
                         ))}
                     </div>
                 </div>
                 <div className={styles.bottomShadowContainer}></div>
             </div>
             <div className={styles.selectedItemContainer}>
-                <div className={styles.upgradingInfoContainer}>
-                    <div className={styles.itemIconContainer}>
-                        <img src={miscItems[selectedItem]?.icon} />
-                        {miscItems[selectedItem]?.rarity !== undefined && (
-                            <div className={styles.bgLight} style={{ background: `${colors[miscItems[selectedItem].rarity]?.hex}` }}></div>
-                        )}
-                    </div>
-                    <div className={styles.nameContainer}>
-                        <p>{miscItems[selectedItem]?.name}</p>
-                    <p style={{ color: `${colors[miscItems[selectedItem]?.rarity]?.hex}` }}>{miscItems[selectedItem]?.rarity.toUpperCase()}</p>
-                    </div>
-                </div>
-                <div className={styles.statsDisplayContainer}>
-                    <div className={styles.currentLevelContainer}>
-                        {miscItems[selectedItem]?.level !== undefined && (
-                            <p className={styles.level}>Level +{miscItems[selectedItem].level}</p>
-                        )}
-                        <p className={styles.stats}>Damage: {miscItems[selectedItem]?.stats.damage}</p>
-                    </div>
-                    <p>{"-->"}</p>
-                    <div className={styles.nextLevelContainer}>
-                        {miscItems[selectedItem]?.level !== undefined && (
-                            <p className={styles.level}>Level +{miscItems[selectedItem].level + 1}</p>
-                        )}
-                        <div className={styles.damageIncreaseContainer}>
-                            <p className={styles.stats}>Damage: {miscItems[selectedItem]?.stats.damage + 2}</p>
-                            <p className={styles.stats}>(+2)</p>
+                {selectedItem !== null ? (
+                    <>
+                    <div className={styles.upgradingInfoContainer}>
+                        <div className={styles.itemIconContainer}>
+                            <img src={selectedItem?.icon} />
+                            {selectedItem?.rarity !== undefined && (
+                                <div className={styles.bgLight} style={{ background: `${colors[selectedItem?.rarity]?.hex}` }}></div>
+                            )}
+                        </div>
+                        <div className={styles.nameContainer}>
+                            <h3>{selectedItem?.name.toUpperCase()}</h3>
+                            <p style={{ color: `${colors[selectedItem?.rarity]?.hex}` }}>{selectedItem?.rarity.toUpperCase()}</p>
                         </div>
                     </div>
-                </div>
+                    <div className={styles.statsDisplayContainer}>
+                        {selectedItem.level < selectedItem.maxLevel ? (
+                            <>
+                            <div className={styles.currentLevelContainer}>
+                                {selectedItem?.level !== undefined && (
+                                    <p className={styles.level}>Level +{selectedItem.level}</p>
+                                )}
+                                <p className={styles.stats}>Damage: {selectedItem?.stats.damage}</p>
+                            </div>
+                            <p>{"-->"}</p>
+                            <div className={styles.nextLevelContainer}>
+                                {selectedItem?.level !== undefined && (
+                                    <p className={styles.level}>Level +{selectedItem.level + 1}</p>
+                                )}
+                                <div className={styles.damageIncreaseContainer}>
+                                    <p className={styles.stats}>Damage: {selectedItem?.stats.damage + 2}</p>
+                                    <p className={styles.stats}>(+2)</p>
+                                </div>
+                            </div>
+                            </>
+                        ) : (
+                            <div className={styles.maxLevelContainer}>
+                                <p>Level 10</p>
+                                <h3>MAX LEVEL</h3>
+                            </div>
+                        )}
+                    </div>
+                    {selectedItem.level < selectedItem.maxLevel && (
+                        <>
+                        <div className={styles.materialsContainer}>
+                            <div className={styles.material}>
+                                <div className={styles.materialIcon}>
+                                    <div className={styles.materialBgLight}></div>
+                                    <img src={goldIcon.src} />
+                                </div>
+                                <p>2354 / {getUpgradeCost(selectedItem).gold}</p>
+                            </div>
+                            {getUpgradeCost(selectedItem).materials.map((material, index) => (
+                                <div key={index} className={styles.material}>
+                                    <div className={styles.materialIcon}>
+                                        <div className={styles.materialBgLight} style={{ background: `${colors[material.material.rarity].hex}` }}></div>
+                                        <img src={material.material.icon} style={{ filter: `drop-shadow(0 0 3px ${colors[material.material.rarity].hex})` }} />
+                                    </div>
+                                    <p>23 / {material.quantity}</p>
+                                </div>
+                            ))}
+                        </div>
+                        <button className={styles.upgradeBtn} onClick={upgradeItem}>UPGRADE</button>
+                        </>
+                    )}
+                    </>
+                    
+                ) : (
+                    <div>No item selected</div>
+                )}
+                
                 
             </div>
         </div>

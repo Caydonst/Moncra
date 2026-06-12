@@ -47,15 +47,15 @@ export class Player extends ex.Actor {
     private dashSpeed = 1000;
     private dashTracer!: DashTracer;
 
-    private spriteScale = 2.2;
+    private spriteScale = 2.3;
 
     constructor(pos: ex.Vector, worldWidth: number, worldHeight: number, private resources: GameResources, private collisionGroups: any, private gameState: GameState) {
         super({
             name: "player",
             pos: pos,
             anchor: ex.vec(0.5, 0.5),
-            width: 11 * 2.2,    // set desired width
-            height: 16 * 2.2,   // set desired height
+            width: 11 * 2.3,    // set desired width
+            height: 16 * 2.3,   // set desired height
             color: ex.Color.Yellow,  // optional, for debugging
             collisionType: ex.CollisionType.Active,
             z: 3,

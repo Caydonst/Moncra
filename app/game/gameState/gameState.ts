@@ -1,13 +1,14 @@
 import { Inventory } from "../inventory/inventory";
-import { Player } from "../player/player";
+import type { Player } from "../player/player";
 
 export class GameState {
-  inventory: Inventory;
-  player?: Player;
+    inventory: Inventory;
+    player?: Player;
+    engine?: any;
 
-  constructor() {
-    this.inventory = new Inventory();
-  }
+    constructor() {
+        this.inventory = new Inventory();
+    }
 }
 
 export const gameState = new GameState();

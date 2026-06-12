@@ -47,6 +47,7 @@ import Tilesheet from "./assets/map/spritesheet.png";
 // --- WEAPONS ---
 import arrowImage from './assets/projectiles/arrow.png';
 
+import greatSword0 from "./assets/weapons/great_sword/stone_sword.png";
 import greatSword from "./assets/weapons/great_sword/vampire_sword.png";
 import greatSword1 from "./assets/weapons/great_sword/ruby_sword.png";
 import greatSword2 from "./assets/weapons/great_sword/diamond_sword.png";
@@ -116,6 +117,7 @@ export async function createResources() {
         mapSpritesheetImage: new ex.ImageSource(mapSpritesheet64.src),
         arrow: new ex.ImageSource(arrowImage.src),
         tileSheet: new ex.ImageSource(Tilesheet.src),
+        greatSword0: new ex.ImageSource(greatSword0.src),
         greatSword: new ex.ImageSource(greatSword.src),
         greatSword1: new ex.ImageSource(greatSword1.src),
         greatSword2: new ex.ImageSource(greatSword2.src),
