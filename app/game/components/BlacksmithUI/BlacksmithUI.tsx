@@ -9,6 +9,7 @@ import Upgrading from "./upgrading";
 type Props = {
     blacksmithOpen: boolean;
     inventory: Inventory;
+    setInventory: React.Dispatch<React.SetStateAction<Inventory>>
 }
 
 const colors = {
@@ -38,7 +39,7 @@ const colors = {
     },
 }
 
-export default function BlacksmithUI({ blacksmithOpen, inventory }: Props) {
+export default function BlacksmithUI({ blacksmithOpen, inventory, setInventory }: Props) {
     const [selectedItem, setSelectedItem] = useState(-1);
     const [itemPanelOpen, setItemPanelOpen] = useState(false);
     const [miscItems, setMiscItems] = useState<(Item | Weapon | null)[]>(
@@ -47,14 +48,13 @@ export default function BlacksmithUI({ blacksmithOpen, inventory }: Props) {
     const [inventorySelected, setInventorySelected] = useState<number>(-1);
     const [storageSelected, setStorageSelected] = useState<number>(-1);
 
-    const [inventoryFilter, setInventoryFilter] = useState("all");
     const [storageFilter, setStorageFilter] = useState("all");
 
     const [hoveredInventoryFilter, setHoveredInventoryFilter] = useState<string | null>(null);
     const [hoveredStorageFilter, setHoveredStorageFilter] = useState<string | null>(null);
 
     const [selectedFilter, setSelectedFilter] = useState("crafting");
-
+    
     useEffect(() => {
         if (!blacksmithOpen) {
             setSelectedFilter("crafting");
@@ -71,7 +71,7 @@ export default function BlacksmithUI({ blacksmithOpen, inventory }: Props) {
                         <button className={selectedFilter === "evolving" ? styles.selectedFilter : ""} onClick={() => setSelectedFilter("evolving")}>Evolving</button>
                     </div>
                     {selectedFilter === "upgrading" && (
-                        <Upgrading blacksmithOpen={blacksmithOpen} inventory={inventory}  />
+                        <Upgrading blacksmithOpen={blacksmithOpen} inventory={inventory} setInventory={setInventory}  />
                     )}
                     {selectedFilter === "evolving" && (
                         <Evolving blacksmithOpen={blacksmithOpen} inventory={inventory}  />

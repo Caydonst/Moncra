@@ -75,7 +75,7 @@
 .itemIconContainer img {
     height: 100%;
     image-rendering: pixelated;
-    filter: drop-shadow(0 30px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(0 25px rgba(0, 0, 0, 0.3));
 }
 .nameContainer {
     display: flex;
@@ -151,13 +151,11 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 70px;
-    height: 70px;
     padding: 10px;
     position: relative;
 }
 .materialIcon img {
-    width: 100%;
+    width: 60px;
     image-rendering: pixelated;
     filter: drop-shadow(0 0 3px rgba(255, 255, 255, 1));
 }
@@ -302,8 +300,8 @@
     align-items: center;
     flex-direction: column;
     width: 100%;
-    padding: 30px 15px 30px 3px;
-    gap: 6px;
+    padding: 30px 15px 30px 9px;
+    gap: 16px;
 }
 .slot {
     width: 100%;
@@ -320,6 +318,100 @@
 .slot p:nth-child(1) {
     font-size: 10px;
 }
+.selected {
+    outline: 4px solid #fff;
+    outline-offset: 3px;
+    transition: 0.05s;
+}
+*.selected:hover .hoverContainer {
+    display: none;
+}
+*.selected:hover {
+    outline-offset: 5px;
+}
+.hoverContainer {
+    position: absolute;
+    inset: -13px; /* slightly larger than slot */
+    pointer-events: none;
+    transition: 0.1s;
+    opacity: 0;
+}
+.slot:hover .hoverContainer,
+.gearSlot:hover .hoverContainer {
+    inset: -10px;
+    opacity: 1;
+}
+.topRight,
+.bottomLeft,
+.topLeft,
+.bottomRight {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+}
+
+.topRight {
+    top: 0;
+    right: 0;
+    border-top: 4px solid #fff;
+    border-right: 4px solid #fff;
+}
+
+.bottomLeft {
+    bottom: 0;
+    left: 0;
+    border-bottom: 4px solid #fff;
+    border-left: 4px solid #fff;
+}
+.topLeft {
+    top: 0;
+    left: 0;
+    border-top: 4px solid #fff;
+    border-left: 4px solid #fff;
+}
+.bottomRight {
+    bottom: 0;
+    right: 0;
+    border-bottom: 4px solid #fff;
+    border-right: 4px solid #fff;
+}
+.weaponLevel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 12px;
+    letter-spacing: 2px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 3px;
+    font-weight: 0;
+}
+.gearSlot .weaponLevel,
+ .gearSlot .powerLevel{
+    font-size: 14px;
+    gap: 5px;
+}
+.gearSlot .powerLevel img {
+    width: 7px;
+}
+.powerLevel {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    font-size: 12px;
+    letter-spacing: 2px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 3px 3px 3px 5px;
+    font-weight: 0;
+    color: #FFE500;
+    gap: 3px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.powerLevel img {
+    width: 5px;
+    transform: rotate(45deg);
+}
 .miscItemNameContainer {
     display: flex;
     justify-content: center;
@@ -327,16 +419,6 @@
     flex-direction: column;
     color: #fff;
     gap: 5px;
-}
-.selected {
-    outline: 3px solid #fff;
-}
-.weaponLevel {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    font-size: 10px;
-    text-shadow: 2px 2px rgba(0, 0, 0, 0.3);
 }
 .selectedWeaponLevel {
     font-size: 12px;
@@ -370,9 +452,6 @@
 .weaponSlot.relic {
     border-color: #FF4E32;
     background: #662414;
-}
-.slot:hover {
-    outline: 3px solid #fff;
 }
 .miscSlotIconContainer {
     height: 100%;

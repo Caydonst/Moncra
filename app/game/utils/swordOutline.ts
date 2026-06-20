@@ -283,3 +283,71 @@ export class EnchantedGlowEffect {
         });
     }
 }
+
+export class GlowEffect {
+    private readonly shader: string;
+    public material: ex.Material;
+
+    constructor(game: ex.Engine) {
+        this.shader = `#version 300 es
+        precision mediump float;
+
+        uniform sampler2D u_graphic;
+        uniform vec2 u_graphic_resolution;
+
+        in vec2 v_uv;
+        out vec4 fragColor;
+
+        vec2 uv_iq(in vec2 uv, in vec2 texture_size) {
+            vec2 pixel = uv * texture_size;
+            vec2 seam = floor(pixel + 0.5);
+            vec2 dudv = fwidth(pixel);
+            pixel = seam + clamp((pixel - seam) / dudv, -0.5, 0.5);
+            return pixel / texture_size;
+        }
+
+        void main() {
+            vec2 texel = 2.0 / u_graphic_resolution;
+            vec2 pixelUV = uv_iq(v_uv, u_graphic_resolution);
+
+            vec4 base = texture(u_graphic, pixelUV);
+
+            float glow = 0.0;
+
+            for (float radius = 0.5; radius <= 1.0; radius += 0.5) {
+                float strength = 1.0 - (radius / 6.0);
+
+                glow += texture(u_graphic, v_uv + vec2(texel.x * radius, 0.0)).a * strength;
+                glow += texture(u_graphic, v_uv + vec2(-texel.x * radius, 0.0)).a * strength;
+                glow += texture(u_graphic, v_uv + vec2(0.0, texel.y * radius)).a * strength;
+                glow += texture(u_graphic, v_uv + vec2(0.0, -texel.y * radius)).a * strength;
+
+                glow += texture(u_graphic, v_uv + vec2(texel.x * radius, texel.y * radius)).a * strength * 0.7;
+                glow += texture(u_graphic, v_uv + vec2(-texel.x * radius, texel.y * radius)).a * strength * 0.7;
+                glow += texture(u_graphic, v_uv + vec2(texel.x * radius, -texel.y * radius)).a * strength * 0.7;
+                glow += texture(u_graphic, v_uv + vec2(-texel.x * radius, -texel.y * radius)).a * strength * 0.7;
+            }
+
+            glow = clamp(glow * 0.2, 0.0, 1.0);
+
+            float spriteMask = smoothstep(0.01, 0.8, base.a);
+            float glowMask = glow * (1.0 - spriteMask);
+
+            vec3 glowColor = vec3(1.0, 1.0, 1.0);
+            float glowAlpha = 0.7;
+
+            vec4 glowLayer = vec4(glowColor, glowAlpha * glowMask);
+
+            fragColor = glowLayer;
+            fragColor = mix(fragColor, base, spriteMask);
+
+            fragColor.rgb *= fragColor.a;
+        }
+        `;
+
+        this.material = game.graphicsContext.createMaterial({
+            name: "glow-effect",
+            fragmentSource: this.shader
+        });
+    }
+}

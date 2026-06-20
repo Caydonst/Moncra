@@ -1,136 +1,78 @@
+import type { Material, Weapon } from "../items/ItemTypes";
 import { Armor } from "../armor/armor";
-import type {Ammunition, Item, Weapon} from "../items/ItemTypes";
 
 export class Inventory {
     weapon: Weapon | null = null;
     armor: Armor | null = null;
-    misc: (Item | Weapon | Armor | null)[] = Array(24).fill(null);
 
-    addItem(item: Item | Weapon | Armor): boolean {
+    miscWeapons: (Weapon | null)[] = Array(12).fill(null);
+    miscArmor: (Armor | null)[] = Array(12).fill(null);
+    miscMaterial: (Material | null)[] = Array(12).fill(null);
 
-        const slot = this.misc.indexOf(null);
-        if (slot === -1) return false;
-        this.misc[slot] = item;
+    gold = 0;
 
-        /*
-        if (item.type === "weapon") {
-            this.weapon = item;
-        }
-        else if (item.type === "armor") {
-            const slot = this.armor.indexOf(null);
-            if (slot === -1) return false;
-            this.armor[slot] = item;
-        }
-        else {
-            const slot = this.misc.indexOf(null);
-            if (slot === -1) return false;
-            this.misc[slot] = item;
-        }
-         */
-        return true;
+    constructor(data?: Partial<Inventory>) {
+        if (!data) return;
+
+        this.weapon = data.weapon ?? null;
+        this.armor = data.armor ?? null;
+        this.miscWeapons = data.miscWeapons ?? Array(12).fill(null);
+        this.miscArmor = data.miscArmor ?? Array(12).fill(null);
+        this.miscMaterial = data.miscMaterial ?? Array(12).fill(null);
+        this.gold = data.gold ?? 0;
     }
 
-    removeItem(item: Item | Weapon | Armor) {
-        if (this.weapon?.id === item.id) {
-            this.weapon = null;
-        }
+    async spawnEquippedWeapon(engine: ex.Engine) {
+        if (!this.weapon) return;
 
-        if (this.armor?.id === item.id) {
-            this.armor = null;
-        }
-
-        const mi = this.misc.findIndex(m => m?.id === item.id);
-        if (mi !== -1) {
-            this.misc[mi] = null;
-        }
-    }
-
-    equip(item: Weapon | Armor, engine: ex.Engine, miscIndex?: number) {
-        if (item.type === "Armor") {
-            this.equipArmor(item, miscIndex);
-        } else {
-            this.equipWeapon(item, engine, miscIndex);
-        }
-    }
-
-    unequip(item: Weapon | Armor, engine: ex.Engine | null) {
-        if (item.type === "Armor") {
-            this.unequipArmor(item);
-        } else {
-            this.unequipWeapon(item, engine?.currentScene);
-        }
-    }
-
-    equipWeapon(weapon: Weapon, engine: ex.Engine, miscIndex?: number) {
         const scene = engine.currentScene;
-        const previousWeapon = this.weapon;
 
-        // remove previous equipped actor
-        this.unequipWeapon(previousWeapon, scene);
-
-        if (!weapon.createWeapon) {
-            console.warn("Weapon item has no createWeapon function:", weapon);
+        if (!this.weapon.createWeapon) {
+            console.warn("Weapon has no createWeapon function:", this.weapon);
             return;
         }
 
-        // remove newly equipped weapon from misc
-        if (miscIndex !== undefined && miscIndex >= 0) {
-            this.misc[miscIndex] = null;
-        }
+        // avoid duplicate actor
+        this.removeEquippedWeaponActor(engine);
 
-        const instance = weapon.createWeapon();
+        const instance = await this.weapon.createWeapon();
 
-        if (scene) {
-            scene.add(instance);
-        }
-
+        scene.add(instance);
         instance.addListeners?.();
 
-        weapon.instance = instance;
-        this.weapon = weapon;
-    }
-    unequipWeapon(weapon: Weapon | null, scene: ex.Scene | null) {
-        if (!weapon) return;
-
-        if (weapon.instance) {
-            weapon.instance.cleanup?.();
-
-            if (scene) {
-                scene.remove(weapon.instance);
-            }
-
-            weapon.instance = undefined;
-        }
-
-        const openSlot = this.misc.indexOf(null);
-
-        if (openSlot === -1) {
-            console.warn("No open slot to unequip weapon");
-            return;
-        }
-
-        this.weapon = null;
-        this.misc[openSlot] = weapon;
+        this.weapon.instance = instance;
+        this.weapon.instance?.sendResourceData?.();
     }
 
-    equipArmor(armor: Armor, miscIndex: number) {
-        if (armor.type !== "Armor") return;
-        this.armor = armor;
+    async removeEquippedWeaponActor(engine: ex.Engine | null) {
+        if (!this.weapon?.instance) return;
 
-        if (miscIndex !== undefined && miscIndex >= 0) {
-            this.misc[miscIndex] = null;
+        this.weapon.instance.cleanup?.();
+
+        if (engine?.currentScene) {
+            engine.currentScene.remove(this.weapon.instance);
         }
+
+        this.weapon.instance = undefined;
     }
 
-    unequipArmor(armor: Armor) {
-        const openSlot = this.misc.indexOf(null);
+    applyServerInventory(serverInventory: Inventory) {
+        this.weapon = serverInventory.weapon;
+        this.armor = serverInventory.armor;
+        this.miscWeapons = serverInventory.miscWeapons;
+        this.miscArmor = serverInventory.miscArmor;
+        this.miscMaterial = serverInventory.miscMaterial;
+        this.gold = serverInventory.gold;
+    }
 
-        if (openSlot === -1) {
-            console.warn("No open slot to unequip armor");
-            return;
-        }
-
-        this.armor = null;
-        this.misc[openSlot] = armor;
+    clone() {
+        return new Inventory({
+            weapon: this.weapon,
+            armor: this.armor,
+            miscWeapons: [...this.miscWeapons],
+            miscArmor: [...this.miscArmor],
+            miscMaterial: [...this.miscMaterial],
+            gold: this.gold,
+        });
     }
 }

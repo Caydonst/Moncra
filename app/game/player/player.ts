@@ -8,6 +8,8 @@ import { GameScene } from "../scenes/GameScene";
 import { multiplayer } from "../network/multiplayer";
 import { GameState } from "../gameState/gameState";
 import { Inventory } from "../inventory/inventory";
+import { Sentinel } from "../weapons/sentinel";
+import { EnchantedGlowEffect } from "../utils/swordOutline";
 
 type Stats = {
     speed: number;
@@ -24,8 +26,8 @@ export class Player extends ex.Actor {
         speed: 250,
         baseSpeed: 250,
         damage: 0,
-        maxHp: 100,
-        hp: 100,
+        maxHp: 5000,
+        hp: 5000,
         armor: 0,
         crit: 0,
     }
@@ -46,16 +48,19 @@ export class Player extends ex.Actor {
     private dashTime = 200; // 0.2 seconds
     private dashSpeed = 1000;
     private dashTracer!: DashTracer;
+    private previousPos!: ex.Vector;
 
-    private spriteScale = 2.3;
+    private hpUiUpdateQueued = false;
+
+    private spriteScale = 2;
 
     constructor(pos: ex.Vector, worldWidth: number, worldHeight: number, private resources: GameResources, private collisionGroups: any, private gameState: GameState) {
         super({
             name: "player",
             pos: pos,
             anchor: ex.vec(0.5, 0.5),
-            width: 11 * 2.3,    // set desired width
-            height: 16 * 2.3,   // set desired height
+            width: 15 * 2,    // set desired width
+            height: 20 * 2,   // set desired height
             color: ex.Color.Yellow,  // optional, for debugging
             collisionType: ex.CollisionType.Active,
             z: 3,
@@ -135,7 +140,6 @@ export class Player extends ex.Actor {
             },
         });
 
-
         engine.currentScene.add(this.particleTimer);
         this.particleTimer.start();
     }
@@ -197,7 +201,7 @@ export class Player extends ex.Actor {
         }
 
         if (this.shadow) {
-            this.shadow.pos = this.pos.add(ex.vec(0, (this.height / 2) + 3));
+            this.shadow.pos = this.pos.add(ex.vec(0, (this.height / 2) - 3));
         }
 
         this.dashTracer?.updateTracer(engine, delta, this.isDashing);
@@ -216,29 +220,63 @@ export class Player extends ex.Actor {
             ? equippedWeapon.getAttackId()
             : 0;
 
+        const weapon = {
+            id: this.gameState.inventory.weapon?.id,
+            icon: this.gameState.inventory.weapon?.icon,
+            damage: this.gameState.inventory.weapon?.stats?.damage,
+        }
+
         multiplayer.sendPlayerMove({
             x: this.pos.x,
             y: this.pos.y,
             rotation: this.rotation,
-            weaponId: this.gameState.inventory.weapon?.id ?? "",
+            weapon: this.gameState.inventory.weapon
+                ? {
+                    id: this.gameState.inventory.weapon.id,
+                    icon: this.gameState.inventory.weapon.gameIcon,
+                    damage: this.gameState.inventory.weapon.stats.damage,
+                    }
+                : undefined,
             aimAngle,
             isAttacking,
             attackId,
         });
 
     }
+
+    private queueHpUiUpdate() {
+        if (this.hpUiUpdateQueued) return;
+
+        this.hpUiUpdateQueued = true;
+
+        requestAnimationFrame(() => {
+            this.hpUiUpdateQueued = false;
+            window.dispatchEvent(new Event("player-damaged"));
+        });
+    }
+
     takeDamage(damage: number) {
         if (this.isDead) return;
 
+        const weaponInstance = this.gameState.inventory.weapon?.instance;
+
+        if (weaponInstance instanceof Sentinel) {
+            if (weaponInstance.isBlockingNow()) {
+                weaponInstance.onBlockedAttack(false);
+                damage *= 1 - weaponInstance.getDamageReduction();
+            }
+        }
+
         if (this.stats.hp <= damage) {
+
             this.stats.hp = 0;
-            window.dispatchEvent(new Event("player-damaged"));
+            this.queueHpUiUpdate();
             this.isDead = true;
             return;
         }
 
         this.stats.hp -= damage;
-        window.dispatchEvent(new Event("player-damaged"));
+        this.queueHpUiUpdate();
     }
     private dash() {
         const now = performance.now()

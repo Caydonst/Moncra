@@ -18,12 +18,16 @@ export function damageEnemy(
     isCrit: false,
     scene
   };
+  if (weapon.enchantments !== undefined && weapon.enchantments.length > 0) {
+    weapon.enchantments?.forEach(e => e.onBeforeDamage?.(ctx));
 
-  weapon.enchantments?.forEach(e => e.onBeforeDamage?.(ctx));
+    
+
+    weapon.enchantments?.forEach(e => e.onAfterDamage?.(ctx));
+  }
 
   target.takeDamage(ctx.finalDamage);
 
-  weapon.enchantments?.forEach(e => e.onAfterDamage?.(ctx));
 
   if (target.hp <= 0) {
     weapon.enchantments?.forEach(e => e.onKill?.(ctx));

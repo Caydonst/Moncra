@@ -11,7 +11,7 @@ import { Player } from '../player/player';
 import { Demon } from '../enemies/demon';
 import { Bow } from '../weapons/bow';
 import { WarHammer } from '../weapons/warhammer';
-import { Chest } from "../chest"
+import { Chest } from "../chest/chest";
 import warHammer from "../assets/weapons/war_hammer/anime_war_hammer.png";
 import greatSword from "../assets/weapons/great_sword/vampire_sword.png";
 import greatSword1 from "../assets/weapons/great_sword/ruby_sword.png";
@@ -48,6 +48,7 @@ import { StorageChest } from "../HubSystems/StorageChest";
 import { Blacksmith } from "../HubSystems/blacksmith";
 import obsidianArmorImg from "../assets/armor/obsidian_armor.png"
 import { CriticalHit, ChainLightning } from "@/app/game/enchantments/enchantments";
+import { gameItems } from "../items/GameItems";
 
 type Maps = {
     layer1: number[][];
@@ -180,6 +181,10 @@ export class HubScene extends ex.Scene {
                 const itemsList = []
                 const chestItems: (Item | Weapon | Ammunition | null)[] = Array(12).fill(null);
 
+                for (let i = 0; i < 5; i++) {
+                    itemsList.push(gameItems.materials.legendaryTestMaterial)
+                }
+
                 const randomFour = itemsList.sort(() => 0.5 - Math.random()).slice(0, 4);
                 const indexes = new Set()
                 randomFour.forEach((item) => {
@@ -194,7 +199,7 @@ export class HubScene extends ex.Scene {
                     }
                 })
 
-                return chestItems;
+                return itemsList;
             }
 
             this.chest1 = new Chest(ex.vec(500, 500), this.resources, getRandomItems());

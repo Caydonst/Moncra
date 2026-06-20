@@ -1,20 +1,24 @@
-.tempered {
+.common {
+    color: #fff;
+    border-color: #fff;
+}
+.uncommon {
     color: #32FF9C;
     border-color: #32FF9C;
 }
-.runed {
-    color: #FFE032;
-    border-color: #FFE032;
+.legendary {
+    color: #FFA500;
+    border-color: #FFA500;
 }
 .exalted {
     color: #FF3232;
     border-color: #FF3232;
 }
-.ascendant {
+.epic {
     color: #F132FF;
     border-color: #F132FF;
 }
-.mythic {
+.rare {
     color: #32FFFF;
     border-color: #32FFFF;
 }
@@ -47,7 +51,7 @@
     transform: translateY(100%);
     transition: 0.2s;
     background: #080808;
-    padding: 30px;
+    padding: 30px 0 30px 30px;
 }
 .storageInner {
     width: 100%;
@@ -153,23 +157,15 @@
 }
 
 .inventoryInner::-webkit-scrollbar-track {
-    background: transparent;
+    background: #242424;
 }
 
 .inventoryInner::-webkit-scrollbar-thumb {
-    background: linear-gradient(
-        to bottom,
-        #3a3a3a,
-        #1f1f1f
-    );
+    background: #626262;
 }
 
 .inventoryInner::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(
-        to bottom,
-        #4a4a4a,
-        #2a2a2a
-    );
+    background: #4a4a4a;
 }
 .miscGrid {
     display: grid;
@@ -179,7 +175,7 @@
     );
     gap: 16px;
     width: 100%;
-    padding: 30px 30px 30px 3px;
+    padding: 30px 30px 30px 9px;
 }
 .slot {
     aspect-ratio: 1 / 1;
@@ -187,42 +183,141 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 6px;
+    padding: 0;
     position: relative;
     background: #0A0A0A;
 }
+.selected {
+    outline: 4px solid #fff;
+    outline-offset: 3px;
+    transition: 0.05s;
+}
+*.selected:hover .hoverContainer {
+    display: none;
+}
+*.selected:hover {
+    outline-offset: 5px;
+}
+.hoverContainer {
+    position: absolute;
+    inset: -13px; /* slightly larger than slot */
+    pointer-events: none;
+    transition: 0.1s;
+    opacity: 0;
+    will-change: inset;
+}
+.slot:hover .hoverContainer {
+    inset: -10px;
+    opacity: 1;
+}
+.topRight,
+.bottomLeft,
+.topLeft,
+.bottomRight {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+}
+
+.topRight {
+    top: 0;
+    right: 0;
+    border-top: 4px solid #fff;
+    border-right: 4px solid #fff;
+}
+
+.bottomLeft {
+    bottom: 0;
+    left: 0;
+    border-bottom: 4px solid #fff;
+    border-left: 4px solid #fff;
+}
+.topLeft {
+    top: 0;
+    left: 0;
+    border-top: 4px solid #fff;
+    border-left: 4px solid #fff;
+}
+.bottomRight {
+    bottom: 0;
+    right: 0;
+    border-bottom: 4px solid #fff;
+    border-right: 4px solid #fff;
+}
 .weaponLevel {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    font-size: 10px;
-    text-shadow: 2px 2px rgba(0, 0, 0, 0.3);
+    top: 0;
+    right: 0;
+    font-size: 12px;
+    letter-spacing: 2px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 3px;
+    font-weight: 0;
 }
 .selectedWeaponLevel {
     font-size: 12px;
 }
-.slot.tempered,
-.weaponSlot.tempered {
+.powerLevel {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    font-size: 12px;
+    letter-spacing: 2px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 3px 3px 3px 5px;
+    font-weight: 0;
+    color: #FFE500;
+    gap: 3px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.powerLevel img {
+    width: 5px;
+    transform: rotate(45deg);
+}
+.quantity {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    font-size: 12px;
+    letter-spacing: 2px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 3px 3px 3px 5px;
+    font-weight: 0;
+    color: #fff;
+    gap: 3px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.slot.common,
+.weaponSlot.common {
+    border-color: #fff;
+    background: #666666;
+}
+.slot.uncommon,
+.weaponSlot.uncommon {
     border-color: #32FF9C;
     background: #13633C;
 }
-.slot.runed,
-.weaponSlot.runed {
-    border-color: #FFE032;
-    background: #665814;
+.slot.legendary,
+.weaponSlot.legendary {
+    border-color: #FFA500;
+    background: #664000;
 }
 .slot.exalted,
 .weaponSlot.exalted {
     border-color: #FF3232;
     background: #661414;
 }
-.slot.ascendant,
-.weaponSlot.ascendant {
+.slot.epic,
+.weaponSlot.epic {
     border-color: #F132FF;
     background: #5D1466;
 }
-.slot.mythic,
-.weaponSlot.mythic {
+.slot.rare,
+.weaponSlot.rare {
     border-color: #32FFFF;
     background: #146666;
 }
@@ -230,9 +325,6 @@
 .weaponSlot.relic {
     border-color: #FF4E32;
     background: #662414;
-}
-.slot:hover {
-    outline: 3px solid #fff;
 }
 .slot .slotImg {
     width: 100%;
@@ -260,13 +352,13 @@
 }
 .itemIconContainer {
     position: absolute;
-    top: 60px;
+    top: 40px;
     right: 150px;
     width: 180px;
-    height: 400px;
+    height: 460px;
     min-width: 100px;
     min-height: 100px;
-    transform: rotate(30deg);
+    /*transform: rotate(30deg);*/
     border: 5px solid transparent;
     display: flex;
     justify-content: center;
@@ -305,7 +397,7 @@
     object-fit: contain;
     image-rendering: pixelated;
     z-index: 2;
-    filter: drop-shadow(50px 50px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(-50px 50px rgba(0, 0, 0, 0.3));
 }
 .itemInfoContainer {
     width: 100%;
@@ -313,8 +405,8 @@
     justify-content: center;
     align-items: start;
     flex-direction: column;
-    background: transparent;
     z-index: 2;
+    gap: 180px;
 }
 .nameContainer {
     display: flex;
@@ -330,7 +422,7 @@
     align-items: center;
     gap: 16px;
 }
-.nameContainer .header p:first-child {
+.powerText {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -357,15 +449,19 @@
     background: #282828;
     border: 2px solid rgba(255, 255, 255, 0.1);
 }
-.attackStyleName {
+.specialization {
     font-size: 10px;
     color: #fff;
     padding: 5px;
-    background: #282828;
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    background: #332400;
+    border: 2px solid #FFBF00;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
 }
 .nameContainer .header img {
-    width: 8px;
+    width: 7px;
     transform: rotate(45deg);
 }
 .itemStatsContainer {
@@ -399,6 +495,53 @@
     width: 16px;
     transform: rotate(45deg);
 }
+.enchantmentsContainer {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    gap: 40px;
+    min-height: 300px;
+    padding-top: 10px;
+    box-shadow: 0 -100px 120px 40px #080808;
+    background: #080808;;
+}
+.enchantmentsContainer p:first-child {
+    font-size: 12px;
+}
+.enchantments {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap: 60px;
+}
+.enchantment {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    gap: 30px;
+    height: 100%;
+    max-height: 400px;
+    width: 80px;
+}
+.enchantmentName {
+    font-size: 10px;
+}
+.enchantmentIconContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    aspect-ratio: 1;
+    border: 3px solid gray;
+    background: #141414;
+    text-align: center;
+    transform: rotate(45deg);
+}
 .itemDescContainer {
     display: flex;
     flex-direction: column;
@@ -417,23 +560,17 @@
 #item-info-stats p {
     font-size: 12px;
 }
-.selected {
-    outline: 3px solid #fff;
-}
 .equipBtnContainer {
     position: absolute;
-    bottom: 30px;
+    bottom: 5px;
     left: 0;
-    right: 30px;
+    right: 0;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 .equipBtn {
-    position: absolute;
-    bottom: 30px;
-    left: 0;
-    right: 30px;
+    width: 100%;
     height: 45px;
     border: 3px solid #70ff8d;
     background: #3b8249;
@@ -449,7 +586,6 @@
 }
 .unequipBtn {
     width: 100%;
-    max-width: 300px;
     height: 45px;
     border: 3px solid #ff5e5e;
     background: #913434;
@@ -494,14 +630,23 @@
         max-width: 250px;
     }
 }
-@media (max-width: 1400px) {
+@media (max-width: 1500px) {
     .itemIconContainer {
-        right: 30px;
+        right: 0;
+        width: 180px;
     }
 }
 @media (max-width: 1300px) {
     .nameContainer h3 {
         max-width: 150px;
+    }
+}
+@media (max-width: 1200px) {
+    .enchantments {
+        gap: 40px;
+    }
+    .enchantment {
+        width: 60px;
     }
 }
 @media (max-width: 1140px) {
@@ -514,5 +659,17 @@
     }
     .weaponSlot {
         height: 100px;
+    }
+}
+@media (max-width: 1140px) {
+    .inventory {
+        width: 350px;
+    }
+    .miscGrid {
+        display: grid;
+        grid-template-columns: repeat(
+            2,
+            minmax(var(--min-slot-size), 1fr)
+        );
     }
 }

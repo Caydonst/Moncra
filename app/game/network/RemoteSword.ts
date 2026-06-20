@@ -46,7 +46,7 @@ export class RemoteSword extends ex.Actor {
   private comboIndex = 0;
   private currentAttack!: Attack;
 
-  private readonly ROT_OFFSET = Math.PI * 0.75;
+  private readonly ROT_OFFSET = Math.PI / 2;
 
   private combo: Attack[] = [
     {
@@ -82,6 +82,8 @@ export class RemoteSword extends ex.Actor {
     },
   ];
 
+  private cleanedUp = false;
+
   constructor(
     private player: ex.Actor & { bobOffsetY?: number },
     private resources: GameResources,
@@ -90,14 +92,14 @@ export class RemoteSword extends ex.Actor {
     super({
       name: "remote-sword",
       pos: player.pos.clone(),
-      anchor: ex.vec(0.75, 0.75),
-      width: image.width * 3.5,
-      height: image.height * 3.5,
+      anchor: ex.vec(0.5, 0.5),
+      width: image.width * 2.5,
+      height: image.height * 2.5,
       z: 4,
       collisionType: ex.CollisionType.PreventCollision,
     });
 
-    this.offset = ex.vec(this.height * 0.35, 0);
+    this.offset = ex.vec(44, 0);
   }
 
   onInitialize(engine: ex.Engine) {
@@ -147,17 +149,18 @@ export class RemoteSword extends ex.Actor {
         this.swingProgress = 0;
 
         if (this.currentAttack.type === "slash") {
-        this.startSlash(this.aimAngle);
+          this.startSlash(this.aimAngle);
 
-        this.swingTracer.start(
+          this.swingTracer.start(
             this.player,
             this.swingStartAngle,
             this.swingEndAngle,
             this.swingDuration,
-            this.height
-        );
+            this.offset.x,
+            () => this.player.pos.clone().add(ex.vec(0, this.player.bobOffsetY ?? 0)),
+          );
         } else {
-        this.startThrust(this.aimAngle);
+          this.startThrust(this.aimAngle);
         }
 
         this.comboIndex = (this.comboIndex + 1) % this.combo.length;
@@ -317,9 +320,15 @@ export class RemoteSword extends ex.Actor {
   }
 
   cleanup() {
-    this.shadow?.kill();
-    this.swingTracer?.kill();
-    this.thrustTracer?.kill();
-    this.kill();
+      if (this.cleanedUp) return;
+      this.cleanedUp = true;
+
+      this.shadow?.kill();
+      this.swingTracer?.kill();
+      this.thrustTracer?.kill();
+  }
+  
+  onPreKill() {
+      this.cleanup();
   }
 }

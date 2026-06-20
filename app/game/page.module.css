@@ -120,12 +120,14 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 100px;
+  height: 130px;
   pointer-events: none;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: start;
+  align-items: end;
   z-index: 2;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  padding: 0 30px 30px 30px;
 
 }
 .overlayWeaponInfoContainer {
@@ -158,4 +160,17 @@
 .overlayWeaponInfoContainer p {
   height: 50%;
   font-size: 8px;
+}
+.lanternContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 30px;
+}
+.lanternContainer img {
+  width: 70px;
+  image-rendering: pixelated;
 }

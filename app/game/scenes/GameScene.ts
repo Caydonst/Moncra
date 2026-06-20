@@ -11,7 +11,7 @@ import { Player } from '../player/player';
 import { Demon } from '../enemies/demon';
 import { Bow } from '../weapons/bow';
 import { WarHammer } from '../weapons/warhammer';
-import { Chest } from "../chest"
+import { Chest } from "../chest/chest";
 import warHammer from "../assets/weapons/war_hammer/anime_war_hammer.png";
 import greatSword from "../assets/weapons/great_sword/anime_sword.png";
 import SNSImg from "../assets/weapons/sword_and_shield/crystal_sns.png";

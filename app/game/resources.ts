@@ -5,8 +5,8 @@ import { TiledResource } from "@excaliburjs/plugin-tiled";
 // --- MAP ---
 const tiledMap = new TiledResource("/maps/hub.tmx");
 // --- CHARACTER ---
-import characterWalkSheetImage from "./assets/character/walk/walk_spritesheet2.png"
-import characterIdleSheetImage from "./assets/character/idle/idle_spritesheet.png"
+import characterWalkSheetImage from "./assets/character/walk/walk_spritesheet3.png"
+import characterIdleSheetImage from "./assets/character/idle/idle_spritesheet2.png"
 import characterWalk0 from "./assets/character/walk/walk0.png";
 import characterWalk1 from "./assets/character/walk/walk1.png";
 import characterWalk2 from "./assets/character/walk/walk2.png";
@@ -69,6 +69,7 @@ import bowSpritesheetImg from "./assets/weapons/bow/bow_spritesheet.png"
 import obsidianArmorImg from "./assets/armor/obsidian_armor.png"
 // --- MISC ---
 import coinSpritesheet from "./assets/currency/coin_spritesheet.png";
+import goldImg from "./assets/currency/gold_icon.png"
 import chestImage from "./assets/chest/chest.png"
 import chestSelected from "./assets/chest/chest_selected.png"
 import chestOpen from "./assets/chest/chest_open.png"
@@ -80,6 +81,7 @@ import portalSpritesheetImage from "./assets/misc/portal_spritesheet.png"
 import portalSelectedSpritesheetImage from "./assets/misc/portal_selected_spritesheet.png"
 import {CustomLoader} from "@/app/game/utils/customLoader";
 import mapSpritesheet64 from "./assets/map/map_spritesheet_64.png"
+import test_material from "./assets/currency/test_material.png"
 
 // --- NPC ---
 import blacksmithSpritesheetImage from "./assets/npc/blacksmith/idle_spritesheet.png"
@@ -136,6 +138,7 @@ export async function createResources() {
         shield: new ex.ImageSource(shieldImg.src),
         obsidianArmor: new ex.ImageSource(obsidianArmorImg.src),
         coinSheetImage: new ex.ImageSource(coinSpritesheet.src),
+        goldImage: new ex.ImageSource(goldImg.src),
         chestSheetImage: new ex.ImageSource(chestSpritesheet.src),
         chest: new ex.ImageSource(chestImage.src),
         chestSelected: new ex.ImageSource(chestSelected.src),
@@ -148,6 +151,7 @@ export async function createResources() {
         demonBossIdleSheetImage: new ex.ImageSource(demonBossIdleSheetImage.src),
         demonBossHurt: new ex.ImageSource(demonBossHurt.src),
         demonBossWalkSheetImage: new ex.ImageSource(demonBossWalkSheetImage.src),
+        testMaterial: new ex.ImageSource(test_material.src),
     };
 
     const PlayerImages: ImageGroups = {
@@ -217,8 +221,8 @@ export async function createResources() {
         grid: {
             rows: 1,
             columns: 4,
-            spriteWidth: 11,
-            spriteHeight: 16,
+            spriteWidth: 15,
+            spriteHeight: 21,
         }
     });
 
@@ -227,8 +231,8 @@ export async function createResources() {
         grid: {
             rows: 1,
             columns: 4,
-            spriteWidth: 11,
-            spriteHeight: 16,
+            spriteWidth: 15,
+            spriteHeight: 21,
         }
     });
     const demonBossIdleSpritesheet = ex.SpriteSheet.fromImageSource({

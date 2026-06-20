@@ -5,6 +5,7 @@ export class GameState {
     inventory: Inventory;
     player?: Player;
     engine?: any;
+    resources?: any;
 
     constructor() {
         this.inventory = new Inventory();

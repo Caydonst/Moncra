@@ -89,25 +89,37 @@ export class RemotePlayer extends ex.Actor {
     this.particleTimer.start();
   }
 
-    updateWeapon(weaponId: string, engine: ex.Engine) {
-        if (weaponId === this.currentWeaponId) return;
+    private getWeaponIcon(weaponId: string): ex.ImageSource {
+        const swordImages: Record<string, ex.ImageSource> = {
+            great_sword0: this.resources.Images.greatSword0,
+            great_sword1: this.resources.Images.greatSword,
+            great_sword2: this.resources.Images.greatSword2,
+            obsidian_sword: this.resources.Images.greatSword1,
+        };
+
+        return swordImages[weaponId] ?? this.resources.Images.greatSword0;
+    }
+
+    updateWeapon(weapon: any, engine: ex.Engine) {
+        if (weapon === undefined) {
+            this.weaponActor?.kill();
+            this.weaponActor = null;
+            return;
+        }
+        
+        if (weapon.id === this.currentWeaponId) return;
 
         this.weaponActor?.kill();
         this.weaponActor = null;
-        this.currentWeaponId = weaponId;
+        this.currentWeaponId = weapon.id;
 
-        if (!weaponId) return;
+        const icon = this.getWeaponIcon(weapon.id);
 
-        if (weaponId === "bow1") {
-            this.weaponActor = new RemoteBow(this, this.resources);
-        }
-        if (weaponId === "great_sword1") {
-            this.weaponActor = new RemoteSword(
-                this,
-                this.resources,
-                this.resources.Images.greatSword
-            );
-        }
+        this.weaponActor = new RemoteSword(
+            this,
+            this.resources,
+            icon,
+        );
 
         if (this.weaponActor) {
             engine.currentScene.add(this.weaponActor);
@@ -115,10 +127,11 @@ export class RemotePlayer extends ex.Actor {
     }
 
     updateFromNetwork(player: any, engine: ex.Engine) {
+        console.log(player)
         this.targetPos = ex.vec(player.x, player.y);
         this.rotation = player.rotation;
 
-        this.updateWeapon(player.weaponId, engine);
+        this.updateWeapon(player.weapon, engine);
 
         if (this.weaponActor instanceof RemoteBow) {
             this.weaponActor.setAimAngle(player.aimAngle ?? 0);

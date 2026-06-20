@@ -1,6 +1,6 @@
 import * as ex from "excalibur"
 import { Portal } from "../portal";
-import { Chest } from "../chest";
+import { Chest } from "../chest/chest";
 import { createTileMapFromDungeonFloor, generateDungeonFloor, tileToWorld } from "../utils/mapGenerator";
 import { GameResources } from "../resources";
 import { Player } from "../player/player";

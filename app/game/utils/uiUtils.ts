@@ -30,3 +30,18 @@ export const colors = {
         rgba: "rgba(255, 50, 50, 0.3)",
     },
 }
+
+export const specializationColors = {
+    Duelist: {
+        color: "#00E5FF",
+        background: "#002E33"
+    },
+    Executioner: {
+        color: "#FF0000",
+        background: "#330000"
+    },
+    Sentinel: {
+        color: "#FFBF00",
+        background: "#332500"
+    },
+} as const;

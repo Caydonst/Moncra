@@ -1,10 +1,11 @@
-import type {Item, Weapon} from "@/app/game/items/ItemTypes";
+import type {Item, Material, Weapon} from "@/app/game/items/ItemTypes";
 
 const ex = await import("excalibur");
 import {GameResources} from "../resources";
 import { Player } from "../player/player";
 import {Shadow} from "../utils/shadow";
 import {Coin} from "../coin";
+import { Armor } from "../armor/armor";
 
 
 
@@ -16,7 +17,9 @@ export class StorageChest extends ex.Actor {
     private engine!: ex.Engine;
     private animationDone = false;
     private selectDistance = 140;
-    private slots: (Item | Weapon | null)[] = Array(36).fill(null);
+    miscWeapons: (Weapon | null)[] = Array(12).fill(null);
+    miscArmor: (Armor | null)[] = Array(12).fill(null);
+    miscMaterial: (Material | null)[] = Array(12).fill(null);
 
     constructor(pos: ex.Vector, private resources: GameResources) {
         super({
@@ -118,7 +121,6 @@ export class StorageChest extends ex.Actor {
         window.dispatchEvent(
             new CustomEvent("storage-opened", {
                 detail: {
-                    items: this.slots,
                     storage: this,
                 },
             })
@@ -130,17 +132,56 @@ export class StorageChest extends ex.Actor {
             this.engine.currentScene.add(coin);
         }
     }
-    addItem(item: Item | Weapon): boolean {
+    addItem(item: Weapon | Armor | Material) {
+        let slot = 0;
+        switch(item.type) {
+            
+            case "Weapon":
 
-        const slot = this.slots.indexOf(null);
-        this.slots[slot] = item;
-        return true;
+                slot = this.miscWeapons.indexOf(null);
+                this.miscWeapons[slot] = item;
+                break;
+
+            case "Armor":
+                
+                slot = this.miscArmor.indexOf(null);
+                this.miscArmor[slot] = item;
+                break;
+
+            case "Material":
+                slot = this.miscMaterial.indexOf(null);
+                this.miscMaterial[slot] = item;
+                break;
+
+            default:
+                break;
+        }
+
+        return slot;
     }
-    removeItem(item: Item | Weapon) {
-        const slotIndex = this.slots.findIndex(m => m?.id === item.id);
-        if (slotIndex !== -1) this.slots[slotIndex] = null;
+    removeItem(item: Weapon | Armor | Material) {
+        if (item.type === "Weapon") {
+            const mi = this.miscWeapons.findIndex(m => m?.id === item.id);
+            if (mi !== -1) {
+                this.miscWeapons[mi] = null;
+            }
+        } else if (item.type === "Armor") {
+            const mi = this.miscArmor.findIndex(m => m?.id === item.id);
+            if (mi !== -1) {
+                this.miscArmor[mi] = null;
+            }
+        } else if (item.type === "Material") {
+            const mi = this.miscMaterial.findIndex(m => m?.id === item.id);
+            if (mi !== -1) {
+                this.miscMaterial[mi] = null;
+            }
+        }
     }
     getItems() {
-        return this.slots;
+        return {
+            weapons: this.miscWeapons,
+            armor: this.miscArmor,
+            material: this.miscMaterial,
+        };
     }
 }

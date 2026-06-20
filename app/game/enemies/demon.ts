@@ -12,18 +12,18 @@ import {DemonBoss} from "@/app/game/enemies/bosses/DemonBoss";
 export class Demon extends ex.Actor {
     private speed = 220; // pixels per second
     private target: ex.Actor; // the player
-    private worldWidth: number;
-    private worldHeight: number;
+    private worldWidth?: number;
+    private worldHeight?: number;
     private hp: number;
     private maxHp: number;
-    private walkAnim: ex.Animation;
-    private deadAnim: ex.Animation;
-    private miscAnim: ex.Animation;
+    private walkAnim!: ex.Animation;
+    private deadAnim!: ex.Animation;
+    private miscAnim!: ex.Animation;
     private engine: ex.Engine;
-    private displayedHp: number;
+    private displayedHp?: number;
     public isDead: boolean = false;
-    private shadow: Shadow;
-    private hpBar: HPBar;
+    private shadow!: Shadow;
+    private hpBar!: HPBar;
     private playedDeath = false;
     private playedMisc = false;
     public scene: ex.Scene;
@@ -32,7 +32,7 @@ export class Demon extends ex.Actor {
     private hurtSprite!: ex.Sprite;
     private damage: number = 15;
     private touchingPlayer: Player | null = null;
-    private damageCooldown = 1000; // ms
+    private damageCooldown = 500; // ms
     private lastDamageTime = 0;
     private isAFK = true;
 
@@ -130,7 +130,7 @@ export class Demon extends ex.Actor {
             this.graphics.offset = ex.vec(0, -30);
             this.graphics.use("misc");
             this.playedMisc = true;
-            //this.spawnCoins(3);
+            this.spawnCoins(3);
             return;
         }
 
@@ -174,11 +174,7 @@ export class Demon extends ex.Actor {
             this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2));
         }
 
-        if (!this.touchingPlayer) return;
-
-        const now = performance.now();
-
-        if (now - this.lastDamageTime >= this.damageCooldown) {
+        if (this.touchingPlayer) {
             this.damagePlayer();
         }
     }
@@ -242,30 +238,36 @@ export class Demon extends ex.Actor {
         if (other.owner instanceof Player) {
             this.touchingPlayer = other.owner;
 
-            // optional: damage immediately on first touch
             this.damagePlayer();
         }
-    }
+    } 
     onCollisionEnd(_self: ex.Collider, other: ex.Collider) {
         if (other.owner instanceof Player) {
             this.touchingPlayer = null;
         }
     }
     private damagePlayer() {
-        if (!this.touchingPlayer) return;
+        const now = performance.now();
 
-        this.touchingPlayer.takeDamage(this.damage);
-        this.lastDamageTime = performance.now();
+        if (now - this.lastDamageTime < this.damageCooldown) {
+            return;
+        }
+
+        this.lastDamageTime = now;
+
+        console.log("Damaging player")
+
+        this.touchingPlayer?.takeDamage(this.damage);
     }
-    /*
+    
     spawnCoins(count: number = 2) {
         for (let i = 0; i < count; i++) {
-            const coin = new Coin(this.pos.clone());
+            const coin = new Coin(this.pos.clone(), this.resources);
             this.engine.currentScene.add(coin);
         }
     }
 
-     */
+     
 }
 /*if (this.deadAnim.done) {
         this.graphics.use("misc");

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styles from "./blacksmith.module.css"
-import { Item, Weapon } from "../../items/ItemTypes";
+import { Item, Material, Weapon } from "../../items/ItemTypes";
 import { Inventory } from "../../inventory/inventory";
 import allIcon from "@/app/game/assets/icons/all_icon.png"
 import weaponIcon from "@/app/game/assets/icons/weapon_icon.png"
@@ -9,18 +9,29 @@ import allIconSelected from "@/app/game/assets/icons/all_icon_selected.png"
 import weaponIconSelected from "@/app/game/assets/icons/weapon_icon_selected.png"
 import armorIconSelected from "@/app/game/assets/icons/armor_icon_selected.png"
 import goldIcon from "@/app/game/assets/currency/gold_icon.png"
+import powerIconImg from "../../assets/misc/power_icon.png"
 import { colors } from "../../utils/uiUtils"
 import { Armor } from "../../armor/armor";
 import { upgrade } from "./helperFunctions"
 import { getUpgradeCost } from "../../items/UpgradeCosts";
+import { createClientInventory } from "../../inventory/createClientInventory";
+import { gameState } from "../../gameState/gameState";
 
 type Props = {
     blacksmithOpen: boolean;
     inventory: Inventory;
+    setInventory: React.Dispatch<React.SetStateAction<Inventory>>
 }
 
-export default function Upgrading({ blacksmithOpen, inventory }: Props) {
-    const [selectedItem, setSelectedItem] = useState<Weapon | Armor | null>(null);
+type Filter = "all" | "weapons" | "armor" | "material" | "equipment";
+type SelectedSlot = {
+    filter: Filter,
+    displayIndex: number,
+    realIndex: number,
+};
+
+export default function Upgrading({ blacksmithOpen, inventory, setInventory }: Props) {
+    const [selectedItem, setSelectedItem] = useState<Weapon | Armor |  null>(null);
     const [selectedItemIndex, setSelectedItemIndex] = useState(-1);
     const [realItemIndex, setRealItemIndex] = useState(-1);
     const [itemPanelOpen, setItemPanelOpen] = useState(false);
@@ -35,6 +46,10 @@ export default function Upgrading({ blacksmithOpen, inventory }: Props) {
 
     const [hoveredInventoryFilter, setHoveredInventoryFilter] = useState<string | null>(null);
     const [hoveredStorageFilter, setHoveredStorageFilter] = useState<string | null>(null);
+
+    const [hoveredFilter, setHoveredFilter] = useState<string | null>(null);
+    const [selectedFilter, setSelectedFilter] = useState<Filter>("all");
+    const [selectedSlot, setSelectedSlot] = useState<SelectedSlot>({ filter: "all", displayIndex: -1, realIndex: -1 })
 
     function itemMatchesFilter(item: Item | Weapon | null, filter: string) {
         if (!item) return false;
@@ -52,19 +67,76 @@ export default function Upgrading({ blacksmithOpen, inventory }: Props) {
         return true;
     }
 
-    const filteredInventoryItems = (() => {
-        const allItems = [inventory.weapon, inventory.armor, ...inventory.misc]
-        const matchingItems = allItems
-            .map((item, realIndex) => ({ item, realIndex }))
-            .filter(({ item }) => itemMatchesFilter(item, inventoryFilter));
+    const filteredItems = (() => {
+        if (!inventory) return [];
 
-        return [...matchingItems];
+        let sourceItems = [];
+
+        switch (selectedFilter) {
+            case "weapons":
+                sourceItems = [
+                    {
+                        item: inventory.weapon,
+                        realIndex: -2,
+                        source: "equippedWeapon" as const,
+                    },
+                    ...inventory.miscWeapons.map((item, realIndex) => ({
+                    item,
+                    realIndex,
+                    source: "weapon" as const,
+                    })),
+                ];
+                break;
+
+            case "armor":
+                sourceItems = [
+                    {
+                        item: inventory.armor,
+                        realIndex: -2,
+                        source: "equippedArmor" as const,
+                    },
+                    ...inventory.miscArmor.map((item, realIndex) => ({
+                    item,
+                    realIndex,
+                    source: "armor" as const,
+                    })),
+                ];
+                break;
+
+            default:
+                sourceItems = [
+                    {
+                        item: inventory.weapon,
+                        realIndex: -2,
+                        source: "equippedWeapon" as const,
+                    },
+                    {
+                        item: inventory.armor,
+                        realIndex: -2,
+                        source: "equippedArmor" as const,
+                    },
+                    ...inventory.miscWeapons.map((item, realIndex) => ({
+                        item,
+                        realIndex,
+                        source: "weapon" as const,
+                    })),
+                    ...inventory.miscArmor.map((item, realIndex) => ({
+                        item,
+                        realIndex,
+                        source: "armor" as const,
+                    })),
+                ];
+        }
+
+        const filledSlots = sourceItems.filter(({ item }) => item !== null);
+
+        return [...filledSlots];
     })();
-
-    function upgradeItem() {
+    /*
+    function upgradeItem(goldCost: number) {
         if (!selectedItem) return;
 
-        const upgradedItem = upgrade(selectedItem);
+        const upgradedItem = upgrade(selectedItem, goldCost);
         if (!upgradedItem) return;
 
         setSelectedItem(upgradedItem);
@@ -75,11 +147,55 @@ export default function Upgrading({ blacksmithOpen, inventory }: Props) {
         } else if (selectedItem === inventory.armor) {
             inventory.armor = upgradedItem as Armor;
         } else {
-            inventory.misc[realItemIndex - 2] = upgradedItem;
-        }
+            if (selectedItem.type === "Weapon") {
+                inventory.miscWeapons[selectedSlot.realIndex] = upgradedItem;
+            } else if (selectedItem.type === "Armor") {
+                inventory.miscArmor[selectedSlot.realIndex] = upgradedItem;
+            
+            }
         
 
         //filteredInventoryItems[selectedItemIndex] = upgradedItem;
+        }
+    }
+        */
+
+    async function upgradeItem() {
+        if (!selectedItem || !inventory || !gameState.engine) return;
+
+        const wasEquippedWeapon =
+            selectedItem.type === "Weapon" &&
+            selectedItem.uid === inventory.weapon?.uid;
+
+        if (wasEquippedWeapon) {
+            inventory.removeEquippedWeaponActor(gameState.engine);
+        }
+
+        const res = await fetch("/api/upgrade-item", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                uid: selectedItem.uid,
+            }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) return;
+
+        const clientInventory = createClientInventory(data.inventory, gameState);
+
+        gameState.inventory = clientInventory;
+        setInventory(clientInventory);
+
+        if (wasEquippedWeapon && clientInventory.weapon) {
+            await clientInventory.spawnEquippedWeapon(gameState.engine);
+            setSelectedItem(clientInventory.weapon);
+        } else {
+            setSelectedItem(data.upgradedItem);
+        }
     }
 
     return (
@@ -87,36 +203,36 @@ export default function Upgrading({ blacksmithOpen, inventory }: Props) {
             <div className={styles.inventory}>
                 <div className={styles.itemFilterContainer}>
                     <button 
-                        onClick={() => setInventoryFilter("all")} className={`${styles.filterBtn} ${inventoryFilter === "all" ? styles.filterSelected : ""}`}
-                        onMouseEnter={() => setHoveredInventoryFilter("all")}
-                        onMouseLeave={() => setHoveredInventoryFilter(null)}
+                        onClick={() => setSelectedFilter("all")} className={`${styles.filterBtn} ${selectedFilter === "all" ? styles.filterSelected : ""}`}
+                        onMouseEnter={() => setHoveredFilter("all")}
+                        onMouseLeave={() => setHoveredFilter(null)}
                     >
                         All<img src={
-                            inventoryFilter === "all" || hoveredInventoryFilter === "all"
+                            selectedFilter === "all" || hoveredFilter === "all"
                                     ? allIconSelected.src
                                     : allIcon.src
                                 } 
                             />
                     </button>
                     <button 
-                        onClick={() => setInventoryFilter("weapons")} className={`${styles.filterBtn} ${inventoryFilter === "weapons" ? styles.filterSelected : ""}`}
-                        onMouseEnter={() => setHoveredInventoryFilter("weapons")}
-                        onMouseLeave={() => setHoveredInventoryFilter(null)}
+                        onClick={() => setSelectedFilter("weapons")} className={`${styles.filterBtn} ${selectedFilter === "weapons" ? styles.filterSelected : ""}`}
+                        onMouseEnter={() => setHoveredFilter("weapons")}
+                        onMouseLeave={() => setHoveredFilter(null)}
                     >
                         Weapons<img src={
-                            inventoryFilter === "weapons" || hoveredInventoryFilter === "weapons"
+                            selectedFilter === "weapons" || hoveredFilter === "weapons"
                                     ? weaponIconSelected.src
                                     : weaponIcon.src
                                 } 
                             />
                     </button>
                     <button 
-                        onClick={() => setInventoryFilter("armor")} className={`${styles.filterBtn} ${inventoryFilter === "armor" ? styles.filterSelected : ""}`}
-                        onMouseEnter={() => setHoveredInventoryFilter("armor")}
-                        onMouseLeave={() => setHoveredInventoryFilter(null)}
+                        onClick={() => setSelectedFilter("armor")} className={`${styles.filterBtn} ${selectedFilter === "armor" ? styles.filterSelected : ""}`}
+                        onMouseEnter={() => setHoveredFilter("armor")}
+                        onMouseLeave={() => setHoveredFilter(null)}
                     >
                         Armor<img src={
-                            inventoryFilter === "armor" || hoveredInventoryFilter === "armor"
+                            selectedFilter === "armor" || hoveredFilter === "armor"
                                     ? armorIconSelected.src
                                     : armorIcon.src
                                 } 
@@ -125,17 +241,18 @@ export default function Upgrading({ blacksmithOpen, inventory }: Props) {
                 </div>
                 <div className={styles.inventoryInner}>
                     <div id="misc-grid" className={styles.miscGrid}>
-                        {filteredInventoryItems.map(({ item: slot, realIndex }, displayIndex) => (
+                        {filteredItems.map(({ item: slot, realIndex }, displayIndex) => (
                             <div
                                 key={displayIndex}
                                 className={`${styles.slot} ${
-                                    slot && selectedItemIndex === displayIndex ? styles.selected : ""
+                                    slot && (selectedSlot.displayIndex === displayIndex && selectedSlot.filter === selectedFilter) ? styles.selected : ""
                                 }`}
                                 onClick={() => {
                                     if (!slot) return;
                                     setSelectedItem(slot);
                                     setSelectedItemIndex(displayIndex)
                                     setRealItemIndex(realIndex)
+                                    setSelectedSlot({ filter: selectedFilter, displayIndex: displayIndex, realIndex: realIndex })
                                 }}
                                 style={{ 
                                     background: `linear-gradient(
@@ -155,8 +272,17 @@ export default function Upgrading({ blacksmithOpen, inventory }: Props) {
                                     <p>{slot?.name.toUpperCase()}</p>
                                 </div>
                                 {slot?.level !== undefined && (
-                                    <p className={styles.weaponLevel} style={{ color: `${slot?.level === 10 ? "#FFE500" : "#fff"}` }}>+{slot?.level}</p>
+                                    <p className={styles.weaponLevel} style={{ color: `${slot.level === 10 ? "#FFE500" : "#fff"}` }}>+{slot.level}</p>
                                 )}
+                                {slot?.stats?.power !== undefined && (
+                                    <p className={styles.powerLevel}><img src={powerIconImg.src} />{slot.stats.power}</p>
+                                )}
+                                <div className={styles.hoverContainer}>
+                                    <div className={styles.topRight}></div>
+                                    <div className={styles.bottomLeft}></div>
+                                    <div className={styles.topLeft}></div>
+                                    <div className={styles.bottomRight}></div>
+                                </div>
                             </div>
                             
                         ))}
@@ -214,10 +340,12 @@ export default function Upgrading({ blacksmithOpen, inventory }: Props) {
                                     <div className={styles.materialBgLight}></div>
                                     <img src={goldIcon.src} />
                                 </div>
-                                <p>2354 / {getUpgradeCost(selectedItem).gold}</p>
+                                <p>{inventory?.gold} / {getUpgradeCost(selectedItem).gold}</p>
                             </div>
                             {getUpgradeCost(selectedItem).materials.map((material, index) => (
+                                
                                 <div key={index} className={styles.material}>
+                                    {console.log(material)}
                                     <div className={styles.materialIcon}>
                                         <div className={styles.materialBgLight} style={{ background: `${colors[material.material.rarity].hex}` }}></div>
                                         <img src={material.material.icon} style={{ filter: `drop-shadow(0 0 3px ${colors[material.material.rarity].hex})` }} />
@@ -226,7 +354,7 @@ export default function Upgrading({ blacksmithOpen, inventory }: Props) {
                                 </div>
                             ))}
                         </div>
-                        <button className={styles.upgradeBtn} onClick={upgradeItem}>UPGRADE</button>
+                        <button className={styles.upgradeBtn} onClick={() => upgradeItem(getUpgradeCost(selectedItem).gold)}>UPGRADE</button>
                         </>
                     )}
                     </>

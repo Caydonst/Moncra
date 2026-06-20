@@ -12,6 +12,7 @@ export async function createGame(canvas: HTMLCanvasElement) {
         backgroundColor: ex.Color.fromHex("#483B3A"),
         displayMode: ex.DisplayMode.FillContainer,
         pixelArt: true,
+        pointerScope: ex.PointerScope.Document,
         physics: {
             colliders: {
                 compositeStrategy: "separate",

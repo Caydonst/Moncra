@@ -1,14 +1,14 @@
 import { Armor } from "../armor/armor";
-import { epicTestMaterial, legendaryTestMaterial } from "./GameItems";
 import { Weapon } from "./ItemTypes";
 import { Material } from "./ItemTypes";
+import { gameItems } from "../items/GameItems"
 
 type UpgradeMaterial = {
     material: Material,
     quantity: number,
 }
 
-type UpgradeCost = {
+export type UpgradeCost = {
     gold: number;
     materials: UpgradeMaterial[],
 }
@@ -22,20 +22,23 @@ const rarityMultiplier = {
     exalted: 16,
 };
 
-const rarityMaterial = {
-    common: [epicTestMaterial],
-    uncommon: [epicTestMaterial],
-    rare: [epicTestMaterial],
-    epic: [epicTestMaterial],
-    legendary: [legendaryTestMaterial],
-    exalted: [legendaryTestMaterial],
-}
+
 
 export function getUpgradeCost(weapon: Weapon | Armor): UpgradeCost {
 
     const materials: UpgradeMaterial[] = [];
 
+    const rarityMaterial = {
+        common: [gameItems.materials.legendaryTestMaterial],
+        uncommon: [gameItems.materials.legendaryTestMaterial],
+        rare: [gameItems.materials.legendaryTestMaterial],
+        epic: [gameItems.materials.legendaryTestMaterial],
+        legendary: [gameItems.materials.legendaryTestMaterial],
+        exalted: [gameItems.materials.legendaryTestMaterial],
+    }
+
     rarityMaterial[weapon.rarity].forEach(material => {
+        console.log(material)
         materials.push({
             material: material,
             quantity: Math.ceil((weapon.level + 1) / 2),

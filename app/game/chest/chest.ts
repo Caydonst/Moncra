@@ -1,10 +1,11 @@
 import type {Ammunition, Item, Weapon} from "@/app/game/items/ItemTypes";
 
 const ex = await import("excalibur");
-import {GameResources} from "./resources";
-import { Player } from "./player/player";
-import {Shadow} from "./utils/shadow";
-import {Coin} from "./coin";
+import {GameResources} from "../resources";
+import { Player } from "../player/player";
+import {Shadow} from "../utils/shadow";
+import {Coin} from "../coin";
+import { GroundItem } from "./GroundItem";
 
 
 
@@ -69,14 +70,8 @@ export class Chest extends ex.Actor {
         // register F key once
         engine.input.keyboard.on("press", (evt) => {
             if (evt.key === ex.Keys.F) {
-                if (this.open) {
-                    window.dispatchEvent(new Event("chest-closed"));
-                    this.open = false;
-                    this.chestAnim.reset();
-                } else {
-                    if (this.pos.distance(this.player.pos) < 60) {
-                        this.openChest();
-                    }
+                if (!this.open && this.pos.distance(this.player.pos) < 60) {
+                    this.openChest();
                 }
             }
         });
@@ -86,41 +81,58 @@ export class Chest extends ex.Actor {
     }
 
     onPostUpdate(_engine: ex.Engine, _delta: number) {
+        if (this.open) {
+            if (this.shadow) {
+                this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2));
+            }
+            return;
+        }
 
         const dist = this.pos.distance(this.player.pos);
 
-        if (!this.open) {
-            if (dist < 60) {
-                this.graphics.use("selected");
-            } else {
-                this.graphics.use("closed");
-                this.chestAnim.reset();
-            }
+        if (dist < 60) {
+            this.graphics.use("selected");
+        } else {
+            this.graphics.use("closed");
+            this.chestAnim.reset();
         }
 
-        if (dist > 200) {
-            if (this.open) {
-                window.dispatchEvent(new Event("chest-closed"));
-                this.open = false;
-            }
-        }
-
-        if (this.shadow) {
-            this.shadow.pos = this.pos.add(ex.vec(0, this.height/2));
-        }
+        this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2));
     }
 
     openChest() {
+        if (this.open) return;
+
         this.graphics.use("openAnim");
         this.open = true;
-        window.dispatchEvent(
-            new CustomEvent("chest-opened", {
-                detail: {
-                    items: this.items,
-                    chest: this,
-                },
-            })
+
+        this.spawnItems();
+        this.spawnCoins(10)
+
+        this.items = [];
+    }
+
+    spawnItems() {
+        const inventory = this.engine.currentScene.gameState.inventory;
+
+        const validItems = this.items.filter(
+            (item): item is Item | Weapon | Ammunition => item !== null
         );
+
+        validItems.forEach((item) => {
+            const chestTop = this.pos.add(ex.vec(0, -20));
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 40 + Math.random() * 60;
+            const landingPos = this.pos.add(ex.Vector.fromAngle(angle).scale(distance));
+
+            const groundItem = new GroundItem(
+                this.pos.clone(),
+                item,
+                inventory,
+            );
+
+            this.engine.currentScene.add(groundItem);
+        });
     }
     spawnCoins(count: number = 2) {
         for (let i = 0; i < count; i++) {

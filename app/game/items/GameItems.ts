@@ -1,4 +1,4 @@
-import type {Ammunition, Item, Weapon} from "@/app/ game/items/ItemTypes";
+import type {Weapon} from "@/app/game/items/ItemTypes";
 import greatSword0 from "../assets/weapons/great_sword/stone_sword.png";
 import greatSword from "../assets/weapons/great_sword/vampire_sword.png";
 import greatSword1 from "../assets/weapons/great_sword/ruby_sword.png";
@@ -13,19 +13,32 @@ import greatSword9 from "../assets/weapons/great_sword/verdict.png";
 import greatSword10 from "../assets/weapons/great_sword/tidal.png";
 import greatSword11 from "../assets/weapons/great_sword/starfall.png";
 import obsidianArmorImg from "../assets/armor/obsidian_armor.png"
-import test_material from "../assets/currency/test_material.png"
 import { CriticalHit, ChainLightning } from "@/app/game/enchantments/enchantments";
 import {gameState} from "../gameState/gameState"
 import { Armor } from "../armor/armor";
 import type { Material } from "../items/ItemTypes";
+import test_material from "../assets/currency/test_material.png"
+
+import duelistIcon from "../assets/icons/duelist_icon.png"
+import executionerIcon from "../assets/icons/executioner_icon.png"
+import sentinelIcon from "../assets/icons/sentinel_icon.png"
+export const gameItems = {
+    weapons: {},
+    armor: {},
+    materials: {},
+}
 
 export async function createGameItems() {
+    /*
     const { GreatSword } = await import("../weapons/sword");
+    const { Sentinel } = await import("../weapons/sentinel");
 
     const GreatSword0: Weapon = {
         id: "great_sword0",
         name: "Stone Sword",
-        type: "Great Sword",
+        type: "Weapon",
+        kind: "Great Sword",
+        specialization: {name: "Sentinel", icon: sentinelIcon.src},
         icon: greatSword0.src,
         rarity: "common",
         attackStyle: "Melee",
@@ -35,7 +48,8 @@ export async function createGameItems() {
         },
         level: 0,
         maxLevel: 10,
-        createWeapon: () => new GreatSword(
+        enchantments: [],
+        createWeapon: () => new Sentinel(
             gameState.engine.currentScene.player,
             gameState.engine,
             gameState.engine.currentScene.resources,
@@ -53,7 +67,9 @@ export async function createGameItems() {
     const GreatSword1: Weapon = {
         id: "great_sword1",
         name: "Sword",
-        type: "Great Sword",
+        type: "Weapon",
+        kind: "Great Sword",
+        specialization: {name: "Sentinel", icon: sentinelIcon.src},
         icon: greatSword.src,
         rarity: "legendary",
         attackStyle: "Melee",
@@ -64,7 +80,7 @@ export async function createGameItems() {
         level: 0,
         maxLevel: 10,
         enchantments: [CriticalHit, ChainLightning],
-        createWeapon: () => new GreatSword(
+        createWeapon: () => new Sentinel(
             gameState.engine.currentScene.player,
             gameState.engine,
             gameState.engine.currentScene.resources,
@@ -81,7 +97,8 @@ export async function createGameItems() {
     const GreatSword2: Weapon = {
         id: "great_sword2",
         name: "Sword",
-        type: "Great Sword",
+        type: "Weapon",
+        kind: "Great Sword",
         icon: greatSword2.src,
         rarity: "rare",
         attackStyle: "Melee",
@@ -91,6 +108,7 @@ export async function createGameItems() {
         },
         level: 0,
         maxLevel: 10,
+        enchantments: [],
         createWeapon: () => new GreatSword(
             gameState.engine.currentScene.player,
             gameState.engine,
@@ -108,7 +126,9 @@ export async function createGameItems() {
     const GreatSword3: Weapon = {
         id: "obsidian_sword",
         name: "Excalibur",
-        type: "Great Sword",
+        type: "Weapon",
+        specialization: {name: "Executioner", icon: executionerIcon.src},
+        kind: "Great Sword",
         icon: greatSword1.src,
         rarity: "legendary",
         attackStyle: "Melee",
@@ -136,7 +156,9 @@ export async function createGameItems() {
     const GreatSword4: Weapon = {
         id: "great_sword4",
         name: "Sword",
-        type: "Great Sword",
+        type: "Weapon",
+        specialization: {name: "Duelist", icon: duelistIcon.src},
+        kind: "Great Sword",
         icon: greatSword3.src,
         rarity: "uncommon",
         attackStyle: "Melee",
@@ -164,7 +186,8 @@ export async function createGameItems() {
     const GreatSword5: Weapon = {
         id: "great_sword5",
         name: "Sword",
-        type: "Great Sword",
+        type: "Weapon",
+        kind: "Great Sword",
         icon: greatSword4.src,
         rarity: "epic",
         attackStyle: "Melee",
@@ -187,12 +210,13 @@ export async function createGameItems() {
         ),
     };
 
-    gameState.inventory.addItem(GreatSword5);
+    //gameState.inventory.addItem(GreatSword5);
 
     const GreatSword6: Weapon = {
         id: "great_sword6",
         name: "Sword",
-        type: "Great Sword",
+        type: "Weapon",
+        kind: "Great Sword",
         icon: greatSword5.src,
         rarity: "epic",
         attackStyle: "Melee",
@@ -220,7 +244,9 @@ export async function createGameItems() {
     const GreatSword7: Weapon = {
         id: "great_sword7",
         name: "Cataclysm",
-        type: "Great Sword",
+        type: "Weapon",
+        kind: "Great Sword",
+        specialization: {name: "Duelist", icon: duelistIcon.src},
         icon: greatSword6.src,
         rarity: "exalted",
         attackStyle: "Melee",
@@ -248,7 +274,9 @@ export async function createGameItems() {
     const GreatSword8: Weapon = {
         id: "great_sword8",
         name: "Oblivion",
-        type: "Great Sword",
+        type: "Weapon",
+        kind: "Great Sword",
+        specialization: {name: "Executioner", icon: executionerIcon.src},
         icon: greatSword7.src,
         rarity: "exalted",
         attackStyle: "Melee",
@@ -276,7 +304,9 @@ export async function createGameItems() {
     const GreatSword9: Weapon = {
         id: "great_sword9",
         name: "Ascension",
-        type: "Great Sword",
+        type: "Weapon",
+        kind: "Great Sword",
+        specialization: {name: "Duelist", icon: duelistIcon.src},
         icon: greatSword8.src,
         rarity: "exalted",
         attackStyle: "Melee",
@@ -304,7 +334,9 @@ export async function createGameItems() {
     const GreatSword10: Weapon = {
         id: "great_sword10",
         name: "Verdict",
-        type: "Great Sword",
+        type: "Weapon",
+        kind: "Great Sword",
+        specialization: {name: "Sentinel", icon: sentinelIcon.src},
         icon: greatSword9.src,
         rarity: "exalted",
         attackStyle: "Melee",
@@ -315,7 +347,7 @@ export async function createGameItems() {
             damage: 40,
         },
         enchantments: [CriticalHit, ChainLightning],
-        createWeapon: () => new GreatSword(
+        createWeapon: () => new Sentinel(
             gameState.engine.currentScene.player,
             gameState.engine,
             gameState.engine.currentScene.resources,
@@ -331,8 +363,10 @@ export async function createGameItems() {
 
     const GreatSword11: Weapon = {
         id: "great_sword11",
-        name: "Tidal",
-        type: "Great Sword",
+        name: "Colossus",
+        type: "Weapon",
+        kind: "Great Sword",
+        specialization: {name: "Sentinel", icon: sentinelIcon.src},
         icon: greatSword10.src,
         rarity: "exalted",
         attackStyle: "Melee",
@@ -343,7 +377,7 @@ export async function createGameItems() {
         level: 0,
         maxLevel: 10,
         enchantments: [CriticalHit, ChainLightning],
-        createWeapon: () => new GreatSword(
+        createWeapon: () => new Sentinel(
             gameState.engine.currentScene.player,
             gameState.engine,
             gameState.engine.currentScene.resources,
@@ -360,7 +394,9 @@ export async function createGameItems() {
     const GreatSword12: Weapon = {
         id: "great_sword12",
         name: "Starfall",
-        type: "Great Sword",
+        type: "Weapon",
+        kind: "Great Sword",
+        specialization: {name: "Executioner", icon: executionerIcon.src},
         icon: greatSword11.src,
         rarity: "exalted",
         attackStyle: "Melee",
@@ -399,20 +435,31 @@ export async function createGameItems() {
         },
         level: 0,
         maxLevel: 10,
+        enchantments: [],
     })
 
     gameState.inventory.addItem(ObsidianArmor);
+    */
+    
+    const legendaryTestMaterial: Material = {
+        ...gameItemDefinitions.material,
+        gameIcon: gameState.resources.Images.testMaterial
+    }
+
+    gameItems.materials.legendaryTestMaterial = legendaryTestMaterial
+
+    console.log(gameState.inventory);
+    
+    
 }
 
-export const legendaryTestMaterial: Material = {
-    id: "infernal_fagment",
-    name: "Infernal Fragment",
-    rarity: "legendary",
-    icon: test_material.src,
-}
-export const epicTestMaterial: Material = {
-    id: "infernal_fagment",
-    name: "Infernal Fragment",
-    rarity: "epic",
-    icon: test_material.src,
-}
+export const gameItemDefinitions = {
+    material: {
+        id: "infernal_fragment",
+        name: "Infernal Fragment",
+        type: "Material",
+        rarity: "epic",
+        quantity: 1,
+        icon: test_material.src,
+    },
+} as const;

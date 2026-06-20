@@ -11,11 +11,12 @@ type Stats = {
 }
 
 export class Armor {
+    public uid: string;
     public id: string;
     public name: string;
     public description: string;
     public icon: string;
-    public type: string;
+    public type: "Armor";
     public rarity: Rarity;
     public stats: Stats;
     public level: number;
@@ -23,6 +24,7 @@ export class Armor {
     public enchantments?: Enchantment[]
 
     constructor({
+        uid,
         id,
         name,
         description,
@@ -32,17 +34,21 @@ export class Armor {
         stats,
         level,
         maxLevel,
+        enchantments,
     }: {
+        uid: string,
         id: string;
         name: string;
         description: string;
         icon: string;
-        type: string;
+        type: "Armor";
         rarity: Rarity;
         stats: Stats;
         level: number;
         maxLevel: number;
+        enchantments: Enchantment[];
     }) {
+        this.uid = uid;
         this.id = id;
         this.name = name;
         this.description = description;
@@ -52,5 +58,6 @@ export class Armor {
         this.stats = stats;
         this.level = level;
         this.maxLevel = maxLevel;
+        this.enchantments = enchantments;
     }
 }

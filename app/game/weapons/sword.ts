@@ -8,22 +8,18 @@ import {DemonBoss} from "../enemies/bosses/DemonBoss";
 import { GameScene } from '../scenes/GameScene';
 import { multiplayer } from '../network/multiplayer';
 import { damageEnemy } from '../combat/CombatSystem';
-import { Weapon } from '../items/ItemTypes';
+import type { Weapon } from '../items/ItemTypes';
 
-type AttackType = "slash" | "thrust";
+export type AttackType = "slash" | "thrust";
 
-type Attack = {
+export type Attack = {
     type: AttackType;
     duration: number;
     cooldown: number;
     damageMultiplier: number;
-
-    // slash only
     startOffset?: number;
     endOffset?: number;
     swingFlip?: boolean;
-
-    // thrust only
     thrustDistance?: number;
 };
 
@@ -33,39 +29,38 @@ export class GreatSword extends ex.Actor {
     public offset: ex.Vector; // radius from player center
 
     // Swing state
-    private swinging = false;
-    private swingProgress = 0;
-    private swingDuration = 250; // ms for full swing
+    protected swinging = false;
+    protected swingProgress = 0;
+    protected swingDuration = 250; // ms for full swing
     protected isHolding = false;
 
-    private swingStartAngle = 0;
-    private swingEndAngle = 0;
+    protected swingStartAngle = 0;
+    protected swingEndAngle = 0;
 
-    private swingCooldown = 350;
-    private lastSwingTime = 0;
-    private swingTracer: SwingTracer;
+    protected swingCooldown = 350;
+    protected lastSwingTime = 0;
+    protected swingTracer: SwingTracer;
 
     // Orbit around player
     private orbitAngle = 0;
     private idleOrbitAngleOffset = Math.PI / 1.5;
-    private side: 1 | -1 = 1; // 1 = one side of mouse, -1 = other side
 
     private readonly ROT_OFFSET = Math.PI / 2; // tweak based on sprite art
 
     private shadow: Shadow;
-    private swingHitSet = new Set<ex.Actor>();
+    protected swingHitSet = new Set<ex.Actor>();
 
     private comboIndex = 0;
     private comboThreshold = 400;
-    private currentAttack!: Attack;
+    protected currentAttack!: Attack;
 
     private thrustDirection = ex.vec(0, 0);
     private thrustDistance!: number; // shorter thrust
     private thrustPauseTime = 150; // ms pause at peak
-    private thrusting = false;
-    private thrustTracer!: ThrustTracer;
+    protected thrusting = false;
+    protected thrustTracer!: ThrustTracer;
 
-    private isBlocking = false;
+    protected isBlocking = false;
     public blockDamageMultiplier = 0.5;
 
     private combo: Attack[] = [
@@ -130,10 +125,10 @@ export class GreatSword extends ex.Actor {
         engine: ex.Engine,
         private resources: GameResources,
         private collisionGroups: any,
-        private damage: number,
+        protected damage: number,
         private image: ex.ImageSource,
         private glow: boolean,
-        private weaponItem: Weapon,
+        protected weaponItem: Weapon,
     ) {
         super({
             pos: player.pos.clone(),
@@ -145,7 +140,7 @@ export class GreatSword extends ex.Actor {
 
         this.player = player;
         this.engine = engine;
-        this.offset = ex.vec(45, 0);
+        this.offset = ex.vec(44, 0);
     }
 
     onInitialize(engine: ex.Engine) {
@@ -169,8 +164,8 @@ export class GreatSword extends ex.Actor {
             this.graphics.material = outline.outlineMaterial;
         }*/
 
-        const effect = new EnchantedGlowEffect(engine);
-        this.graphics.material = effect.material;
+        //const effect = new EnchantedGlowEffect(engine);
+        //this.graphics.material = effect.material;
     }
 
     onPostUpdate(_engine: ex.Engine, delta: number) {
@@ -233,7 +228,7 @@ export class GreatSword extends ex.Actor {
                 (this.swingEndAngle - this.swingStartAngle) * eased;
 
             // rotate offset
-            const rotatedOffset = this.offset.rotate(this.orbitAngle);
+            const rotatedOffset = this.offset.rotate(this.orbitAngle).add(ex.vec(0, 5));
 
             // ADD BOBBING HERE
             const bobbedOffset = addBobbing(rotatedOffset);
@@ -260,7 +255,7 @@ export class GreatSword extends ex.Actor {
         // -------------------------------
         this.orbitAngle = mouseAngle + this.idleOrbitAngleOffset;
 
-        const rotatedOffset = this.offset.rotate(this.orbitAngle);
+        const rotatedOffset = this.offset.rotate(this.orbitAngle).add(ex.vec(0, 5));
 
         // ADD BOBBING HERE TOO
         const bobbedOffset = addBobbing(rotatedOffset);
@@ -274,13 +269,17 @@ export class GreatSword extends ex.Actor {
         }
     }
 
-    private getMouseAngle(): number | null {
+    protected getMouseAngle(): number | null {
         const pointer = this.engine.input.pointers.primary;
         if (!pointer.lastScreenPos) return null;
 
         const worldPos = this.engine.screenToWorldCoordinates(pointer.lastScreenPos);
         const dir = worldPos.sub(this.player.pos);
         return dir.toAngle();
+    }
+
+    protected getAttackDamageMultiplier() {
+        return this.currentAttack.damageMultiplier;
     }
 
     startSwing() {
@@ -331,7 +330,7 @@ export class GreatSword extends ex.Actor {
         this.comboIndex = (this.comboIndex + 1) % this.combo.length;
     }
 
-    private startSlash(mouseAngle: number) {
+    protected startSlash(mouseAngle: number) {
         this.swinging = true;
         this.swingProgress = 0;
 
@@ -390,7 +389,8 @@ export class GreatSword extends ex.Actor {
             .clone()
             .add(baseOffset)
             .add(thrustOffset)
-            .add(ex.vec(0, this.player.bobOffsetY));
+            .add(ex.vec(0, this.player.bobOffsetY))
+            .add(ex.vec(0, 5));
 
         this.rotation = this.thrustDirection.toAngle() + this.ROT_OFFSET;
 
@@ -404,7 +404,7 @@ export class GreatSword extends ex.Actor {
         }
     }
 
-    private startBlock() {
+    protected startBlock() {
         this.isHolding = false;
 
         if (this.swinging || this.thrusting) {
@@ -414,12 +414,14 @@ export class GreatSword extends ex.Actor {
         this.isBlocking = true;
     }
 
-    private stopBlock() {
+    protected stopBlock() {
         this.isBlocking = false;
 
         //this.player.isBlocking = false;
         //this.player.damageMultiplier = 1;
     }
+
+    protected onSuccessfulHit(_target: ex.Actor) {}
 
     onPreCollisionResolve(_self: ex.Collider, other: ex.Collider) {
         const target = other.owner;
@@ -434,9 +436,20 @@ export class GreatSword extends ex.Actor {
         // First hit this swing → apply damage
         this.swingHitSet.add(target);
         //this.engine.currentScene.camera.shake(8, 8, 60);
+
+        const originalDamage = this.weaponItem.stats.damage;
+
+        this.weaponItem.stats.damage =
+            originalDamage * this.getAttackDamageMultiplier();
+
+        damageEnemy(this.player, target, this.weaponItem, this.scene as GameScene);
+
+        this.weaponItem.stats.damage = originalDamage;
+
+        this.onSuccessfulHit(target);
         
         //target.takeDamage(this.damage * this.currentAttack.damageMultiplier);
-        damageEnemy(this.player, target, this.weaponItem, this.scene as GameScene);
+        //damageEnemy(this.player, target, this.weaponItem, this.scene as GameScene);
     }
 
 
@@ -447,6 +460,7 @@ export class GreatSword extends ex.Actor {
         pointer.on("down", this.pointerDownHandler);
         pointer.on("up", this.pointerUpHandler);
     }
+    
     cleanup() {
         const pointer = this.engine.input.pointers.primary;
 
@@ -457,6 +471,7 @@ export class GreatSword extends ex.Actor {
         this.shadow.kill();
         this.swingTracer.kill();
     }
+    
     public attachToScene(scene: ex.Scene) {
         if (!this.shadow || this.shadow.isKilled()) {
             this.shadow = new Shadow(this);

@@ -1,6 +1,6 @@
 import styles from "./inventory.module.css"
 import { Inventory } from "../../inventory/inventory"
-import {Ammunition, Item, Weapon} from "../../items/ItemTypes";
+import {Ammunition, Item, Material, Weapon} from "../../items/ItemTypes";
 import React, { useEffect, useState } from "react";
 import type { GameScene } from "../../scenes/GameScene";
 import {XMarkIcon} from "@heroicons/react/24/solid"
@@ -10,12 +10,17 @@ import hpIcon from "../../assets/icons/hp_icon.png"
 import allIcon from "@/app/game/assets/icons/all_icon.png"
 import weaponIcon from "@/app/game/assets/icons/weapon_icon.png"
 import armorIcon from "@/app/game/assets/icons/armor_icon.png"
+import materialIcon from "@/app/game/assets/icons/material_icon.png"
 import allIconSelected from "@/app/game/assets/icons/all_icon_selected.png"
 import weaponIconSelected from "@/app/game/assets/icons/weapon_icon_selected.png"
 import armorIconSelected from "@/app/game/assets/icons/armor_icon_selected.png"
+import materialIconSelected from "@/app/game/assets/icons/material_icon_selected.png"
+import goldIcon from "@/app/game/assets/currency/gold_icon.png"
 import { equippableItems } from "../../items/ItemTypes";
 import { Armor } from "../../armor/armor";
-import { colors } from "../../utils/uiUtils"
+import { colors, specializationColors } from "../../utils/uiUtils"
+import { createClientInventory } from "../../inventory/createClientInventory";
+import { gameState } from "../../gameState/gameState";
 
 type Props = {
     inventoryOpen: boolean;
@@ -26,11 +31,19 @@ type Props = {
     selectedItem: Weapon | Armor | null;
     setSelectedItem: React.Dispatch<React.SetStateAction<Weapon | Armor | null>>;
     engine: ex.Engine | null;
+    setInventory: React.Dispatch<React.SetStateAction<Inventory>>
 }
 
-export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory, itemPanelOpen, setItemPanelOpen, selectedItem, setSelectedItem, engine }: Props) {
-    const [selected, setSelected] = useState<number>(-1);
-    const [selectedFilter, setSelectedFilter] = useState("all");
+type Filter = "all" | "weapons" | "armor" | "material" | "equipment";
+type SelectedSlot = {
+    filter: Filter,
+    displayIndex: number,
+    realIndex: number,
+};
+
+export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory, setInventory, itemPanelOpen, setItemPanelOpen, selectedItem, setSelectedItem, engine }: Props) {
+    const [selectedSlot, setSelectedSlot] = useState<SelectedSlot>({ filter: "all", displayIndex: -1, realIndex: -1 })
+    const [selectedFilter, setSelectedFilter] = useState<Filter>("all");
     const [hoveredFilter, setHoveredFilter] = useState<string | null>(null);
 
     function openItemPanel(slot: any) {
@@ -43,51 +56,185 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
     useEffect(() => {
         if (!inventoryOpen) {
             setSelectedItem(null);
-            setSelected(-1);
+            setSelectedFilter("all");
+            setSelectedSlot({filter: "all", displayIndex: -1, realIndex: -1});
         }
-    })
+    }, [inventoryOpen])
+
+    useEffect(() => {
+        console.log(selectedSlot);
+    }, [selectedSlot])
 
     const filteredItems = (() => {
-        const matchingItems =
-            inventory?.misc
-                .map((item, realIndex) => ({ item, realIndex }))
-                .filter(({ item }) => {
-                    if (!item) return false;
+        if (!inventory) return [];
 
-                    if (selectedFilter === "all") return true;
+        let sourceItems = [];
 
-                    if (selectedFilter === "weapons") {
-                        return item.type === "Great Sword" || item.type === "Bow";
-                    }
+        switch (selectedFilter) {
+            case "weapons":
+                sourceItems = inventory.miscWeapons.map((item, realIndex) => ({
+                    item,
+                    realIndex,
+                    source: "weapon" as const,
+                }));
+                break;
 
-                    if (selectedFilter === "armor") {
-                        return item.type === "Armor";
-                    }
+            case "armor":
+                sourceItems = inventory.miscArmor.map((item, realIndex) => ({
+                    item,
+                    realIndex,
+                    source: "armor" as const,
+                }));
+                break;
 
-                    return true;
-                }) ?? [];
+            case "material":
+                sourceItems = inventory.miscMaterial.map((item, realIndex) => ({
+                    item,
+                    realIndex,
+                    source: "material" as const,
+                }));
+                break;
 
-        const emptySlots = Array(24 - matchingItems.length)
+            default:
+                sourceItems = [
+                    ...inventory.miscWeapons.map((item, realIndex) => ({
+                        item,
+                        realIndex,
+                        source: "weapon" as const,
+                    })),
+                    ...inventory.miscArmor.map((item, realIndex) => ({
+                        item,
+                        realIndex,
+                        source: "armor" as const,
+                    })),
+                    ...inventory.miscMaterial.map((item, realIndex) => ({
+                        item,
+                        realIndex,
+                        source: "material" as const,
+                    })),
+                ];
+        }
+
+        const filledSlots = sourceItems.filter(({ item }) => item !== null);
+
+        const targetSlotCount =
+            selectedFilter === "all" ? 36 : 12;
+
+        const emptySlots = Array(targetSlotCount - filledSlots.length)
             .fill(null)
             .map(() => ({
                 item: null,
                 realIndex: -1,
+                source: "empty" as const,
             }));
 
-        return [...matchingItems, ...emptySlots];
+        return [...filledSlots, ...emptySlots];
     })();
+
+    const selectedIsEquipped =
+    selectedItem?.type === "Weapon"
+        ? !!selectedItem.uid && selectedItem.uid === inventory?.weapon?.uid
+        : selectedItem?.type === "Armor"
+            ? !!selectedItem.uid && selectedItem.uid === inventory?.armor?.uid
+            : false;
+
+    async function equipSelectedItem() {
+        if (!inventory || !engine || !selectedItem) return null;
+
+        const oldWeapon = inventory.weapon;
+        const oldWeaponUid = oldWeapon?.uid;
+        const oldWeaponInstance = oldWeapon?.instance;
+
+        const res = await fetch("/api/equip-item", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ uid: selectedItem.uid }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) return null;
+
+        const clientInventory = createClientInventory(data.inventory, gameState);
+
+        const newWeaponUid = clientInventory.weapon?.uid;
+        const weaponChanged = oldWeaponUid !== newWeaponUid;
+
+        if (weaponChanged) {
+            await inventory.removeEquippedWeaponActor(engine);
+        } else if (clientInventory.weapon && oldWeaponInstance) {
+            clientInventory.weapon.instance = oldWeaponInstance;
+        }
+
+        gameState.inventory = clientInventory;
+        setInventory(clientInventory);
+
+        if (weaponChanged && clientInventory.weapon) {
+            await clientInventory.spawnEquippedWeapon(engine);
+        }
+
+        return clientInventory;
+    }
+    async function unequipSelectedItem() {
+        if (!inventory || !selectedItem) return;
+
+        const slot =
+            selectedItem.type === "Weapon"
+                ? "weapon"
+                : selectedItem.type === "Armor"
+                    ? "armor"
+                    : null;
+
+        if (!slot) return;
+
+        const res = await fetch("/api/unequip-item", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ slot }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            console.error(data.error);
+            return;
+        }
+
+        if (slot === "weapon") {
+            inventory.removeEquippedWeaponActor(engine);
+        }
+
+        const clientInventory = createClientInventory(data.inventory, gameState);
+
+        gameState.inventory = clientInventory;
+        setInventory(clientInventory);
+
+        setSelectedItem(null);
+        setItemPanelOpen(false);
+        setSelectedSlot({
+            filter: "all",
+            displayIndex: -1,
+            realIndex: -1,
+        });
+    }
 
     return (
         <div id="inventory-wrapper" className={inventoryOpen ? `${styles.inventoryWrapper} ${styles.open}` : styles.inventoryWrapper} onClick={(e) => e.stopPropagation()}>
             <div id="inventory" className={styles.inventoryContainer}>
-                <h3 className={styles.wrapperh3}>INVENTORY</h3>
+                <div className={styles.inventoryHeader}>
+                    <div className={styles.inventoryResource}>
+                        <img src={goldIcon.src} />
+                        {inventory?.gold}
+                    </div>
+                </div>
                 
                 <div className={styles.gearContainer}>
                     <div className={styles.weaponSlotWrapper}>
                         <p>Equipment</p>
                         <div 
                             className={
-                                `${styles.weaponSlot} ${selected === 0 ? styles.selected : ""}`
+                                `${styles.gearSlot} ${(selectedSlot.displayIndex === 0 && selectedSlot.filter === "equipment") ? styles.selected : ""}`
                             } 
                             style={{
                                 background: `linear-gradient(
@@ -100,8 +247,10 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                 }`
                             }} 
                             onClick={() => {
+                                if (!inventory?.weapon) return;
+
                                 openItemPanel(inventory?.weapon); 
-                                setSelected(0);
+                                setSelectedSlot({ ...selectedSlot, filter: "equipment", displayIndex: 0 });
                             }}>
                             
                             {inventory?.weapon ? (
@@ -110,7 +259,7 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                     <img src={inventory.weapon.icon} className={styles.gearImg} />
                                 </div>
                                 <div className={styles.equippedWeaponInfoContainer}>
-                                    <p style={{ color: `${colors[inventory?.weapon?.rarity]?.hex}` }}>{inventory?.weapon?.rarity.toUpperCase()}</p>
+                                    <p style={{ color: `${colors[inventory?.weapon?.rarity]?.hex}` }}>{inventory.weapon.rarity.toUpperCase()}</p>
                                     <h3>{inventory?.weapon?.name.toUpperCase()}</h3>
                                 </div>
                                 </>
@@ -120,13 +269,27 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                     <h3>None</h3>
                                 </div>
                             )}
-                            
+                            {inventory?.weapon?.level !== undefined && (
+                                        <p className={styles.weaponLevel} style={{ color: `${inventory.weapon.level === 10 ? "#FFE500" : "#fff"}` }}>+{inventory.weapon.level}</p>
+                            )}
+                            {inventory?.weapon?.stats?.power !== undefined && (
+                                <p className={styles.powerLevel}><img src={powerIconImg.src} />{inventory.weapon.stats.power}</p>
+                            )}
+                            {inventory?.weapon?.type === "Weapon" && (
+                                <div className={styles.specializationIcon}><img src={inventory?.weapon?.specialization?.icon} /></div>
+                            )}
+                            <div className={styles.hoverContainer}>
+                                <div className={styles.topRight}></div>
+                                <div className={styles.bottomLeft}></div>
+                                <div className={styles.topLeft}></div>
+                                <div className={styles.bottomRight}></div>
+                            </div>
                         </div>
 
 
                         <div 
                             className={
-                                `${styles.weaponSlot} ${selected === 1 ? styles.selected : ""}`
+                                `${styles.gearSlot} ${(selectedSlot.displayIndex === 1 && selectedSlot.filter === "equipment") ? styles.selected : ""}`
                             } 
                             style={{
                                 background: `linear-gradient(
@@ -139,8 +302,10 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                 }`
                             }} 
                             onClick={() => {
+                                if (!inventory?.armor) return;
+
                                 openItemPanel(inventory?.armor); 
-                                setSelected(1);
+                                setSelectedSlot({ ...selectedSlot, filter: "equipment", displayIndex: 1 });
                             }}>
                             
                             {inventory?.armor ? (
@@ -159,7 +324,18 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                     <h3>None</h3>
                                 </div>
                             )}
-                            
+                            {inventory?.armor?.level !== undefined && (
+                                        <p className={styles.weaponLevel} style={{ color: `${inventory.armor.level === 10 ? "#FFE500" : "#fff"}` }}>+{inventory.armor.level}</p>
+                            )}
+                            {inventory?.armor?.stats?.power !== undefined && (
+                                <p className={styles.powerLevel}><img src={powerIconImg.src} />{inventory.armor.stats.power}</p>
+                            )}
+                            <div className={styles.hoverContainer}>
+                                <div className={styles.topRight}></div>
+                                <div className={styles.bottomLeft}></div>
+                                <div className={styles.topLeft}></div>
+                                <div className={styles.bottomRight}></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -201,6 +377,18 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                     } 
                                 />
                         </button>
+                        <button 
+                            onClick={() => setSelectedFilter("material")} className={`${styles.filterBtn} ${selectedFilter === "material" ? styles.filterSelected : ""}`}
+                            onMouseEnter={() => setHoveredFilter("material")}
+                            onMouseLeave={() => setHoveredFilter(null)}
+                        >
+                            Material<img src={
+                                selectedFilter === "material" || hoveredFilter === "material"
+                                        ? materialIconSelected.src
+                                        : materialIcon.src
+                                    } 
+                                />
+                        </button>
                     </div>
                     <div className={styles.inventoryInner}>
                         <div id="misc-grid" className={styles.miscGrid}>
@@ -209,13 +397,13 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                     key={displayIndex}
                                     id={`misc-slot-${displayIndex}`}
                                     className={`${styles.slot} ${slot ? styles[slot.rarity] : ""} ${
-                                        slot && selected === realIndex + 2 ? styles.selected : ""
+                                        slot && (selectedSlot.displayIndex === displayIndex && selectedSlot.filter === selectedFilter) ? styles.selected : ""
                                     }`}
                                     onClick={() => {
                                         if (!slot) return;
 
                                         openItemPanel(slot);
-                                        setSelected(realIndex + 2);
+                                        setSelectedSlot({ filter: selectedFilter, displayIndex: displayIndex, realIndex: realIndex })
                                     }}
                                 >
                                     {slot?.icon && (
@@ -224,6 +412,21 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                     {slot?.level !== undefined && (
                                         <p className={styles.weaponLevel} style={{ color: `${slot?.level === 10 ? "#FFE500" : "#fff"}` }}>+{slot?.level}</p>
                                     )}
+                                    {slot?.stats?.power !== undefined && (
+                                        <p className={styles.powerLevel}><img src={powerIconImg.src} />{slot.stats.power}</p>
+                                    )}
+                                    {slot?.type === "Material" && (
+                                        <p className={styles.quantity}>x{slot.quantity}</p>
+                                    )}
+                                    {slot?.type === "Weapon" && (
+                                        <div className={styles.specializationIcon}><img src={slot.specialization?.icon} /></div>
+                                    )}
+                                    <div className={styles.hoverContainer}>
+                                        <div className={styles.topRight}></div>
+                                        <div className={styles.bottomLeft}></div>
+                                        <div className={styles.topLeft}></div>
+                                        <div className={styles.bottomRight}></div>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -234,7 +437,7 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                     <div className={styles.itemIconContainer}>
                         {selectedItem && (
                             <>
-                                <img src={selectedItem.icon} className={selectedItem.type === "pistol" && "stats" in selectedItem ? styles.selectedPistolImg : styles.selectedOtherImg} />
+                                <img src={selectedItem.icon} className={styles.selectedOtherImg} />
                                 <div className={styles.bgLight} style={{ background: `${colors[selectedItem.rarity]?.hex}` }}></div>
                             </>
                         )}
@@ -243,15 +446,19 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                         <div className={styles.itemInfoContainer}>
                         <div className={styles.nameContainer}>
                             <div className={styles.header}>
-                                <p><img src={powerIconImg.src}/> {selectedItem.stats.power}</p>
-                                <p>|</p>
+                                {selectedItem.stats?.power && (
+                                    <>
+                                        <p className={styles.powerText}><img src={powerIconImg.src}/> {selectedItem.stats?.power}</p>
+                                        <p>|</p>
+                                    </>
+                                )}
                                 <p className={styles[`${selectedItem.rarity}`]}>{selectedItem.rarity.toUpperCase()}</p>
                             </div>
                             <h3 className={styles.itemName}>{selectedItem.name.toUpperCase()}</h3>
                             <div className={styles.weaponTypeContainer}>
                                 <p className={styles.weaponTypeName}>{selectedItem.type}</p>
-                                {selectedItem.attackStyle && (
-                                    <p className={styles.attackStyleName}>{selectedItem.attackStyle}</p>
+                                {selectedItem.type === "Weapon" && (
+                                    <div className={styles.specialization} style={{ color: `${specializationColors[selectedItem.specialization?.name]?.color}`, background: `${specializationColors[selectedItem.specialization?.name]?.background}`, borderColor: `${specializationColors[selectedItem.specialization?.name]?.color}` }}><img src={selectedItem.specialization?.icon} />{selectedItem.specialization?.name}</div>
                                 )}
                             </div>
                             {selectedItem?.level !== undefined && (
@@ -260,24 +467,24 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                 </>
                             )}
                             <div className={styles.itemStatsContainer}>
-                                {selectedItem.stats.damage && (
+                                {selectedItem.stats?.damage && (
                                     <div className={styles.statContainer}>
                                         <div className={styles.statIconContainer}><img src={damageIcon.src} className={styles.damageIcon} /></div>
-                                        <p>{selectedItem.stats.damage} Damage</p>
+                                        <p>{selectedItem.stats?.damage} Damage</p>
                                     </div>
                                 )}
-                                {selectedItem.stats.hp && (
+                                {selectedItem.stats?.hp && (
                                     <div className={styles.statContainer}>
                                         <div className={styles.statIconContainer}><img src={hpIcon.src} className={styles.hpIcon} /></div>
-                                        <p>{selectedItem.stats.hp} HP</p>
+                                        <p>{selectedItem.stats?.hp} HP</p>
                                     </div>
                                 )}
                             </div>
                         </div>
-                        
-                        <div className={styles.enchantmentsContainer}>
+                        {selectedItem.enchantments !== undefined && (
+                            <div className={styles.enchantmentsContainer}>
                             <p>Enchantments</p>
-                            {selectedItem.enchantments ? (
+                            {selectedItem.enchantments.length > 0 ? (
                                 <div className={styles.enchantments}>
                                     {selectedItem.enchantments.map(enchantment => (
                                         <div key={enchantment.id} className={styles.enchantment}>
@@ -291,6 +498,8 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                             )}
                             
                         </div>
+                        )}
+                        
                         <div className={styles.itemDescContainer}>
                             <div id="item-info-text">
                                 <h1 id="item-info-name"></h1>
@@ -298,25 +507,45 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                             </div>
                             <p id="item-info-description"></p>
                             <div id="item-info-stats"></div>
-                            {equippableItems.includes(selectedItem.type) && (
-                                <div id="button-container" className={styles.equipBtnContainer}>
-                                    {selectedItem !== inventory?.weapon && selectedItem !== inventory?.armor ? (
-                                        <button id="equip-btn" className={styles.equipBtn} onClick={() => {
-                                            inventory?.equip(selectedItem, engine, selected-2)
-                                            setItemPanelOpen(false);
-                                            setSelected(-1);
-                                        }}>EQUIP</button>
-                                    ) : (
-                                        <button id="equip-btn" className={styles.unequipBtn} onClick={() => {
-                                            inventory?.unequip(selectedItem, engine)
+                            <div className={styles.equipBtnContainer}>
+                                {!selectedIsEquipped ? (
+                                    <button
+                                        className={styles.equipBtn}
+                                        onClick={async () => {
+                                            const updatedInventory = await equipSelectedItem();
+
+                                            const newSelected =
+                                                selectedItem.type === "Weapon"
+                                                    ? updatedInventory?.weapon
+                                                    : updatedInventory?.armor;
+
+                                            if (newSelected) {
+                                                setSelectedItem(newSelected);
+                                            }
+
+                                            setSelectedSlot(
+                                                selectedItem.type === "Weapon"
+                                                    ? { filter: "equipment", realIndex: -1, displayIndex: 0 }
+                                                    : { filter: "equipment", realIndex: -1, displayIndex: 1 }
+                                            );
+                                        }}
+                                    >
+                                        EQUIP
+                                    </button>
+                                ) : (
+                                    <button
+                                        className={styles.unequipBtn}
+                                        onClick={async () => {
+                                            await unequipSelectedItem();
                                             setItemPanelOpen(false);
                                             setSelectedItem(null);
-                                            setSelected(-1);
-                                        }}>UNEQUIP</button>
-                                    )}
-                                    
-                                </div>
-                            )}
+                                        }}
+                                    >
+                                        UNEQUIP
+                                    </button>
+                                )}
+                            </div>
+                            
                         </div>
                     </div>
                     )}

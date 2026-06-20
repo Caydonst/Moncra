@@ -1,0 +1,43 @@
+.classResourceWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  flex-direction: column;
+  color: #fff;
+  gap: 5px;
+}
+.classResourceContainer {
+  width: 400px;
+  height: 50px;
+  background: #00070a;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  color: #fff;
+  border: 4px solid #000;
+  position: relative;
+}
+.classResourceContainer p {
+  color: white; /* Text fill color */
+  text-shadow: 
+    -2px -2px 0 #000,  
+     2px -2px 0 #000,
+    -2px  2px 0 #000,
+     2px  2px 0 #000;
+}
+.classNameContainer {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.classResourceAmount {
+  height: 100%;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+}
+.classResourceContainer p {
+  position: absolute;
+  left: 10px;
+}

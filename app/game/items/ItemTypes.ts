@@ -1,7 +1,4 @@
-import {WarHammer} from "../weapons/warhammer"
-import {Bow} from "../weapons/bow"
-import {GreatSword} from "../weapons/sword"
-import {Player} from "../player/player"
+
 export type ItemSlot = "weapon" | "armor" | "misc";
 import * as ex from 'excalibur'
 import type { Enchantment } from "../enchantments/enchantments"
@@ -26,7 +23,6 @@ export type Item = {
     stats?: any;
     level?: number;
     maxLevel?: number;
-    weapon?: GreatSword | WarHammer | Bow;
 
     createWeapon?: () => ex.Actor & {
         addListeners?: () => void;
@@ -39,18 +35,23 @@ export type Item = {
     }
 };
 
+type Specialization = {
+    name: "Duelist" | "Executioner" | "Sentinel";
+    icon: string;
+}
+
 export type Weapon = {
     id: string;
     name: string;
-    type: "Great Sword" | "Bow";
+    type: "Weapon";
+    kind: "Great Sword" | "Bow";
+    specialization: Specialization;
     icon: string; // URL to image
     rarity: Rarity
-    attackStyle: "Ranged" | "Melee"
     stats?: any;
     level: number;
     maxLevel: number;
-    enchantments?: Enchantment[]
-    weapon?: Bow;
+    enchantments?: Enchantment[];
 
     createWeapon?: () => ex.Actor & {
         addListeners?: () => void;
@@ -63,11 +64,16 @@ export type Weapon = {
     }
 }
 
+
+
 export type Material = {
     id: string,
     name: string,
-    rarity: Rarity,
+    type: "Material",
+    rarity: Rarity, 
+    quantity: number,
     icon: string;
+    gameIcon: any;
 }
 
 export type Ammunition = {
@@ -80,6 +86,6 @@ export type Ammunition = {
     maxAmount: number;
 }
 
-export const equippableItems = ["Great Sword", "Bow", "Armor"];
+export const equippableItems = ["Weapon", "Armor"];
 
 export type InventoryItem = Item;

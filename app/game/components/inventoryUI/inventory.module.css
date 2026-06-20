@@ -1,5 +1,5 @@
 :root {
-    --min-slot-size: 100px;
+    --min-slot-size: 120px;
     --max-slot-size: 160px;
 }
 .common {
@@ -61,12 +61,29 @@
     gap: 30px;
     padding: 50px 0;
 }
-.wrapperh3 {
+.inventoryHeader {
     position: absolute;
     left: 30px;
     top: 30px;
     color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+}
+.inventoryHeader h3 {
     font-weight: 300;
+}
+.inventoryResource {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+.inventoryResource img {
+    width: 34px;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 4px #fff);
 }
 .bottomShadowContainer {
     position: absolute;
@@ -151,18 +168,20 @@
 }
 
 .inventoryInner::-webkit-scrollbar-track {
-    background: transparent;
+    background: #242424;
 }
 
 .inventoryInner::-webkit-scrollbar-thumb {
-    background: #3a3a3a;
+    background: #626262;
 }
 
 .inventoryInner::-webkit-scrollbar-thumb:hover {
     background: #4a4a4a;
 }
 .selected {
-    outline: 3px solid #fff;
+    outline: 4px solid #fff;
+    outline-offset: 3px;
+    transition: 0.05s;
 }
 .gearContainer,
 .inventory,
@@ -185,10 +204,10 @@
     justify-content: center;
     align-items: start;
     flex-direction: column;
-    gap: 10px;
+    gap: 16px;
     padding-left: 30px;
 }
-.weaponSlot {
+.gearSlot {
     position: relative;
     width: 100%;
     height: 120px;
@@ -206,10 +225,7 @@
     justify-content: center;
     align-items: center;
 }
-.weaponSlot:hover {
-    outline: 3px solid #fff;
-}
-.weaponSlot .gearImg {
+.gearSlot .gearImg {
     height: 100%;
     object-fit: contain;
     image-rendering: pixelated;
@@ -243,7 +259,7 @@
     );
     gap: 16px;
     width: 100%;
-    padding: 30px 30px 30px 3px;
+    padding: 30px 30px 30px 9px;
 }
 .slot {
     aspect-ratio: 1 / 1;
@@ -256,53 +272,167 @@
     background: #0A0A0A;
     
 }
+*.selected:hover .hoverContainer {
+    display: none;
+}
+*.selected:hover {
+    outline-offset: 5px;
+}
+.hoverContainer {
+    position: absolute;
+    inset: -13px; /* slightly larger than slot */
+    pointer-events: none;
+    transition: 0.1s;
+    opacity: 0;
+    will-change: inset;
+}
+.slot:hover .hoverContainer,
+.gearSlot:hover .hoverContainer {
+    inset: -10px;
+    opacity: 1;
+}
+.topRight,
+.bottomLeft,
+.topLeft,
+.bottomRight {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+}
+
+.topRight {
+    top: 0;
+    right: 0;
+    border-top: 4px solid #fff;
+    border-right: 4px solid #fff;
+}
+
+.bottomLeft {
+    bottom: 0;
+    left: 0;
+    border-bottom: 4px solid #fff;
+    border-left: 4px solid #fff;
+}
+.topLeft {
+    top: 0;
+    left: 0;
+    border-top: 4px solid #fff;
+    border-left: 4px solid #fff;
+}
+.bottomRight {
+    bottom: 0;
+    right: 0;
+    border-bottom: 4px solid #fff;
+    border-right: 4px solid #fff;
+}
 .weaponLevel {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    font-size: 10px;
-    text-shadow: 2px 2px rgba(0, 0, 0, 0.3);
+    top: 0;
+    right: 0;
+    font-size: 12px;
+    letter-spacing: 2px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 3px;
+    font-weight: 0;
+}
+.gearSlot .weaponLevel,
+ .gearSlot .powerLevel{
+    font-size: 14px;
+    gap: 5px;
+}
+.gearSlot .powerLevel img {
+    width: 7px;
+}
+.powerLevel {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    font-size: 12px;
+    letter-spacing: 2px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 3px 3px 3px 5px;
+    font-weight: 0;
+    color: #FFE500;
+    gap: 3px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.powerLevel img {
+    width: 5px;
+    transform: rotate(45deg);
+}
+.quantity {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    font-size: 12px;
+    letter-spacing: 2px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 3px 3px 3px 5px;
+    font-weight: 0;
+    color: #fff;
+    gap: 3px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 .selectedWeaponLevel {
     font-size: 12px;
 }
+.specializationIcon {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 5px;
+    font-weight: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.specializationIcon img {
+    width: 16px;
+    image-rendering: pixelated;
+}
+.gearSlot .specializationIcon img {
+    width: 20px;
+    image-rendering: unset;
+}
 .slot.common,
-.weaponSlot.common {
+.gearSlot.common {
     border-color: #fff;
     background: #666666;
 }
 .slot.uncommon,
-.weaponSlot.uncommon {
+.gearSlot.uncommon {
     border-color: #32FF9C;
     background: #13633C;
 }
 .slot.legendary,
-.weaponSlot.legendary {
+.gearSlot.legendary {
     border-color: #FFA500;
     background: #663E00;
 }
 .slot.exalted,
-.weaponSlot.exalted {
+.gearSlot.exalted {
     border-color: #FF3232;
     background: #661414;
 }
 .slot.epic,
-.weaponSlot.epic {
+.gearSlot.epic {
     border-color: #F132FF;
     background: #5D1466;
 }
 .slot.rare,
-.weaponSlot.rare {
+.gearSlot.rare {
     border-color: #32FFFF;
     background: #146666;
 }
 .slot.relic,
-.weaponSlot.relic {
+.gearSlot.relic {
     border-color: #FF4E32;
     background: #662414;
-}
-.slot:hover {
-    outline: 3px solid #fff;
 }
 .slot .slotImg {
     width: 100%;
@@ -407,7 +537,7 @@
     align-items: center;
     gap: 16px;
 }
-.nameContainer .header p:first-child {
+.powerText {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -434,15 +564,19 @@
     background: #282828;
     border: 2px solid rgba(255, 255, 255, 0.1);
 }
-.attackStyleName {
+.specialization {
     font-size: 10px;
     color: #fff;
     padding: 5px;
-    background: #282828;
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    background: #332400;
+    border: 2px solid #FFBF00;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
 }
 .nameContainer .header img {
-    width: 8px;
+    width: 7px;
     transform: rotate(45deg);
 }
 .itemStatsContainer {
@@ -485,8 +619,8 @@
     gap: 40px;
     min-height: 300px;
     padding-top: 10px;
-    box-shadow: 0 -100px 130px #080808;
-    background: #080808;
+    box-shadow: 0 -100px 120px 40px #080808;
+    background: #080808;;
 }
 .enchantmentsContainer p:first-child {
     font-size: 12px;
@@ -652,8 +786,5 @@
             2,
             minmax(var(--min-slot-size), 1fr)
         );
-        gap: 16px;
-        width: 100%;
-        padding: 30px 30px 30px 3px;
     }
 }

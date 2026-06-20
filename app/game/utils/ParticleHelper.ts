@@ -232,7 +232,6 @@ export class DustParticleManager extends ex.Actor {
   }
 
   spawnDust(pos: ex.Vector, count = 1) {
-    console.log("spawn dust", pos);
 
     for (let i = 0; i < count; i++) {
       this.particles.push({

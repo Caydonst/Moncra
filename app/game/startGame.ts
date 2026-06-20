@@ -20,6 +20,7 @@ export async function startGame(canvas: HTMLCanvasElement, onLoaded: () => void)
 
     const game = await createGame(canvas);
     gameState.engine = game;
+    gameState.resources = resources;
     createGameItems()
 
     /*

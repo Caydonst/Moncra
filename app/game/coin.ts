@@ -5,18 +5,19 @@ import { Shadow } from "./utils/shadow";
 export class Coin extends ex.Actor {
     private vx: number;
     private vy: number;
-    private gravity = 1000;
+    private gravity = 1500;
     private groundY: number;
     private magnetEnabled = false;
     private magnetRange = 150;   // distance at which magnet activates
-    private magnetSpeed = 200;   // how fast coin flies to player
-    private shadow: Shadow;
-    private engine: ex.Engine;
+    private magnetSpeed = 500;   // how fast coin flies to player
+    private shadow!: Shadow;
+    private engine?: ex.Engine;
 
     // 🔥 Bounce physics
     private bouncesRemaining = 3;       // how many bounces to perform
     private bounceEnergy = 0.45;        // how much height remains after each bounce
     private minBounceSpeed = 60;        // stop bouncing when below this speed
+    private landed = false;
 
     constructor(startPos: ex.Vector, private resources: GameResources) {
         super({
@@ -31,6 +32,8 @@ export class Coin extends ex.Actor {
 
         // coin sprite
         const sprite = this.resources.Images.coinSheetImage.toSprite();
+        //const sprite = this.resources.Images.goldImage.toSprite();
+        //sprite.scale = ex.vec(2, 2)
         this.graphics.use(sprite);
 
         // RANDOM TARGET LAND POSITION
@@ -40,13 +43,14 @@ export class Coin extends ex.Actor {
         this.groundY = startPos.y + offsetY;
 
         // POP UPWARD
-        this.vy = -300 - Math.random() * 200; // jump force
+        this.vy = -400 - Math.random() * 200; // jump force
         this.vx = offsetX / 0.7; // enough horizontal speed to reach target in ~0.7s
     }
 
     onInitialize(engine: ex.Engine) {
         this.engine = engine;
         // Scale each frame BEFORE making an animation
+        
         const frames = this.resources.CoinSpriteSheet.sprites.map(sprite => {
             const s = sprite.clone();        // clone so you can modify safely
             s.width *= 3;                    // scale X
@@ -63,6 +67,7 @@ export class Coin extends ex.Actor {
         });
 
         this.graphics.use(anim);
+        
 
         this.shadow = new Shadow(this);
         engine.currentScene.add(this.shadow);
@@ -83,6 +88,7 @@ export class Coin extends ex.Actor {
         if (this.bouncesRemaining > 0) {
             if (this.pos.y >= this.groundY) {
                 this.pos.y = this.groundY;
+                this.landed = true;
 
                 if (Math.abs(this.vy) > this.minBounceSpeed) {
                     // reverse velocity to bounce
@@ -109,7 +115,7 @@ export class Coin extends ex.Actor {
         // ---- MAGNET LOGIC ----
         const player = engine.currentScene.player
 
-        if (player) {
+        if (player && this.landed) {
             const dist = this.pos.distance(player.pos);
 
             // Enable magnet ONCE
