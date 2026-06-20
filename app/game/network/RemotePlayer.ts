@@ -25,6 +25,8 @@ export class RemotePlayer extends ex.Actor {
 
     public bobOffsetY = 0;
 
+    private aimAngle = 0
+
   constructor(
     pos: ex.Vector,
     private resources: GameResources
@@ -34,7 +36,7 @@ export class RemotePlayer extends ex.Actor {
       pos,
       anchor: ex.vec(0.5, 0.5),
       width: 15 * 2,
-      height: 23 * 2,
+      height: 20 * 2,
       z: 3,
       collisionType: ex.CollisionType.PreventCollision,
     });
@@ -100,17 +102,24 @@ export class RemotePlayer extends ex.Actor {
         return swordImages[weaponId] ?? this.resources.Images.greatSword0;
     }
 
-    updateWeapon(weapon: any, engine: ex.Engine) {
-        if (weapon === undefined) {
-            this.weaponActor?.kill();
-            this.weaponActor = null;
-            return;
-        }
-        
-        if (weapon.id === this.currentWeaponId) return;
+    
 
+    private clearWeapon() {
         this.weaponActor?.kill();
         this.weaponActor = null;
+        this.currentWeaponId = "";
+    }
+
+    updateWeapon(weapon: any, engine: ex.Engine) {
+        if (!weapon || !weapon.id) {
+            this.clearWeapon();
+            return;
+        }
+
+        if (weapon.id === this.currentWeaponId) return;
+
+        this.clearWeapon();
+
         this.currentWeaponId = weapon.id;
 
         const icon = this.getWeaponIcon(weapon.id);
@@ -121,15 +130,22 @@ export class RemotePlayer extends ex.Actor {
             icon,
         );
 
-        if (this.weaponActor) {
-            engine.currentScene.add(this.weaponActor);
-        }
+        engine.currentScene.add(this.weaponActor);
     }
 
     updateFromNetwork(player: any, engine: ex.Engine) {
         console.log(player)
         this.targetPos = ex.vec(player.x, player.y);
         this.rotation = player.rotation;
+
+        this.aimAngle = player.aimAngle ?? this.aimAngle;
+
+        const aimingLeft = Math.cos(this.aimAngle) > 0;
+
+        if (this.idleAnim && this.walkAnim) {
+            this.idleAnim.flipHorizontal = aimingLeft;
+            this.walkAnim.flipHorizontal = aimingLeft;
+        }
 
         this.updateWeapon(player.weapon, engine);
 
@@ -220,7 +236,7 @@ export class RemotePlayer extends ex.Actor {
         }
 
         if (this.shadow) {
-            this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2));
+            this.shadow.pos = this.pos.add(ex.vec(0, (this.height / 2) - 3));
         }
     }
 

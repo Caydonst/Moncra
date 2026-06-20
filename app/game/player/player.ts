@@ -1,9 +1,9 @@
 import * as ex from "excalibur";
 import {Engine, Resource} from "excalibur";
-import {GameResources} from "@/app/ game/resources";
+import {GameResources} from "@/app/game/resources";
 import {collidesWithWall8} from '../utils/checkCollisions'
 import {Shadow} from "../utils/shadow";
-import {spawnParticles} from "@/app/ game/utils/ParticleHelper";
+import {spawnParticles} from "@/app/game/utils/ParticleHelper";
 import { GameScene } from "../scenes/GameScene";
 import { multiplayer } from "../network/multiplayer";
 import { GameState } from "../gameState/gameState";
@@ -219,12 +219,6 @@ export class Player extends ex.Actor {
         equippedWeapon && "getAttackId" in equippedWeapon
             ? equippedWeapon.getAttackId()
             : 0;
-
-        const weapon = {
-            id: this.gameState.inventory.weapon?.id,
-            icon: this.gameState.inventory.weapon?.icon,
-            damage: this.gameState.inventory.weapon?.stats?.damage,
-        }
 
         multiplayer.sendPlayerMove({
             x: this.pos.x,

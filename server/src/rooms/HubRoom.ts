@@ -39,6 +39,10 @@ export class HubRoom extends Room<GameState> {
       player.weapon.id = data.weapon.id ?? 0;
       player.weapon.icon = data.weapon.icon ?? "";
       player.weapon.damage = data.weapon.damage ?? 0;
+    } else {
+      player.weapon.id = "";
+      player.weapon.icon = "";
+      player.weapon.damage = 0;
     }
   });
 
