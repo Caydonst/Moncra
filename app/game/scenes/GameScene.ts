@@ -27,7 +27,6 @@ import {getSpawnPointsFromTiledMap} from "./helperFunctions"
 import { EnemyPlayer } from "../enemies/enemyPlayer"
 import { ProjectileManager } from "../utils/projectileManager";
 import { Portal } from "../portal";
-import { generateDungeonFloor, createTileMapFromDungeonFloor, tileToWorld } from "../utils/mapGenerator"
 
 type Maps = {
     layer1: number[][];

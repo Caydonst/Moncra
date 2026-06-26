@@ -48,7 +48,7 @@ import Tilesheet from "./assets/map/spritesheet.png";
 import arrowImage from './assets/projectiles/arrow.png';
 
 import greatSword0 from "./assets/weapons/great_sword/stone_sword.png";
-import greatSword from "./assets/weapons/great_sword/vampire_sword.png";
+import greatSword from "./assets/weapons/great_sword/forged.png";
 import greatSword1 from "./assets/weapons/great_sword/ruby_sword.png";
 import greatSword2 from "./assets/weapons/great_sword/diamond_sword.png";
 import greatSword3 from "./assets/weapons/great_sword/iron_sword.png";

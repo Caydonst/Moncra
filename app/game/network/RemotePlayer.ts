@@ -224,7 +224,7 @@ export class RemotePlayer extends ex.Actor {
 
         this.graphics.use(this.moving ? "walk" : "idle");
 
-        const bobWalk = [0, -4, -2, 0, -4];
+        const bobWalk = [0, 0, 0, 4];
         const bobIdle = [0, 2, 4, 2];
 
         if (this.moving) {

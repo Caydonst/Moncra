@@ -1,7 +1,8 @@
-import * as ex from "excalibur"
 import { getGame } from "../gameInstance";
 
-export function changeScene(sceneString: string) {
+export function changeScene(sceneString: "hub" | "dungeon") {
+    if (typeof window === "undefined") return;
+
     const game = getGame();
 
     switch (sceneString) {

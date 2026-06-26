@@ -11,6 +11,8 @@ export class Inventory {
 
     gold = 0;
 
+    private spawningWeapon = false;
+
     constructor(data?: Partial<Inventory>) {
         if (!data) return;
 
@@ -24,36 +26,64 @@ export class Inventory {
 
     async spawnEquippedWeapon(engine: ex.Engine) {
         if (!this.weapon) return;
+        if (this.spawningWeapon) return;
+        if (this.weapon.instance && !this.weapon.instance.isKilled()) return;
 
-        const scene = engine.currentScene;
+        this.spawningWeapon = true;
 
-        if (!this.weapon.createWeapon) {
-            console.warn("Weapon has no createWeapon function:", this.weapon);
-            return;
+        try {
+            const scene = engine.currentScene;
+
+            if (!this.weapon.createWeapon) {
+                console.warn("Weapon has no createWeapon function:", this.weapon);
+                return;
+            }
+
+            const instance = await this.weapon.createWeapon();
+
+            if (this.weapon.instance && !this.weapon.instance.isKilled()) {
+                instance.kill();
+                return;
+            }
+
+            this.weapon.instance = instance;
+
+            scene.add(instance);
+            instance.addListeners?.();
+            instance.sendResourceData?.();
+
+            await this.syncMultiplayerWeapon(this.weapon);
+        } finally {
+            this.spawningWeapon = false;
         }
-
-        // avoid duplicate actor
-        this.removeEquippedWeaponActor(engine);
-
-        const instance = await this.weapon.createWeapon();
-
-        scene.add(instance);
-        instance.addListeners?.();
-
-        this.weapon.instance = instance;
-        this.weapon.instance?.sendResourceData?.();
     }
 
     async removeEquippedWeaponActor(engine: ex.Engine | null) {
-        if (!this.weapon?.instance) return;
+        const weapon = this.weapon;
+        if (!weapon?.instance) return;
 
-        this.weapon.instance.cleanup?.();
+        weapon.instance.cleanup?.();
+        weapon.instance.kill();
 
         if (engine?.currentScene) {
-            engine.currentScene.remove(this.weapon.instance);
+            engine.currentScene.remove(weapon.instance);
         }
 
-        this.weapon.instance = undefined;
+        weapon.instance = undefined;
+
+        await this.syncMultiplayerWeapon(null);
+    }
+
+    async syncMultiplayerWeapon(weapon: Weapon | null) {
+        if (typeof window === "undefined") return;
+
+        const { multiplayer } = await import("../network/multiplayer");
+
+        multiplayer.setLocalWeapon(weapon?.instance ?? null);
+
+        if (weapon) {
+            multiplayer.sendEquipWeapon(weapon.id);
+        }
     }
 
     applyServerInventory(serverInventory: Inventory) {

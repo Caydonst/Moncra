@@ -2,6 +2,7 @@ import styles from "./dungeon.module.css"
 import { changeScene } from "../../utils/sceneChanges"
 import DungeonImg from "../../assets/misc/dungeon_level5.png"
 import { colors, type Dungeon } from "./dungeonInfo";
+import { enterDungeon } from "../../utils/sceneTransition";
 
 type Props = {
     scene: ex.Scene | null;
@@ -25,8 +26,8 @@ export default function DungeonCard({ scene, setDungeonMenuOpen, dungeon }: Prop
                 </div>
                 <p>Enter the dungeon?</p>
                 <div className={styles.buttonsContainer}>
-                    <button className={styles.enterBtn} onClick={() => {
-                        changeScene("dungeon")
+                    <button className={styles.enterBtn} onClick={async () => {
+                        await enterDungeon(dungeon);
                         setDungeonMenuOpen(false);
                         }}>ENTER DUNGEON</button>
                     <button className={styles.cancelBtn} onClick={() => setDungeonMenuOpen(false)}>CANCEL</button>

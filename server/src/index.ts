@@ -4,6 +4,7 @@ import { Server } from "@colyseus/core";
 import { WebSocketTransport } from "@colyseus/ws-transport";
 import { createServer } from "http";
 import { HubRoom } from "./rooms/HubRoom.js";
+import { DungeonRoom } from "./rooms/DungeonRoom.js";
 
 const port = Number(process.env.PORT || 2567);
 
@@ -25,6 +26,7 @@ const gameServer = new Server({
 });
 
 gameServer.define("hub_room", HubRoom);
+gameServer.define("dungeon_room", DungeonRoom);
 
 await gameServer.listen(port);
 

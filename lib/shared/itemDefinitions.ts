@@ -32,7 +32,7 @@ export const itemDefinitions = {
             name: "Sentinel",
             icon: "/icons/sentinel_icon.png"
         },
-        icon: "/weapons/great_sword/vampire_sword.png",
+        icon: "/weapons/great_sword/forged.png",
         rarity: "legendary",
         attackStyle: "Melee",
         baseStats: {

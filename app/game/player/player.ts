@@ -44,11 +44,12 @@ export class Player extends ex.Actor {
 
     private isDashing = false;
     private dashCooldown = 3000; // 3 seconds
-    private lastDashTime!: number;
-    private dashTime = 200; // 0.2 seconds
+    private lastDashTime = 0;
+    private dashDistance = 200;
+    private dashDistanceRemaining = 0;
     private dashSpeed = 1000;
     private dashTracer!: DashTracer;
-    private previousPos!: ex.Vector;
+    private dashDir = ex.vec(0, 0);
 
     private hpUiUpdateQueued = false;
 
@@ -169,23 +170,35 @@ export class Player extends ex.Actor {
         if (engine.input.keyboard.isHeld(ex.Keys.A)) this.move = this.move.add(ex.vec(-1, 0));
         if (engine.input.keyboard.isHeld(ex.Keys.D)) this.move = this.move.add(ex.vec(1, 0));
 
-        if (engine.input.keyboard.wasPressed(ex.Keys.Space)) this.dash();
+        if (engine.input.keyboard.wasPressed(ex.Keys.Space)) {
+            const dashDir =
+                this.move.magnitude > 0
+                    ? this.move.normalize()
+                    : ex.vec(0, 0);
 
-        // --- Normalize diagonal movement ---
-        if (this.move.magnitude > 0) {
-            this.graphics.use("walk");
-            const dir = this.move.normalize();
-            const step = dir.scale(this.stats.speed * (delta / 1000));
+            const didDash = this.dash(dashDir);
 
-            this.pos.x += step.x;
-            this.pos.y += step.y;
-            
-        } else if (this.move.magnitude <= 0) {
-            this.graphics.use("idle");
+            if (didDash) {
+                multiplayer.sendDash({
+                    dirX: dashDir.x,
+                    dirY: dashDir.y,
+                });
+            }
         }
 
         if (this.isDashing) {
-            this.updateDash();
+            this.updateDash(delta);
+            this.graphics.use("walk");
+        } else if (this.move.magnitude > 0) {
+            this.graphics.use("walk");
+
+            const dir = this.move.normalize();
+            const step = dir.scale(this.stats.baseSpeed * (delta / 1000));
+
+            this.pos.x += step.x;
+            this.pos.y += step.y;
+        } else {
+            this.graphics.use("idle");
         }
 
         const pointer = engine.input.pointers.primary;
@@ -221,9 +234,8 @@ export class Player extends ex.Actor {
             : 0;
 
         multiplayer.sendPlayerMove({
-            x: this.pos.x,
-            y: this.pos.y,
-            rotation: this.rotation,
+            moveX: this.move.x,
+            moveY: this.move.y,
             weapon: this.gameState.inventory.weapon
                 ? {
                     id: this.gameState.inventory.weapon.id,
@@ -236,6 +248,21 @@ export class Player extends ex.Actor {
             attackId,
         });
 
+    }
+
+    public reconcileServerPosition(serverX: number, serverY: number) {
+        const serverPos = ex.vec(serverX, serverY);
+        const error = serverPos.sub(this.pos);
+        const dist = error.magnitude;
+
+        if (dist > 80) {
+            this.pos = serverPos;
+            return;
+        }
+
+        if (dist > 2) {
+            this.pos = this.pos.add(error.scale(0.10));
+        }
     }
 
     private queueHpUiUpdate() {
@@ -272,22 +299,39 @@ export class Player extends ex.Actor {
         this.stats.hp -= damage;
         this.queueHpUiUpdate();
     }
-    private dash() {
-        const now = performance.now()
+    private dash(dir: ex.Vector) {
+        const now = performance.now();
 
-        if (now - this.lastDashTime < this.dashCooldown) return;
+        if (now - this.lastDashTime < this.dashCooldown) return false;
+        if (dir.magnitude <= 0) return false;
 
         this.lastDashTime = now;
         this.isDashing = true;
-        this.stats.speed = this.dashSpeed;
+        this.dashDir = dir.clone();
+        this.dashDistanceRemaining = this.dashDistance;
+
+        return true;
     }
-    private updateDash() {
-        const now = performance.now()
+    private updateDash(delta: number) {
+        const maxStep = this.dashSpeed * (delta / 1000);
 
-        if (now - this.lastDashTime < this.dashTime) return;
+        const stepDistance = Math.min(
+            maxStep,
+            this.dashDistanceRemaining
+        );
 
-        this.stats.speed = this.stats.baseSpeed;
-        this.isDashing = false;
+        const step = this.dashDir.scale(stepDistance);
+
+        this.pos.x += step.x;
+        this.pos.y += step.y;
+
+        this.dashDistanceRemaining -= stepDistance;
+
+        if (this.dashDistanceRemaining <= 0) {
+            this.isDashing = false;
+            this.dashDir = ex.vec(0, 0);
+            this.dashDistanceRemaining = 0;
+        }
     }
     public getStats() {
         return this.stats;

@@ -14,7 +14,7 @@ export async function createWeaponFactory(item: any, gameState: any) {
     const image = swordImages[item.id] ?? scene.resources.Images.greatSword0;
 
     console.log(item)
-
+    /*
     if (item.kind === "Great Sword" && item.specialization.name === "Sentinel") {
         const { Sentinel } = await import("@/app/game/weapons/sentinel");
         return new Sentinel(
@@ -28,6 +28,7 @@ export async function createWeaponFactory(item: any, gameState: any) {
             item,
         );
     }
+    */
     
     if (item.kind === "Great Sword") {
         const { GreatSword } = await import("@/app/game/weapons/sword");

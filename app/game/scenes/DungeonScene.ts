@@ -1,261 +1,278 @@
-import * as ex from "excalibur"
+import * as ex from "excalibur";
 import { Portal } from "../portal";
 import { Chest } from "../chest/chest";
-import { createTileMapFromDungeonFloor, generateDungeonFloor, tileToWorld } from "../utils/mapGenerator";
+import { createTileMapFromDungeonFloor, tileVec } from "../utils/mapGenerator";
+import { multiplayer } from "../network/multiplayer";
+import { getPendingDungeon } from "../utils/sceneTransition";
+import {
+  DungeonFloor,
+  TILE_SIZE,
+} from "@/lib/shared/dungeon/dungeonTypes";
 import { GameResources } from "../resources";
 import { Player } from "../player/player";
 import { GameState } from "../gameState/gameState";
 import { ProjectileManager } from "../utils/projectileManager";
-import { DustParticleManager, ParticleManager } from "../utils/ParticleHelper";
+import { DustParticleManager } from "../utils/ParticleHelper";
 import { Demon } from "../enemies/demon";
 
-export class DungeonScene extends ex.Scene {
-  private currentFloorIndex: number = 1;
-  private currentFloor!: Floor | null;
-  public currentEnemies: any;
-  private numFloors = 5;
-    private worldBounds!: {
-      width: number;
-      height: number;
+type ChestDefinition = {
+  id: string;
+  x: number;
+  y: number;
+  items: any[];
+};
+
+type PortalDefinition = {
+  x: number;
+  y: number;
+  targetFloor: number | "hub";
+};
+
+type EnemyDefinition = {
+  id: string;
+  type: "demon";
+  x: number;
+  y: number;
+  hp: number;
+  maxHp: number;
+  damage: number;
+};
+
+type ServerDungeonFloor = DungeonFloor & {
+  chests: ChestDefinition[];
+  enemies: EnemyDefinition[];
+  portal: PortalDefinition;
+};
+
+type ServerDungeonData = {
+  floors: Record<number, ServerDungeonFloor>;
+  worldBounds: {
+    width: number;
+    height: number;
   };
+};
+
+export class DungeonScene extends ex.Scene {
+  private currentFloorIndex = 1;
+  private currentFloor: Floor | null = null;
+  public currentEnemies: Demon[] = [];
+
+  private numFloors = 5;
+  private worldBounds!: { width: number; height: number };
   private dungeon!: Dungeon;
+
   public player!: Player;
   public engine!: ex.Engine;
+
   private projectileManager!: ProjectileManager;
-  particleManager!: ParticleManager;
   dustParticleManager!: DustParticleManager;
 
-  constructor(private resources: GameResources, private gameState: GameState, public collisionGroups: any) {
-    super()
+  constructor(
+    private resources: GameResources,
+    private gameState: GameState,
+    public collisionGroups: any
+  ) {
+    super();
   }
 
   onInitialize(engine: ex.Engine): void {
-
     this.engine = engine;
-
-    this.camera.zoom = 1.20
+    this.camera.zoom = 1.2;
 
     this.player = this.gameState.player;
     this.add(this.player);
     this.player.attachToScene(this);
 
-    this.dungeon = generateDungeon(this, this.numFloors, this.resources);
-
-    if (this.gameState.inventory.weapon) {
+    if (this.gameState.inventory.weapon?.instance) {
       this.add(this.gameState.inventory.weapon.instance);
       this.gameState.inventory.weapon.instance.attachToScene(this);
     }
 
-    this.worldBounds = this.dungeon.worldBounds;
-
     this.projectileManager = new ProjectileManager(
-        this.resources,
-        this.collisionGroups
+      this.resources,
+      this.collisionGroups
     );
     this.add(this.projectileManager);
 
     this.dustParticleManager = new DustParticleManager();
     this.add(this.dustParticleManager);
 
-    this.loadFloor();
+    multiplayer.onDungeonReady((dungeonData: ServerDungeonData) => {
+      this.buildDungeonFromServerDungeon(dungeonData);
+    });
+  }
+
+  async onActivate() {
+    const pendingDungeon = getPendingDungeon();
+
+    await multiplayer.joinDungeon({
+      engine: this.engine,
+      resources: this.resources,
+      scene: this,
+      difficulty: pendingDungeon?.difficulty,
+      localPlayer: this.player,
+    });
   }
 
   onPostUpdate(engine: ex.Engine, delta: number) {
-      const camera = engine.currentScene.camera;
+    if (!this.worldBounds || !this.currentFloor) return;
 
-      // Center directly on player
-      const targetPos = this.player.pos;
+    const camera = engine.currentScene.camera;
+    const targetPos = this.player.pos;
 
-      // Map/world size
-      const mapWidth = this.worldBounds.width;
-      const mapHeight = this.worldBounds.height;
+    const halfScreenW = engine.drawWidth / camera.zoom / 2;
+    const halfScreenH = engine.drawHeight / camera.zoom / 2;
 
-      // Account for zoom
-      const halfScreenW = (engine.drawWidth / camera.zoom) / 2;
-      const halfScreenH = (engine.drawHeight / camera.zoom) / 2;
+    camera.pos = ex.vec(
+      Math.max(halfScreenW, Math.min(this.worldBounds.width - halfScreenW, targetPos.x)),
+      Math.max(halfScreenH, Math.min(this.worldBounds.height - halfScreenH, targetPos.y))
+    );
 
-      // Clamp camera inside map bounds
-      const clampedX = Math.max(
-          halfScreenW,
-          Math.min(mapWidth - halfScreenW, targetPos.x)
-      );
+    if (this.currentFloor.portal.interacted) {
+      const targetFloor = this.currentFloor.portalTarget;
 
-      const clampedY = Math.max(
-          halfScreenH,
-          Math.min(mapHeight - halfScreenH, targetPos.y)
-      );
-
-      camera.pos = ex.vec(clampedX, clampedY);
-
-      if (this.currentFloor?.portal.interacted) {
-        if (this.currentFloorIndex >= this.numFloors) {
-          engine.goToScene("hub");
-        }
-
-        this.loadFloor();
+      if (targetFloor === "hub") {
+        engine.goToScene("hub");
+        return;
       }
+
+      multiplayer.sendFloorChange(targetFloor);
+
+      this.currentFloorIndex = targetFloor;
+      this.loadFloor();
+    }
   }
 
   loadFloor() {
-    if (this.currentFloor) {
-      this.currentFloor.kill()
-    }
+    this.currentFloor?.kill();
 
     this.currentFloor = this.dungeon.floors[this.currentFloorIndex];
 
-    this.currentFloor?.draw(this);
+    if (!this.currentFloor) {
+      console.warn("Missing floor:", this.currentFloorIndex);
+      return;
+    }
 
-    this.player.pos = tileToWorld(this.currentFloor?.tileLayer.playerSpawn.x, this.currentFloor?.tileLayer.playerSpawn.y);
+    this.currentFloor.draw(this);
 
-    this.currentFloorIndex++;
+    const spawn = this.currentFloor.tileLayer.playerSpawn;
+    this.player.pos = tileVec(spawn.x, spawn.y);
 
-    this.currentEnemies = this.currentFloor?.enemies;
+    this.currentEnemies = this.currentFloor.enemies;
 
-    console.log("Dungeon Loaded");
+    console.log(`Dungeon floor ${this.currentFloorIndex} loaded`);
   }
-  
+
+  private buildDungeonFromServerDungeon(dungeonData: ServerDungeonData) {
+    this.dungeon = buildClientDungeon(dungeonData, this.resources);
+
+    this.worldBounds = this.dungeon.worldBounds;
+    this.numFloors = Object.keys(this.dungeon.floors).length;
+    this.currentFloorIndex = 1;
+
+    this.loadFloor();
+  }
 }
 
 class Dungeon {
-  public floors: Record<number, Floor | null> = {}
+  public floors: Record<number, Floor> = {};
   public worldBounds!: {
-      width: number;
-      height: number;
+    width: number;
+    height: number;
   };
-
-  constructor() {
-
-  }
-
-
 }
 
 class Floor {
   public chests: Chest[] = [];
   public portal!: Portal;
+  public portalTarget!: number | "hub";
   public enemies: Demon[] = [];
-  public tileLayer!: any;
+
+  public tileLayer!: ServerDungeonFloor;
   public tileMap!: ex.TileMap;
-  public numEnemies = 30;
-
-  private isDrawn = false;
-
-  constructor() {
-
-  }
 
   draw(scene: ex.Scene) {
     scene.add(this.tileMap);
     this.chests.forEach(chest => scene.add(chest));
     scene.add(this.portal);
-    this.enemies.forEach(enemy => scene.add(enemy));
-
-    this.isDrawn = true;
   }
 
   kill() {
     this.tileMap?.kill();
-
     this.chests.forEach(chest => chest.kill());
     this.enemies.forEach(enemy => enemy.destroyEnemy());
     this.portal?.kill();
-
-    this.isDrawn = false;
   }
 }
 
-function generateDungeon(scene: DungeonScene, numFloors: number, resources: GameResources) {
+function buildClientDungeon(
+  dungeonData: ServerDungeonData,
+  resources: GameResources
+) {
   const dungeon = new Dungeon();
 
-  const floorWidth = 60;
-  const floorHeight = 60;
+  dungeon.worldBounds = dungeonData.worldBounds;
 
-  for (let i = 0; i < numFloors; i++) {
-    const floor = generateFloor(scene, resources, floorWidth, floorHeight);
-    dungeon.floors[i+1] = floor;
-
+  for (const [floorNumber, floorData] of Object.entries(dungeonData.floors)) {
+    dungeon.floors[Number(floorNumber)] = buildClientFloor(resources, floorData);
   }
-
-  dungeon.worldBounds = {
-      width: floorWidth * 64,
-      height: floorHeight * 64,
-  };
 
   return dungeon;
-
 }
 
-function generateFloor(scene: DungeonScene, resources: GameResources, width: number, height: number) {
-  let floor = new Floor;
+function buildClientFloor(
+  resources: GameResources,
+  floorData: ServerDungeonFloor
+) {
+  const floor = new Floor();
 
-  const generatedMap = generateDungeonFloor(width, height);
-  floor.tileLayer = generatedMap;
-  const tileMap = createTileMapFromDungeonFloor(generatedMap.map, resources.mapSpritesheet)
-  floor.tileMap = tileMap;
+  floor.tileLayer = floorData;
 
-  generatedMap.rooms.forEach(room => {
-    if (Math.random() < 0.5) {
+  floor.tileMap = createTileMapFromDungeonFloor(
+    floorData.map,
+    resources.mapSpritesheet
+  );
 
-      // 10% chance
-      const chest = new Chest(tileToWorld(room.centerX, room.centerY), resources, Array(12).fill(null))
-      floor.chests.push(chest);
+  floorData.enemies.forEach(enemyData => {
+    if (enemyData.type !== "demon") return;
 
-    }
-  })
+    const demon = new Demon(
+      {
+        id: enemyData.id,
+        type: enemyData.type,
+        x: enemyData.x,
+        y: enemyData.y,
+        vx: 0,
+        vy: 0,
+        hp: enemyData.hp,
+        maxHp: enemyData.maxHp,
+        isDead: false,
+        isAggro: false,
+        state: "idle",
+      },
+      resources
+    );
 
-  for (let i = 0; i < floor.numEnemies; i++) {
-    
+    floor.enemies.push(demon);
+  });
 
-    const enemy = new Demon(
-      scene.engine,
-      getRandomEnemySpawn(generatedMap),
-      scene.player,
-      100,
-      100,
+  floorData.chests.forEach(chestData => {
+    const chest = new Chest(
+      ex.vec(chestData.x, chestData.y),
       resources,
-      scene.collisionGroups,
-    )
+      chestData.items
+    );
 
-    floor.enemies.push(enemy);
-  }
+    floor.chests.push(chest);
+  });
 
-  const portal = new Portal(tileToWorld(generatedMap.exitSpawn.x, generatedMap.exitSpawn.y), resources, "dungeon");
+  floor.portal = new Portal(
+    ex.vec(floorData.portal.x, floorData.portal.y),
+    resources,
+    "dungeon"
+  );
 
-  floor.portal = portal;
+  floor.portalTarget = floorData.portal.targetFloor;
 
   return floor;
-}
-
-function randomInt(min: number, max: number) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function getRandomEnemySpawn(generatedMap: any) {
-    let room;
-    let  isPlayerSpawnRoom = true;
-
-    const spawn = generatedMap.playerSpawn;
-
-
-
-    while (isPlayerSpawnRoom) {
-      room = generatedMap.rooms[
-          Math.floor(Math.random() * generatedMap.rooms.length)
-      ];
-
-        isPlayerSpawnRoom =
-          spawn.x >= room.x &&
-          spawn.x < room.x + room.w &&
-          spawn.y >= room.y &&
-          spawn.y < room.y + room.h;
-    }
-    
-
-    const tileX = randomInt(room.x + 1, room.x + room.w - 2);
-    const tileY = randomInt(room.y + 1, room.y + room.h - 2);
-
-    return ex.vec(
-        tileX * 64 + 32,
-        tileY * 64 + 32
-    );
 }

@@ -23,6 +23,14 @@ export type Attack = {
     thrustDistance?: number;
 };
 
+type ServerAttack = {
+    attackId: number;
+    weaponId: string;
+    aimAngle: number;
+    comboIndex: number;
+    attack: Attack;
+};
+
 export class GreatSword extends ex.Actor {
     public player: Player;
     public engine: ex.Engine;
@@ -37,8 +45,6 @@ export class GreatSword extends ex.Actor {
     protected swingStartAngle = 0;
     protected swingEndAngle = 0;
 
-    protected swingCooldown = 350;
-    protected lastSwingTime = 0;
     protected swingTracer: SwingTracer;
 
     // Orbit around player
@@ -48,11 +54,6 @@ export class GreatSword extends ex.Actor {
     private readonly ROT_OFFSET = Math.PI / 2; // tweak based on sprite art
 
     private shadow: Shadow;
-    protected swingHitSet = new Set<ex.Actor>();
-
-    private comboIndex = 0;
-    private comboThreshold = 400;
-    protected currentAttack!: Attack;
 
     private thrustDirection = ex.vec(0, 0);
     private thrustDistance!: number; // shorter thrust
@@ -63,10 +64,18 @@ export class GreatSword extends ex.Actor {
     protected isBlocking = false;
     public blockDamageMultiplier = 0.5;
 
-    private combo: Attack[] = [
+    private swingStartOffset = 0;
+    private swingEndOffset = 0;
+
+    private waitingForAttack = false;
+
+    private predictedComboIndex = 0;
+    private lastPredictedAttackTime = 0;
+    private comboThreshold = 600;
+    private readonly predictedCombo: Attack[] = [
         {
             type: "slash",
-            duration: 250,
+            duration: 400,
             cooldown: 350,
             damageMultiplier: 1,
             startOffset: Math.PI / 1.5,
@@ -75,7 +84,7 @@ export class GreatSword extends ex.Actor {
         },
         {
             type: "slash",
-            duration: 250,
+            duration: 400,
             cooldown: 350,
             damageMultiplier: 1,
             startOffset: -Math.PI / 1.5,
@@ -84,7 +93,7 @@ export class GreatSword extends ex.Actor {
         },
         {
             type: "slash",
-            duration: 250,
+            duration: 400,
             cooldown: 350,
             damageMultiplier: 1.2,
             startOffset: -Math.PI / 1.5,
@@ -93,12 +102,15 @@ export class GreatSword extends ex.Actor {
         },
         {
             type: "thrust",
-            duration: 220,
+            duration: 400,
             cooldown: 350,
             damageMultiplier: 1.5,
             thrustDistance: 15,
-        }
+        },
     ];
+
+    private currentAttackId = 0;
+    private hitEnemiesThisAttack = new Set<string>();
 
     private pointerDownHandler = (evt: ex.PointerEvent) => {
         if (evt.button === ex.PointerButton.Left) {
@@ -133,14 +145,14 @@ export class GreatSword extends ex.Actor {
         super({
             pos: player.pos.clone(),
             anchor: ex.vec(0.5, 0.5), // exvec(0.5, 0.7)
-            width: image.width * 2.5,
-            height: image.height * 2.5,
+            width: image.width * 2.6,
+            height: image.height * 2.6,
             z: 4,
         });
 
         this.player = player;
         this.engine = engine;
-        this.offset = ex.vec(44, 0);
+        this.offset = ex.vec(45, 0);
     }
 
     onInitialize(engine: ex.Engine) {
@@ -164,14 +176,18 @@ export class GreatSword extends ex.Actor {
             this.graphics.material = outline.outlineMaterial;
         }*/
 
-        //const effect = new EnchantedGlowEffect(engine);
-        //this.graphics.material = effect.material;
+        const effect = new EnchantedGlowEffect(engine);
+        this.graphics.material = effect.material;
     }
+
+    private lastSwingEndPos: ex.Vector | null = null;
+    private lastSwingEndAngle = 0;
+    private debugNextIdleFrame = false;
 
     onPostUpdate(_engine: ex.Engine, delta: number) {
 
         if (this.isHolding) {
-            this.startSwing()
+            this.requestAttack();
         }
 
         this.swingTracer?.updateTracer(this.engine, delta);
@@ -219,33 +235,60 @@ export class GreatSword extends ex.Actor {
         // -------------------------------
         if (this.swinging) {
             this.swingProgress += delta;
-            const t = Math.min(this.swingProgress / this.swingDuration, 1);
 
-            const eased = t * t * (3 - 2 * t);
+            const t = Math.min(this.swingProgress / this.swingDuration, 1);
+            const eased = this.heavySwingEase(t);
+
+            const currentMouseAngle = this.getMouseAngle();
+            if (currentMouseAngle === null) return;
+
+            const dynamicStartAngle = currentMouseAngle + this.swingStartOffset;
+            const dynamicEndAngle = currentMouseAngle + this.swingEndOffset;
 
             this.orbitAngle =
-                this.swingStartAngle +
-                (this.swingEndAngle - this.swingStartAngle) * eased;
+                dynamicStartAngle +
+                (dynamicEndAngle - dynamicStartAngle) * eased;
 
-            // rotate offset
-            const rotatedOffset = this.offset.rotate(this.orbitAngle).add(ex.vec(0, 5));
+            if (!Number.isFinite(this.orbitAngle)) {
 
-            // ADD BOBBING HERE
+                this.swinging = false;
+                return;
+            }
+
+            const rotatedOffset = this.offset
+                .clone()
+                .rotate(this.orbitAngle)
+                .add(ex.vec(0, 5));
+
             const bobbedOffset = addBobbing(rotatedOffset);
 
-            // position sword with bobbing
             this.pos = this.player.pos.clone().add(bobbedOffset);
             this.rotation = this.orbitAngle + this.ROT_OFFSET;
 
-            // update shadow
             if (this.shadow) {
                 this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2.5));
             }
 
             if (t >= 1) {
+                this.lastSwingEndPos = this.pos.clone();
+                this.lastSwingEndAngle = this.orbitAngle;
+                this.debugNextIdleFrame = true;
+
                 this.swinging = false;
-                this.orbitAngle = this.swingEndAngle;
+                this.orbitAngle = dynamicEndAngle;
+
+                console.log("SWING END", {
+                    pos: {
+                        x: this.pos.x,
+                        y: this.pos.y,
+                    },
+                    orbitAngle: this.orbitAngle,
+                    mouseAngle: currentMouseAngle,
+                    idleOrbitAngleOffset: this.idleOrbitAngleOffset,
+                    swingEndOffset: this.swingEndOffset,
+                });
             }
+
             return;
         }
         
@@ -255,18 +298,96 @@ export class GreatSword extends ex.Actor {
         // -------------------------------
         this.orbitAngle = mouseAngle + this.idleOrbitAngleOffset;
 
-        const rotatedOffset = this.offset.rotate(this.orbitAngle).add(ex.vec(0, 5));
+        const rotatedOffset = this.offset
+            .clone()
+            .rotate(this.orbitAngle)
+            .add(ex.vec(0, 5));
 
         // ADD BOBBING HERE TOO
         const bobbedOffset = addBobbing(rotatedOffset);
 
-        this.pos = this.player.pos.clone().add(bobbedOffset);
+        const nextPos = this.player.pos.clone().add(bobbedOffset);
+
+        if (!Number.isFinite(nextPos.x) || !Number.isFinite(nextPos.y)) {
+            console.error("Invalid sword pos", {
+                nextPos,
+                playerPos: this.player.pos,
+                offset: this.offset,
+                orbitAngle: this.orbitAngle,
+                bobbedOffset,
+            });
+            return;
+        }
+
+        this.pos = nextPos;
         this.rotation = this.orbitAngle + this.ROT_OFFSET;
+
+        if (this.debugNextIdleFrame && this.lastSwingEndPos) {
+            const diff = this.pos.sub(this.lastSwingEndPos);
+
+            console.log("FIRST IDLE FRAME AFTER SWING", {
+                pos: {
+                    x: this.pos.x,
+                    y: this.pos.y,
+                },
+                lastSwingEndPos: {
+                    x: this.lastSwingEndPos.x,
+                    y: this.lastSwingEndPos.y,
+                },
+                diff: {
+                    x: diff.x,
+                    y: diff.y,
+                    distance: diff.magnitude,
+                },
+                idleOrbitAngle: this.orbitAngle,
+                lastSwingEndAngle: this.lastSwingEndAngle,
+                angleDiff: this.orbitAngle - this.lastSwingEndAngle,
+                mouseAngle,
+                idleOrbitAngleOffset: this.idleOrbitAngleOffset,
+            });
+
+            this.debugNextIdleFrame = false;
+        }
 
         // shadow update
         if (this.shadow) {
             this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2.5));
         }
+    }
+
+    private heavySwingEase(t: number) {
+        if (!Number.isFinite(t)) return 0;
+
+        t = Math.max(0, Math.min(t, 1));
+
+        const startPortion = 0.35; // how much TIME is spent easing in
+        const middlePortion = 0.30; // how much TIME is spent fast
+        const endPortion = 0.35; // how much TIME is spent easing out
+
+        const startDistance = 0.08; // how much ARC the start covers
+        const middleDistance = 0.84; // how much ARC the fast middle covers
+        const endDistance = 0.08; // how much ARC the end covers
+
+        const startPower = 2.8;
+        const endPower = 2.8;
+
+        const middleStart = startPortion;
+        const endStart = startPortion + middlePortion;
+
+        if (t < middleStart) {
+            const p = t / startPortion;
+            return startDistance * Math.pow(p, startPower);
+        }
+
+        if (t < endStart) {
+            const p = (t - middleStart) / middlePortion;
+            return startDistance + middleDistance * p;
+        }
+
+        const p = (t - endStart) / endPortion;
+        const easedOut = 1 - Math.pow(1 - p, endPower);
+
+        return startDistance + middleDistance + endDistance * easedOut;
     }
 
     protected getMouseAngle(): number | null {
@@ -278,92 +399,210 @@ export class GreatSword extends ex.Actor {
         return dir.toAngle();
     }
 
-    protected getAttackDamageMultiplier() {
-        return this.currentAttack.damageMultiplier;
+    onCollisionStart(_self: ex.Collider, other: ex.Collider) {
+        console.log("Sword collided with:", other.owner?.name);
+
+        const enemy = other.owner;
+
+        if (!(enemy instanceof Demon)) return;
+
+        console.log("Sword hit enemy:", enemy.enemyId);
+
+        this.onSwordHitEnemy(enemy.enemyId);
     }
 
-    startSwing() {
+    private onSwordHitEnemy(enemyId: string) {
+        if (!this.swinging && !this.thrusting) return;
+        if (this.hitEnemiesThisAttack.has(enemyId)) return;
+
+        this.hitEnemiesThisAttack.add(enemyId);
+
+        multiplayer.sendSwordHit({
+            attackId: this.currentAttackId,
+            enemyId,
+            hitT: Math.min(this.swingProgress / this.swingDuration, 1),
+            aimAngle: this.getMouseAngle(),
+        });
+    }
+
+    /*
+    playServerAttack(data: ServerAttack) {
+        this.waitingForAttack = false;
+
+        this.predictedComboIndex =
+            (data.comboIndex + 1) % this.predictedCombo.length;
+
+        this.lastPredictedAttackTime = performance.now();
+
+        if (this.swinging || this.thrusting) {
+            return;
+        }
+
+        if (data.attack.type === "slash") {
+            this.startSlash(data);
+        } else {
+            this.startThrust(data);
+        }
+    }
+    */
+
+    public confirmServerAttack(data: ServerAttack) {
+        this.waitingForAttack = false;
+
+        if (Number.isFinite(data.comboIndex)) {
+            this.predictedComboIndex =
+                (data.comboIndex + 1) % this.predictedCombo.length;
+        }
+
+        this.lastPredictedAttackTime = performance.now();
+    }
+
+    private requestAttack() {
+        if (this.waitingForAttack) return;
         if (this.isBlocking) return;
+        if (this.swinging || this.thrusting) return;
+
+        const aimAngle = this.getMouseAngle();
+        if (aimAngle === null) return;
 
         const now = performance.now();
 
-        if (this.swinging || this.thrusting) return;
-        if (now - this.lastSwingTime < this.swingCooldown) return;
-
-        if (now - this.lastSwingTime > this.comboThreshold) {
-            this.comboIndex = 0;
+        if (now - this.lastPredictedAttackTime > this.comboThreshold) {
+            this.predictedComboIndex = 0;
         }
 
-        const mouseAngle = this.getMouseAngle();
-        if (mouseAngle === null) return;
+        const comboIndex = Number.isFinite(this.predictedComboIndex)
+            ? this.predictedComboIndex
+            : 0;
+
+        const attack = this.predictedCombo[comboIndex];
+
+        if (!attack) {
+            console.error("Missing predicted attack", {
+                comboIndex,
+                predictedComboIndex: this.predictedComboIndex,
+                predictedCombo: this.predictedCombo,
+            });
+
+            this.predictedComboIndex = 0;
+            return;
+        }
+
+        this.currentAttackId++;
+        this.hitEnemiesThisAttack.clear();
+
+        const predictedAttack: ServerAttack = {
+            attackId: this.currentAttackId,
+            weaponId: this.weaponItem.id,
+            aimAngle,
+            comboIndex,
+            attack,
+        };
+
+        this.playPredictedAttack(predictedAttack);
+
+        this.lastPredictedAttackTime = now;
+        this.predictedComboIndex =
+            (comboIndex + 1) % this.predictedCombo.length;
+
+        this.waitingForAttack = true;
 
         multiplayer.sendWeaponAttack({
-            weaponId: "great_sword1",
-            x: this.pos.x,
-            y: this.pos.y,
-            aimAngle: mouseAngle,
+            attackId: this.currentAttackId,
+            weaponId: this.weaponItem.id,
+            aimAngle,
         });
 
-        this.currentAttack = this.combo[this.comboIndex];
+        window.setTimeout(() => {
+            this.waitingForAttack = false;
+        }, attack.cooldown);
+    }
 
-        this.lastSwingTime = now;
-        this.swingCooldown = this.currentAttack.cooldown;
-        this.swingDuration = this.currentAttack.duration;
-        this.swingProgress = 0;
-        this.swingHitSet.clear();
-
-        if (this.currentAttack.type === "slash") {
-            this.startSlash(mouseAngle);
-
-            this.swingTracer.start(
-                this.player,
-                this.swingStartAngle,
-                this.swingEndAngle,
-                this.swingDuration,
-                this.offset.x,
-                () => this.player.pos.clone().add(ex.vec(0, this.player.bobOffsetY)),
-            );
+    private playPredictedAttack(data: ServerAttack) {
+        if (data.attack.type === "slash") {
+            this.startSlash(data);
         } else {
-            this.startThrust(mouseAngle);
+            this.startThrust(data);
         }
-
-        this.comboIndex = (this.comboIndex + 1) % this.combo.length;
     }
 
-    protected startSlash(mouseAngle: number) {
+    protected startSlash(data: ServerAttack) {
+        const attack = data.attack;
+        const aimAngle = data.aimAngle;
+
         this.swinging = true;
+        this.thrusting = false;
         this.swingProgress = 0;
 
-        this.graphics.flipHorizontal = this.currentAttack.swingFlip ?? false;
+        this.swingDuration = Number.isFinite(attack.duration) && attack.duration > 0
+            ? attack.duration
+            : 250;
 
-        this.swingStartAngle = mouseAngle + this.currentAttack.startOffset!;
-        this.swingEndAngle = mouseAngle + this.currentAttack.endOffset!;
+        this.graphics.flipHorizontal = attack.swingFlip ?? false;
 
-        this.idleOrbitAngleOffset = this.currentAttack.endOffset!;
+        this.swingStartOffset = Number.isFinite(attack.startOffset)
+            ? attack.startOffset!
+            : 0;
+
+        this.swingEndOffset = Number.isFinite(attack.endOffset)
+            ? attack.endOffset!
+            : 0;
+
+        this.swingStartAngle = aimAngle + this.swingStartOffset;
+        this.swingEndAngle = aimAngle + this.swingEndOffset;
+
+        this.idleOrbitAngleOffset = this.swingEndOffset;
         this.orbitAngle = this.swingStartAngle;
+        
+        this.swingTracer.start(
+            this.player,
+            this.swingStartOffset,
+            this.swingEndOffset,
+            this.swingDuration,
+            this.offset.x,
+            () => this.player.pos.clone()
+                .add(ex.vec(0, this.player.bobOffsetY))
+                .add(ex.vec(0, 5)),
+            () => this.getMouseAngle(),
+        );
     }
-    private startThrust(mouseAngle: number) {
+
+    private startThrust(data: ServerAttack) {
+        const attack = data.attack;
+        const aimAngle = data.aimAngle;
+
         this.thrusting = true;
+        this.swinging = false;
         this.swingProgress = 0;
-        this.swingHitSet.clear();
 
-        this.thrustDirection = ex.Vector.fromAngle(mouseAngle);
-        this.thrustDistance = this.currentAttack.thrustDistance ?? 55;
+        this.swingDuration = attack.duration;
+        this.thrustDirection = ex.Vector.fromAngle(aimAngle);
+        this.thrustDistance = attack.thrustDistance ?? 55;
 
-        const base = this.player.pos.clone().add(this.thrustDirection.scale(this.height * 0.35));
-        const tipStart = base.add(this.thrustDirection.scale(this.height * 0.45));
-        const tipEnd = tipStart.add(this.thrustDirection.scale(this.thrustDistance + 35));
+        const base = this.player.pos
+            .clone()
+            .add(this.thrustDirection.scale(this.height * 0.35))
+            .add(ex.vec(0, this.player.bobOffsetY))
+            .add(ex.vec(0, 5));
 
-        this.thrustTracer.startTrace(tipStart, tipEnd, 140);
+        const tipStart = base.add(
+            this.thrustDirection.scale(this.height - 50)
+        );
+
+        const tipEnd = tipStart.add(
+            this.thrustDirection.scale(this.thrustDistance + 35)
+        );
+
+        this.thrustTracer.startTrace(tipStart, tipEnd, aimAngle);
     }
+
     private updateThrust(delta: number) {
         this.swingProgress += delta;
 
         const forwardTime = 45;
-        const pauseTime = this.thrustPauseTime;
         const retractTime = 100;
-
-        const total = forwardTime + pauseTime + retractTime;
+        const total = this.swingDuration;
+        const pauseTime = Math.max(0, total - forwardTime - retractTime);
 
         const t = Math.min(this.swingProgress, total);
 
@@ -394,6 +633,22 @@ export class GreatSword extends ex.Actor {
 
         this.rotation = this.thrustDirection.toAngle() + this.ROT_OFFSET;
 
+        const thrustAngle = this.thrustDirection.toAngle();
+
+        const swordTipStart = this.pos.clone().add(
+            this.thrustDirection.scale(this.height * 0.25)
+        );
+
+        const swordTipEnd = swordTipStart.clone().add(
+            this.thrustDirection.scale(this.thrustDistance + 35)
+        );
+
+        this.thrustTracer.updateTrace(
+            swordTipStart,
+            swordTipEnd,
+            thrustAngle
+        );
+
         if (this.shadow) {
             this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2.5));
         }
@@ -422,35 +677,6 @@ export class GreatSword extends ex.Actor {
     }
 
     protected onSuccessfulHit(_target: ex.Actor) {}
-
-    onPreCollisionResolve(_self: ex.Collider, other: ex.Collider) {
-        const target = other.owner;
-
-        if (!this.swinging && !this.thrusting) return;
-        if (!target.tags.has("enemy")) return;
-        if (target.isDead) return;
-
-        // Prevent multiple hits on the SAME enemy during the same swing
-        if (this.swingHitSet.has(target)) return;
-
-        // First hit this swing → apply damage
-        this.swingHitSet.add(target);
-        //this.engine.currentScene.camera.shake(8, 8, 60);
-
-        const originalDamage = this.weaponItem.stats.damage;
-
-        this.weaponItem.stats.damage =
-            originalDamage * this.getAttackDamageMultiplier();
-
-        damageEnemy(this.player, target, this.weaponItem, this.scene as GameScene);
-
-        this.weaponItem.stats.damage = originalDamage;
-
-        this.onSuccessfulHit(target);
-        
-        //target.takeDamage(this.damage * this.currentAttack.damageMultiplier);
-        //damageEnemy(this.player, target, this.weaponItem, this.scene as GameScene);
-    }
 
 
     addListeners() {
@@ -490,17 +716,28 @@ export class GreatSword extends ex.Actor {
     }
 }
 
+type SwingTrailSegment = {
+    angle: number;
+    age: number;
+    lifetime: number;
+    swingT: number;
+};
+
 export class SwingTracer extends ex.Actor {
     public active = false;
 
     private player!: ex.Actor;
-    private startAngle = 0;
-    private endAngle = 0;
+    private startOffset = 0;
+    private endOffset = 0;
+    private getAimAngle: (() => number | null) | null = null;
     private progress = 0;
     private duration = 10;
     private radius = 160;
     private getOrigin!: () => ex.Vector;
-    private bladeLength = 34;
+
+    private segments: SwingTrailSegment[] = [];
+    private segmentLifetime = 80;
+    private lastProgress = 0;
 
     constructor() {
         super({
@@ -515,71 +752,149 @@ export class SwingTracer extends ex.Actor {
 
             const origin = this.getOrigin();
 
-            const t = Math.min(this.progress / this.duration, 1);
-            const eased = t * t * (3 - 2 * t);
+            const baseInner = this.radius - 30;
+            const baseOuter = this.radius + 40;
+            const maxWidth = baseOuter - baseInner;
 
-            const currentAngle =
-                this.startAngle + (this.endAngle - this.startAngle) * eased;
+            for (const segment of this.segments) {
+                const lifeT = Math.min(segment.age / segment.lifetime, 1);
+                const fade = 1 - lifeT;
+                const alpha = fade * 0.45;
 
-            const trailLength = Math.PI / 2;
-            const steps = 50;
+                const swingShape = Math.sin(segment.swingT * Math.PI);
+                const width = maxWidth * swingShape * fade;
 
-            const swingDir = Math.sign(this.endAngle - this.startAngle) || 1;
-
-            const totalArc = Math.abs(this.endAngle - this.startAngle);
-            const visibleTrailLength = Math.min(trailLength, totalArc * eased);
-
-            for (let i = 0; i < steps; i++) {
-                const percent = i / steps;
-
-                const a =
-                    currentAngle -
-                    swingDir * visibleTrailLength * percent;
-
-                const alpha = (1 - percent) * 0.45;
-
-                //const inner = this.radius * 0.45;
-                //const outer = this.radius * 1.15;
-
-                const inner = this.radius * 0.7;
-                const outer = this.radius + 40;
+                const outer = baseOuter;
+                const inner = baseOuter - width;
 
                 const p1 = origin
-                    .add(ex.Vector.fromAngle(a).scale(inner))
+                    .add(ex.Vector.fromAngle(segment.angle).scale(inner))
                     .sub(this.pos);
 
                 const p2 = origin
-                    .add(ex.Vector.fromAngle(a).scale(outer))
+                    .add(ex.Vector.fromAngle(segment.angle).scale(outer))
                     .sub(this.pos);
 
                 ctx.save();
                 ctx.opacity = alpha;
-                ctx.drawLine(p1, p2, ex.Color.White, 4);
+                ctx.drawLine(p1, p2, ex.Color.White, 8);
                 ctx.restore();
             }
         };
     }
 
-    start(player: ex.Actor, startAngle: number, endAngle: number, duration: number, radius: number, getOrigin: () => ex.Vector,) {
+    start(
+        player: ex.Actor,
+        startOffset: number,
+        endOffset: number,
+        duration: number,
+        radius: number,
+        getOrigin: () => ex.Vector,
+        getAimAngle: () => number | null,
+    ) {
         this.player = player;
-        this.startAngle = startAngle;
-        this.endAngle = endAngle;
+        this.startOffset = startOffset;
+        this.endOffset = endOffset;
         this.duration = duration;
         this.radius = radius;
         this.getOrigin = getOrigin;
+        this.getAimAngle = getAimAngle;
+
         this.progress = 0;
+        this.segments = [];
         this.active = true;
+        this.lastProgress = 0;
     }
 
     updateTracer(engine: ex.Engine, delta: number) {
         if (!this.active) return;
+
         this.pos = engine.currentScene.camera.pos.clone();
 
         this.progress += delta;
 
-        if (this.progress >= this.duration) {
+        const stillSwinging = this.progress < this.duration;
+
+        if (stillSwinging) {
+            const aimAngle = this.getAimAngle?.();
+            if (aimAngle === null || aimAngle === undefined) return;
+
+            const prevProgress = this.lastProgress;
+            const currProgress = Math.min(this.progress, this.duration);
+
+            const angleSteps = 30;
+
+            for (let i = 0; i < angleSteps; i++) {
+                const p = i / angleSteps;
+
+                const sampleProgress =
+                    prevProgress + (currProgress - prevProgress) * p;
+
+                const t = Math.min(sampleProgress / this.duration, 1);
+                const eased = this.heavySwingEase(t);
+
+                const dynamicStartAngle = aimAngle + this.startOffset;
+                const dynamicEndAngle = aimAngle + this.endOffset;
+
+                const angle =
+                    dynamicStartAngle +
+                    (dynamicEndAngle - dynamicStartAngle) * eased;
+
+                this.segments.push({
+                    angle,
+                    age: 0,
+                    lifetime: this.segmentLifetime,
+                    swingT: t,
+                });
+            }
+
+            this.lastProgress = currProgress;
+        }
+
+        for (const segment of this.segments) {
+            segment.age += delta;
+        }
+
+        this.segments = this.segments.filter(
+            segment => segment.age < segment.lifetime
+        );
+
+        if (!stillSwinging && this.segments.length === 0) {
             this.active = false;
         }
+    }
+
+    private heavySwingEase(t: number) {
+        t = Math.max(0, Math.min(t, 1));
+
+        const startPortion = 0.35;
+        const middlePortion = 0.30;
+        const endPortion = 0.35;
+
+        const startDistance = 0.08;
+        const middleDistance = 0.84;
+        const endDistance = 0.08;
+
+        const startPower = 2.8;
+        const endPower = 2.8;
+
+        const middleStart = startPortion;
+        const endStart = startPortion + middlePortion;
+
+        if (t < middleStart) {
+            const p = t / startPortion;
+            return startDistance * Math.pow(p, startPower);
+        }
+
+        if (t < endStart) {
+            const p = (t - middleStart) / middlePortion;
+            return startDistance + middleDistance * p;
+        }
+
+        const p = (t - endStart) / endPortion;
+        const easedOut = 1 - Math.pow(1 - p, endPower);
+
+        return startDistance + middleDistance + endDistance * easedOut;
     }
 }
 
@@ -588,7 +903,8 @@ export class ThrustTracer extends ex.Actor {
     private start = ex.vec(0, 0);
     private end = ex.vec(0, 0);
     private progress = 0;
-    private duration = 500;
+    private duration = 100;
+    private angle = 0;
 
     constructor() {
         super({
@@ -603,52 +919,90 @@ export class ThrustTracer extends ex.Actor {
             if (!this.active) return;
 
             const t = Math.min(this.progress / this.duration, 1);
+            const eased = t * t * (3 - 2 * t);
             const alpha = 1 - t;
 
             const localStart = this.start.sub(this.pos);
             const localEnd = this.end.sub(this.pos);
 
-            const dir = localEnd.sub(localStart).normalize();
+            const dir = ex.Vector.fromAngle(this.angle);
             const perp = ex.vec(-dir.y, dir.x);
 
-            const offset = 10;
+            const thrustLength = localEnd.distance(localStart);
+            const forwardDistance = thrustLength * eased;
 
-            const shiftedStart = localStart.add(
-                dir.scale(offset)
-            )
+            const tip = localStart
+                .add(dir.scale(forwardDistance))
+                .add(dir.scale(38));
 
-            const shfitedEnd = localEnd.add(
-                dir.scale(offset)
-            )
+            const chevronLength = 52;
+            const chevronWidth = 30;
 
-            const length = shfitedEnd.distance(shiftedStart);
-            const steps = 30;
+            const backCenter = tip.sub(dir.scale(chevronLength));
+
+            const leftBack = backCenter.add(perp.scale(chevronWidth));
+            const rightBack = backCenter.sub(perp.scale(chevronWidth));
+
+            const leftTail = leftBack.sub(dir.scale(12)).add(perp.scale(4));
+            const rightTail = rightBack.sub(dir.scale(12)).sub(perp.scale(4));
+
+            const innerTip = tip.sub(dir.scale(6));
+            const innerLeft = backCenter.add(perp.scale(chevronWidth * 0.55));
+            const innerRight = backCenter.sub(perp.scale(chevronWidth * 0.55));
+
+            const drawTaperedArm = (
+                from: ex.Vector,
+                to: ex.Vector,
+                maxThickness: number,
+                segments = 16
+            ) => {
+                for (let i = 0; i < segments; i++) {
+                    const p1 = i / segments;
+                    const p2 = (i + 1) / segments;
+
+                    const a = from.lerp(to, p1);
+                    const b = from.lerp(to, p2);
+
+                    const mid = (p1 + p2) * 0.5;
+
+                    // Thin at tail, thick near the chevron tip, sharp at the very end
+                    const thicknessShape =
+                        Math.pow(mid, 0.45) * (1 - Math.pow(mid, 8));
+
+                    const thickness = Math.max(
+                        1,
+                        maxThickness * thicknessShape
+                    );
+
+                    ctx.drawLine(a, b, ex.Color.White, thickness);
+                }
+            };
 
             ctx.save();
+
+            // Soft tapered glow
+            ctx.opacity = alpha * 1;
+            drawTaperedArm(leftTail, tip, 26, 18);
+            drawTaperedArm(rightTail, tip, 26, 18);
+
+            // Bright tapered chevron body
             ctx.opacity = alpha;
+            drawTaperedArm(leftTail, tip, 8, 18);
+            drawTaperedArm(rightTail, tip, 8, 18);
 
-            for (let i = 0; i < steps; i++) {
-                const p = i / steps;
-
-                const center = shiftedStart.add(dir.scale(length * p));
-
-                // wide at base, sharp at tip
-                const width = 18 * (1 - p) * alpha;
-
-                const left = center.add(perp.scale(width));
-                const right = center.sub(perp.scale(width));
-
-                ctx.drawLine(left, right, ex.Color.White, 3);
-            }
+            // Inner sharp highlight
+            ctx.opacity = alpha * 3;
+            ctx.drawLine(innerLeft, innerTip, ex.Color.White, 2);
+            ctx.drawLine(innerRight, innerTip, ex.Color.White, 2);
 
             ctx.restore();
         };
     }
 
-    startTrace(start: ex.Vector, end: ex.Vector, duration = 120) {
+    startTrace(start: ex.Vector, end: ex.Vector, angle: number) {
         this.start = start.clone();
         this.end = end.clone();
-        this.duration = duration;
+        this.angle = angle;
         this.progress = 0;
         this.active = true;
     }
@@ -657,11 +1011,18 @@ export class ThrustTracer extends ex.Actor {
         if (!this.active) return;
 
         this.pos = engine.currentScene.camera.pos.clone();
-
         this.progress += delta;
 
         if (this.progress >= this.duration) {
             this.active = false;
         }
+    }
+
+    updateTrace(start: ex.Vector, end: ex.Vector, angle: number) {
+        if (!this.active) return;
+
+        this.start = start.clone();
+        this.end = end.clone();
+        this.angle = angle;
     }
 }

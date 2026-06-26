@@ -3,31 +3,87 @@ import { Client, Room, Callbacks } from "@colyseus/sdk";
 import { GameState, PlayerState } from "../../../server/src/schemas/GameState"
 import { GameResources } from "../resources";
 import { RemotePlayer } from "../network/RemotePlayer";
+import { Demon } from "../enemies/demon";
+import type { DungeonFloor, ServerDungeonData } from "@/lib/shared/dungeon/dungeonTypes";
+import { ServerPlayerDebug } from "../player/ServerPlayerDebug";
+
+type RoomKind = "hub" | "party" | "dungeon";
 
 class MultiplayerManager {
   client = new Client("ws://localhost:2567");
   room: Room | null = null;
-  callbacks = null;
+  callbacks: any = null;
 
+  currentRoomKind: RoomKind | null = null;
+
+  dungeon: ServerDungeonData | null = null;
   remotePlayers = new Map<string, RemotePlayer>();
+  private serverPlayerDebug: ServerPlayerDebug | null = null;
+  enemyActors = new Map<string, Demon>();
 
-  async connect(engine: ex.Engine, resources: GameResources) {
-    try {
-      this.room = await this.client.joinOrCreate("hub_room");
-      this.callbacks = Callbacks.get(this.room);
+  private dungeonListeners: ((dungeon: ServerDungeonData) => void)[] = [];
+  private localWeapon: any = null;
 
-      console.log("Joined room:", this.room.sessionId);
-
-      this.setupRemotePlayers(engine, resources);
-
-      // Ask for existing players AFTER listener is registered
-      this.room.send("get_existing_players");
-    } catch (err) {
-      console.error("Failed to join Colyseus room:", err);
-    }
+  isInDungeon() {
+    return this.currentRoomKind === "dungeon";
   }
 
-  setupRemotePlayers(engine: ex.Engine, resources: GameResources) {
+  canUseCombatMessages() {
+    return this.currentRoomKind === "dungeon" && !!this.room;
+  }
+
+  setLocalWeapon(weapon: any) {
+    this.localWeapon = weapon;
+  }
+
+  onDungeonReady(callback: (dungeon: ServerDungeonData) => void) {
+    if (this.dungeon) {
+      callback(this.dungeon);
+      return;
+    }
+
+    this.dungeonListeners.push(callback);
+  }
+
+  private setDungeon(dungeon: ServerDungeonData) {
+    this.dungeon = dungeon;
+    this.dungeonListeners.forEach(callback => callback(dungeon));
+    this.dungeonListeners = [];
+  }
+
+  async joinDungeon(options: {
+    engine: ex.Engine;
+    resources: GameResources;
+    scene: ex.Scene;
+    dungeonId?: string;
+    difficulty?: string;
+  }) {
+    const { engine, resources, scene, dungeonId, difficulty } = options;
+    if (this.room) {
+      await this.room.leave();
+    }
+
+    this.room = await this.client.joinOrCreate("dungeon_room");
+
+    this.currentRoomKind = "dungeon";
+    this.callbacks = Callbacks.get(this.room);
+
+    this.room.onLeave((code) => {
+      console.warn("Left dungeon room:", code);
+      this.room = null;
+      this.callbacks = null;
+      this.currentRoomKind = null;
+    });
+
+    console.log("Joined dungeon:", this.room.sessionId);
+
+    this.setupDungeonRoomListeners(engine, scene, resources);
+
+    this.room.send("get_existing_players");
+    this.room.send("get_dungeon");
+  }
+
+  setupDungeonRoomListeners(engine: ex.Engine, scene: ex.Scene, resources: GameResources) {
     if (!this.room || !this.callbacks) return;
 
     const addRemotePlayer = (player: any, sessionId: string) => {
@@ -39,7 +95,7 @@ class MultiplayerManager {
         resources,
       );
 
-      engine.currentScene.add(remotePlayer);
+      scene.add(remotePlayer);
       this.remotePlayers.set(sessionId, remotePlayer);
 
       this.callbacks!.onChange(player, () => {
@@ -54,8 +110,17 @@ class MultiplayerManager {
       });
     });
 
+    this.room.onMessage("dungeon_data", (data) => {
+      console.log("Dungeon received:", data.dungeon);
+
+      this.setDungeon(data.dungeon);
+    });
+
     this.room.onMessage("weapon_attack", (data: any) => {
-      if (data.sessionId === this.room?.sessionId) return;
+      if (data.sessionId === this.room?.sessionId) {
+        this.localWeapon?.confirmServerAttack(data);
+        return;
+      }
 
       const remotePlayer = this.remotePlayers.get(data.sessionId);
       if (!remotePlayer) return;
@@ -81,20 +146,24 @@ class MultiplayerManager {
       remotePlayer.playWeaponAttackRelease(data);
     });
 
-    this.room.onMessage("sentinel_charge_attack", (data: any) => {
-      if (data.sessionId !== this.room?.sessionId) return;
-
-      window.dispatchEvent(
-          new CustomEvent("sentinel-charge-attack", {
-              detail: data,
-          })
-      );
-    });
-
     this.callbacks.onAdd("players", (player: any, sessionId: string) => {
       if (sessionId === this.room?.sessionId) {
-          this.setupLocalPlayerCallbacks(player);
-          return;
+        this.setupLocalPlayerCallbacks(player);
+
+        if (!this.serverPlayerDebug) {
+          this.serverPlayerDebug = new ServerPlayerDebug();
+          scene.add(this.serverPlayerDebug);
+        }
+
+        const localPlayer = scene.actors.find(a => a.name === "player") as any;
+
+        this.callbacks!.onChange(player, () => {
+          this.serverPlayerDebug!.pos.setTo(player.x, player.y);
+
+          localPlayer?.reconcileServerPosition?.(player.x, player.y);
+        });
+
+        return;
       }
 
       addRemotePlayer(player, sessionId);
@@ -104,88 +173,169 @@ class MultiplayerManager {
       const remotePlayer = this.remotePlayers.get(sessionId);
       if (!remotePlayer) return;
 
-      engine.currentScene.remove(remotePlayer);
+      scene.remove(remotePlayer);
       this.remotePlayers.delete(sessionId);
+    });
+
+    this.callbacks.onAdd("enemies", (enemyState: any, enemyId: string) => {
+      const demon = new Demon(
+        {
+          id: enemyId,
+          type: enemyState.type,
+          x: enemyState.x,
+          y: enemyState.y,
+          vx: enemyState.vx,
+          vy: enemyState.vy,
+          hp: enemyState.hp,
+          maxHp: enemyState.maxHp,
+          isDead: enemyState.isDead,
+          isAggro: enemyState.isAggro,
+          state: enemyState.state,
+        },
+        resources,
+        //collisionGroups,
+      );
+
+      scene.add(demon);
+      this.enemyActors.set(enemyId, demon);
+
+      this.callbacks!.onChange(enemyState, () => {
+        demon.updateFromServer({
+          id: enemyId,
+          type: enemyState.type,
+          x: enemyState.x,
+          y: enemyState.y,
+          vx: enemyState.vx,
+          vy: enemyState.vy,
+          hp: enemyState.hp,
+          maxHp: enemyState.maxHp,
+          isDead: enemyState.isDead,
+          isAggro: enemyState.isAggro,
+          state: enemyState.state,
+        });
+      });
+    });
+
+    this.callbacks.onRemove("enemies", (_enemyState: any, enemyId: string) => {
+      const demon = this.enemyActors.get(enemyId);
+      if (!demon) return;
+
+      demon.kill();
+      this.enemyActors.delete(enemyId);
     });
 
   }
 
-    sendPlayerMove(data: {
-        x: number;
-        y: number;
-        rotation: number;
-        weapon?: any;
-        aimAngle?: number;
-        isAttacking?: boolean;
-        attackId?: number
-    }) {
-        if (!this.room) return;
+  async joinHub(options: {
+    engine: ex.Engine;
+    resources: GameResources;
+  }) {
+    const { engine, resources } = options;
+    if (this.room?.name === "hub_room") return;
 
-        this.room.send("player_move", data);
-    }
-    sendWeaponAttack(data: {
-      weaponId: string;
-      x: number;
-      y: number;
-      aimAngle: number;
-    }) {
-      if (!this.room) return;
-
-      this.room.send("weapon_attack", data);
-    }
-    sendWeaponAttackStart(data: any) {
-      if (!this.room) return;
-      this.room.send("weapon_attack_start", data);
+    if (this.room) {
+      await this.room.leave();
     }
 
-    sendWeaponAttackRelease(data: any) {
-      if (!this.room) return;
-      this.room.send("weapon_attack_release", data);
-    }
+    this.room = await this.client.joinOrCreate("hub_room");
 
-    sendSentinelGuardToggle() {
-      this.room?.send("sentinel_guard_toggle");
-    }
+    this.currentRoomKind = "hub";
+    this.callbacks = Callbacks.get(this.room);
 
-    sendSentinelBlockStart() {
-      this.room?.send("sentinel_block_start");
-    }
+    this.room.onLeave((code) => {
+      console.warn("Left hub room:", code);
+      this.room = null;
+      this.callbacks = null;
+      this.currentRoomKind = null;
+    });
 
-    sendSentinelBlockEnd() {
-      this.room?.send("sentinel_block_end");
-    }
+    console.log("Joined hub:", this.room.sessionId);
 
-    sendSentinelChargeStart() {
-      this.room?.send("sentinel_charge_start");
-    }
+    this.setupHubRoomListeners();
+  }
 
-    sendSentinelChargeRelease(data: { aimAngle: number }) {
-      this.room?.send("sentinel_charge_release", data);
-    }
+  private setupHubRoomListeners() {
+    if (!this.room || !this.callbacks) return;
 
-    sendSentinelSuccessfulHit() {
-      this.room?.send("sentinel_successful_hit");
-    }
+    this.callbacks.onAdd("players", (player: any, sessionId: string) => {
+      if (sessionId === this.room?.sessionId) {
+        this.setupLocalPlayerCallbacks(player);
+        return;
+      }
+    });
+  }
 
-    sendSentinelBlockedAttack(perfectBlock: boolean) {
-      this.room?.send("sentinel_blocked_attack", { perfectBlock });
-    }
+  sendPlayerMove(data: {
+    moveX: number;
+    moveY: number;
+    weapon?: any;
+    aimAngle?: number;
+    isAttacking?: boolean;
+    attackId?: number
+  }) {
+    if (!this.room) return;
 
-    private setupLocalPlayerCallbacks(player: any) {
-      if (!this.callbacks) return;
+    this.room.send("player_move", data);
+  }
 
-      this.callbacks.onChange(player, () => {
-          window.dispatchEvent(
-              new CustomEvent("class-resource-update", {
-                  detail: {
-                      class: "Sentinel",
-                      name: "Resolve",
-                      amount: Math.trunc(player.resolve),
-                  },
-              })
-          );
-      });
+  sendDash(data: { dirX: number; dirY: number }) {
+    this.room?.send("player_dash", data);
+  }
+
+  sendWeaponAttack(data: {
+    attackId: number;
+    weaponId: string;
+    aimAngle: number;
+  }) {
+    if (!this.room) return;
+    if (!this.canUseCombatMessages()) return;
+
+    this.room.send("weapon_attack", data);
+  }
+
+  private setupLocalPlayerCallbacks(player: any) {
+    if (!this.callbacks) return;
+  }
+
+  sendSwordHit(data: {
+    attackId: number;
+    enemyId: string;
+    hitT: number;
+    aimAngle: number | null;
+  }) {
+    if (!this.room) return;
+    if (!this.canUseCombatMessages()) return;
+    if (data.aimAngle === null) return;
+
+    this.room.send("sword_hit", data);
+  }
+
+  sendEquipWeapon(weaponId: string) {
+    if (!this.room) return;
+
+    if (!this.canUseCombatMessages()) return;
+
+    this.room.send("equip_weapon", {
+      weaponId,
+    });
+  }
+
+  sendFloorChange(targetFloor: number) {
+    if (!this.room) return;
+    this.room.send("floor_change", {
+      targetFloor,
+    });
+  }
+
+  async leaveCurrentRoom(reason = "unknown") {
+    console.trace("Leaving room:", reason);
+
+    if (!this.room) return;
+
+    await this.room.leave();
+    this.room = null;
   }
 }
+
 
 export const multiplayer = new MultiplayerManager();

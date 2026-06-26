@@ -138,8 +138,29 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
             ? !!selectedItem.uid && selectedItem.uid === inventory?.armor?.uid
             : false;
 
+    useEffect(() => {
+        if (!engine) return;
+        if (!inventory?.weapon) return;
+        if (inventory.weapon.instance) return;
+
+        gameState.inventory = inventory;
+
+        let cancelled = false;
+
+        const spawn = async () => {
+            if (cancelled) return;
+            await inventory.spawnEquippedWeapon(engine);
+        };
+
+        spawn();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [engine, inventory?.weapon?.uid]);
+
     async function equipSelectedItem() {
-        if (!inventory || !engine || !selectedItem) return null;
+        if (!inventory || !engine) return null;
 
         const oldWeapon = inventory.weapon;
         const oldWeaponUid = oldWeapon?.uid;
@@ -274,9 +295,6 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                             )}
                             {inventory?.weapon?.stats?.power !== undefined && (
                                 <p className={styles.powerLevel}><img src={powerIconImg.src} />{inventory.weapon.stats.power}</p>
-                            )}
-                            {inventory?.weapon?.type === "Weapon" && (
-                                <div className={styles.specializationIcon}><img src={inventory?.weapon?.specialization?.icon} /></div>
                             )}
                             <div className={styles.hoverContainer}>
                                 <div className={styles.topRight}></div>
@@ -417,9 +435,6 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                     )}
                                     {slot?.type === "Material" && (
                                         <p className={styles.quantity}>x{slot.quantity}</p>
-                                    )}
-                                    {slot?.type === "Weapon" && (
-                                        <div className={styles.specializationIcon}><img src={slot.specialization?.icon} /></div>
                                     )}
                                     <div className={styles.hoverContainer}>
                                         <div className={styles.topRight}></div>

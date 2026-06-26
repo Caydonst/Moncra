@@ -41,7 +41,7 @@ import { getSpawnPointsFromTiledMap } from "./helperFunctions"
 import { EnemyPlayer } from "../enemies/enemyPlayer"
 import { ProjectileManager } from "../utils/projectileManager";
 import { Portal } from "../portal";
-import { generateDungeonFloor, createTileMapFromDungeonFloor, tileToWorld } from "../utils/mapGenerator"
+import { createTileMapFromDungeonFloor } from "../utils/mapGenerator"
 import { GameState } from "../gameState/gameState";
 import { multiplayer } from "../network/multiplayer";
 import { StorageChest } from "../HubSystems/StorageChest";
@@ -115,12 +115,12 @@ export class HubScene extends ex.Scene {
 
             const baseLayer = this.resources.tiledMap.layers[0].tilemap;
 
-            const generatedMap = generateDungeonFloor(100, 100);
+            //const generatedMap = generateDungeonFloor(100, 100);
             //const tileMap = createTileMapFromDungeon(generatedMap.map, this.resources.mapSpritesheet)
             //this.add(tileMap);
             //this.add(baseLayer);
 
-            console.log(generatedMap);
+            //console.log(generatedMap);
             this.worldBounds = {
                 width: baseLayer.width,
                 height: baseLayer.height,
@@ -236,7 +236,7 @@ export class HubScene extends ex.Scene {
     }
 
     async onActivate() {
-        await multiplayer.connect(this.engine, this.resources);
+        await multiplayer.joinHub(this.engine, this.resources);
     }
 
 
