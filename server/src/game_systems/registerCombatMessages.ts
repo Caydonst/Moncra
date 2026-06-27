@@ -107,7 +107,24 @@ export function registerCombatMessages(room: Room<GameState>) {
         const beforeHp = enemy.hp;
 
         enemy.hp = Math.max(0, enemy.hp - player.attackDamage);
-        enemy.state = "hurt";
+
+        if (enemy.hp > 0) {
+            enemy.state = "hurt";
+        }
+
+        const dx = enemy.x - player.x;
+        const dy = enemy.y - player.y;
+        const mag = Math.hypot(dx, dy) || 1;
+
+        const knockbackStrength = 520;
+        const knockbackDuration = 120;
+
+        enemy.knockbackX = (dx / mag) * knockbackStrength;
+        enemy.knockbackY = (dy / mag) * knockbackStrength;
+        enemy.knockbackUntil = room.clock.currentTime + knockbackDuration;
+
+        enemy.vx = enemy.knockbackX;
+        enemy.vy = enemy.knockbackY;
 
         console.log("ENEMY DAMAGED", {
             enemyId,
@@ -120,10 +137,6 @@ export function registerCombatMessages(room: Room<GameState>) {
             enemy.hp = 0;
             enemy.isDead = true;
             enemy.state = "dead";
-
-            room.clock.setTimeout(() => {
-                room.state.enemies.delete(enemyId);
-            }, 500);
         }
     });
 }

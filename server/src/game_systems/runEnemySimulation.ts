@@ -7,11 +7,18 @@ export function runEnemySimulation(
     enemies: MapSchema<EnemyState>,
     players: MapSchema<PlayerState>,
     deltaTime: number,
-    dungeonMap: TileType[][]
+    dungeonMap: TileType[][],
+    now: number
 ) {
     enemies.forEach((enemy) => {
-        if (enemy.type === "demon") {
-            updateDemon(enemy, players, deltaTime, dungeonMap);
+        if (enemy.type !== "demon") return;
+
+        if (enemy.isDead || enemy.state === "dead") {
+            enemy.vx = 0;
+            enemy.vy = 0;
+            return;
         }
+
+        updateDemon(enemy, players, deltaTime, dungeonMap, now);
     });
 }

@@ -220,7 +220,7 @@ class MultiplayerManager {
       const demon = this.enemyActors.get(enemyId);
       if (!demon) return;
 
-      demon.kill();
+      demon.destroyEnemy();
       this.enemyActors.delete(enemyId);
     });
 

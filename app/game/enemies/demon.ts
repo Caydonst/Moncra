@@ -75,9 +75,7 @@ export class Demon extends ex.Actor {
                 duration: 150,
             };
         });
-
-        console.log("GROUPS: ", this.collisionGroups)
-
+        
         const deadFrames = Object.keys(this.resources.DemonImages.dead).map(key => {
             const sprite = this.resources.DemonImages.dead[key].toSprite();
             sprite.scale = ex.vec(2.5, 2.5);
@@ -146,7 +144,7 @@ export class Demon extends ex.Actor {
             this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2));
         }
 
-        if (state.isDead && this.miscAnim.done) {
+        if (state.isDead && this.playedMisc && this.miscAnim.done) {
             this.destroyEnemy();
         }
     }
@@ -194,31 +192,39 @@ export class Demon extends ex.Actor {
     }
 
     private updateAnimation(state: ServerEnemyState) {
-        if (state.isDead && !this.playedDeath) {
-            this.graphics.use("dead");
-            this.playedDeath = true;
-            this.hpBar?.kill();
+        if (state.isDead) {
+            if (!this.playedDeath) {
+                this.deadAnim.reset();
+                this.miscAnim.reset();
+
+                this.graphics.use("dead");
+                this.playedDeath = true;
+
+                this.hpBar?.kill();
+                return;
+            }
+
+            if (!this.playedMisc && this.deadAnim.done) {
+                this.miscAnim.reset();
+
+                this.graphics.offset = ex.vec(0, -30);
+                this.graphics.use("misc");
+                this.playedMisc = true;
+                return;
+            }
+
             return;
         }
 
-        if (this.playedDeath && !this.playedMisc && this.deadAnim.done) {
-            this.graphics.offset = ex.vec(0, -30);
-            this.graphics.use("misc");
-            this.playedMisc = true;
-            return;
-        }
-
-        if (!state.isDead && state.state === "hurt") {
+        if (state.state === "hurt") {
             this.graphics.use(this.hurtSprite);
             return;
         }
 
-        if (!state.isDead && state.state !== "hurt") {
-            this.graphics.use("walk");
-        }
+        this.graphics.use("walk");
     }
 
-    private destroyEnemy() {
+    public destroyEnemy() {
         this.hpBar?.kill();
         this.shadow?.kill();
         this.kill();

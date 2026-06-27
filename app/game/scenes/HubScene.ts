@@ -265,7 +265,14 @@ export class HubScene extends ex.Scene {
             Math.min(mapHeight - halfScreenH, targetPos.y)
         );
 
-        camera.pos = ex.vec(clampedX, clampedY);
+        const target = ex.vec(clampedX, clampedY);
+
+        // Exponential smoothing that's framerate independent
+        const followSpeed = 5; // Try 8–15
+
+        const t = 1 - Math.exp(-followSpeed * (delta / 1000));
+
+        camera.pos = camera.pos.lerp(target, t);
     }
     public getInventory() {
         return this.gameState.inventory;

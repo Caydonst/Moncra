@@ -9,8 +9,48 @@ const DEMON_SPEED = 220;
 const DEMON_WIDTH = 30;
 const DEMON_HEIGHT = 40;
 
-export function updateDemon(enemy: EnemyState, players: MapSchema<PlayerState>, deltaMs: number, dungeonMap: TileType[][]) {
+export function updateDemon(
+    enemy: EnemyState,
+    players: MapSchema<PlayerState>,
+    deltaMs: number,
+    dungeonMap: TileType[][],
+    now: number
+) {
     if (enemy.isDead) return;
+
+    const dt = deltaMs / 1000;
+
+    if (enemy.knockbackUntil > now) {
+        enemy.state = "hurt";
+
+        const friction = 0.60;
+
+        const nextX = enemy.x + enemy.knockbackX * dt;
+        const nextY = enemy.y + enemy.knockbackY * dt;
+
+        if (canMoveTo(dungeonMap, nextX, enemy.y, DEMON_WIDTH, DEMON_HEIGHT)) {
+            enemy.x = nextX;
+        } else {
+            enemy.knockbackX = 0;
+        }
+
+        if (canMoveTo(dungeonMap, enemy.x, nextY, DEMON_WIDTH, DEMON_HEIGHT)) {
+            enemy.y = nextY;
+        } else {
+            enemy.knockbackY = 0;
+        }
+
+        enemy.knockbackX *= friction;
+        enemy.knockbackY *= friction;
+
+        enemy.vx = enemy.knockbackX;
+        enemy.vy = enemy.knockbackY;
+
+        return;
+    }
+
+    enemy.knockbackX = 0;
+    enemy.knockbackY = 0;
 
     let closestPlayer: PlayerState | null = null;
     let closestDist = Infinity;
@@ -46,8 +86,6 @@ export function updateDemon(enemy: EnemyState, players: MapSchema<PlayerState>, 
 
     enemy.vx = dirX * DEMON_SPEED;
     enemy.vy = dirY * DEMON_SPEED;
-
-    const dt = deltaMs / 1000;
 
     const nextX = enemy.x + enemy.vx * dt;
     const nextY = enemy.y + enemy.vy * dt;

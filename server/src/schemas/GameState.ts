@@ -64,6 +64,7 @@ export class EnemyState extends Schema {
 
   @type("boolean") isDead = false;
   @type("boolean") isAggro = false;
+  @type("string") state = "idle";
 
   @type("string") targetSessionId = "";
 

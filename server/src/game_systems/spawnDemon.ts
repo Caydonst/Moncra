@@ -8,7 +8,6 @@ export function spawnDemon(x: number, y: number) {
     enemy.y = y;
     enemy.hp = 100;
     enemy.maxHp = 100;
-    enemy.state = "idle";
 
     return enemy;
 }

@@ -65,7 +65,8 @@ export class DungeonRoom extends Room<GameState> {
                 this.state.enemies,
                 this.state.players,
                 deltaTime,
-                floor.map
+                floor.map,
+                this.clock.currentTime
             );
         });
 

@@ -123,10 +123,24 @@ export class DungeonScene extends ex.Scene {
     const halfScreenW = engine.drawWidth / camera.zoom / 2;
     const halfScreenH = engine.drawHeight / camera.zoom / 2;
 
-    camera.pos = ex.vec(
-      Math.max(halfScreenW, Math.min(this.worldBounds.width - halfScreenW, targetPos.x)),
-      Math.max(halfScreenH, Math.min(this.worldBounds.height - halfScreenH, targetPos.y))
+    const clampedX = Math.max(
+        halfScreenW,
+        Math.min(this.worldBounds.width - halfScreenW, targetPos.x)
     );
+
+    const clampedY = Math.max(
+      halfScreenH,
+      Math.min(this.worldBounds.height - halfScreenH, targetPos.y)
+    );
+
+    const target = ex.vec(clampedX, clampedY);
+
+    // Exponential smoothing that's framerate independent
+    const followSpeed = 5; // Try 8–15
+
+    const t = 1 - Math.exp(-followSpeed * (delta / 1000));
+
+    camera.pos = camera.pos.lerp(target, t);
 
     if (this.currentFloor.portal.interacted) {
       const targetFloor = this.currentFloor.portalTarget;
