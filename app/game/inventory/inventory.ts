@@ -1,9 +1,14 @@
-import type { Material, Weapon } from "../items/ItemTypes";
-import { Armor } from "../armor/armor";
+import type { Material, Weapon, Armor } from "../items/ItemTypes";
+
+let equippedWeaponInstance: any = null;
+let spawningEquippedWeapon = false;
 
 export class Inventory {
     weapon: Weapon | null = null;
-    armor: Armor | null = null;
+    helmet: Armor | null = null;
+    arms: Armor | null = null;
+    chest: Armor | null = null;
+    legs: Armor | null = null;
 
     miscWeapons: (Weapon | null)[] = Array(12).fill(null);
     miscArmor: (Armor | null)[] = Array(12).fill(null);
@@ -17,7 +22,10 @@ export class Inventory {
         if (!data) return;
 
         this.weapon = data.weapon ?? null;
-        this.armor = data.armor ?? null;
+        this.helmet = data.helmet ?? null;
+        this.arms = data.arms ?? null;
+        this.chest = data.chest ?? null;
+        this.legs = data.legs ?? null;
         this.miscWeapons = data.miscWeapons ?? Array(12).fill(null);
         this.miscArmor = data.miscArmor ?? Array(12).fill(null);
         this.miscMaterial = data.miscMaterial ?? Array(12).fill(null);
@@ -26,14 +34,20 @@ export class Inventory {
 
     async spawnEquippedWeapon(engine: ex.Engine) {
         if (!this.weapon) return;
-        if (this.spawningWeapon) return;
-        if (this.weapon.instance && !this.weapon.instance.isKilled()) return;
+        if (spawningEquippedWeapon) return;
 
-        this.spawningWeapon = true;
+        const scene = engine.currentScene;
+
+        if (equippedWeaponInstance && !equippedWeaponInstance.isKilled()) {
+            equippedWeaponInstance.cleanup?.();
+            equippedWeaponInstance.kill();
+            scene.remove(equippedWeaponInstance);
+            equippedWeaponInstance = null;
+        }
+
+        spawningEquippedWeapon = true;
 
         try {
-            const scene = engine.currentScene;
-
             if (!this.weapon.createWeapon) {
                 console.warn("Weapon has no createWeapon function:", this.weapon);
                 return;
@@ -41,35 +55,36 @@ export class Inventory {
 
             const instance = await this.weapon.createWeapon();
 
-            if (this.weapon.instance && !this.weapon.instance.isKilled()) {
-                instance.kill();
-                return;
-            }
-
+            equippedWeaponInstance = instance;
             this.weapon.instance = instance;
 
             scene.add(instance);
             instance.addListeners?.();
-            instance.sendResourceData?.();
 
             await this.syncMultiplayerWeapon(this.weapon);
         } finally {
-            this.spawningWeapon = false;
+            spawningEquippedWeapon = false;
         }
     }
 
     async removeEquippedWeaponActor(engine: ex.Engine | null) {
-        const weapon = this.weapon;
-        if (!weapon?.instance) return;
+        const scene = engine?.currentScene;
 
-        weapon.instance.cleanup?.();
-        weapon.instance.kill();
+        const instance = equippedWeaponInstance ?? this.weapon?.instance;
+        if (!instance) return;
 
-        if (engine?.currentScene) {
-            engine.currentScene.remove(weapon.instance);
+        instance.cleanup?.();
+        instance.kill();
+
+        if (scene) {
+            scene.remove(instance);
         }
 
-        weapon.instance = undefined;
+        equippedWeaponInstance = null;
+
+        if (this.weapon) {
+            this.weapon.instance = undefined;
+        }
 
         await this.syncMultiplayerWeapon(null);
     }

@@ -41,7 +41,7 @@ type Specialization = {
 }
 
 export type Weapon = {
-    id: string;
+    uid: string;
     name: string;
     type: "Weapon";
     kind: "Great Sword" | "Bow";
@@ -64,10 +64,23 @@ export type Weapon = {
     }
 }
 
+export type Armor = {
+    uid: string,
+    name: string,
+    type: "Armor",
+    kind: "helmet" | "arms" | "chest" | "legs",
+    rarity: Rarity,
+    icon: string;
+    gameIcon: any,
+    stats?: any;
+    level: number;
+    maxLevel: number;
+    enchantments?: Enchantment[];
+}
 
 
 export type Material = {
-    id: string,
+    uid: string,
     name: string,
     type: "Material",
     rarity: Rarity, 

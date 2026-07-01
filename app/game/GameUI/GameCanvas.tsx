@@ -38,6 +38,7 @@ export default function GameCanvas() {
     const [chest, setChest] = useState(null);
     const [storageOpen, setStorageOpen] = useState(false);
     const [storage, setStorage] = useState(null);
+    const [storageData, setStorageData] = useState(null);
     const [blacksmithOpen, setBlacksmithOpen] = useState(false);
 
     useEffect(() => {
@@ -91,6 +92,10 @@ export default function GameCanvas() {
 
         //gameState.inventory = clientInventory;
         setInventory(clientInventory);
+        console.log("STROAGE DATA: ", data.storage)
+        if (data.storage) {
+            setStorageData(data.storage);
+        }
     }
 
     const isMenuScene = sceneName === "menu";
@@ -264,9 +269,7 @@ export default function GameCanvas() {
                                 </div>
                             </div>
                             <InventoryUI inventoryOpen={inventoryOpen} inventory={inventory} setInventory={setInventory} setInventoryOpen={setInventoryOpen} itemPanelOpen={itemPanelOpen} setItemPanelOpen={setItemPanelOpen} selectedItem={selectedItem} setSelectedItem={setSelectedItem} engine={game} />
-                            {storageOpen && (
-                                <StorageUI storageOpen={storageOpen} inventory={inventory} storage={storage} />
-                            )}
+                            <StorageUI storageOpen={storageOpen} inventory={inventory} storage={storage} storageData={storageData} setInventory={setInventory} />
                             {blacksmithOpen && (
                                 <BlacksmithUI blacksmithOpen={blacksmithOpen} inventory={inventory} setInventory={setInventory} />
                             )}

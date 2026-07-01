@@ -1,5 +1,6 @@
 // app/api/unequip-item/route.ts
 
+import { Armor } from "@/app/game/items/ItemTypes";
 import { getTestInventory } from "@/lib/server/testInventoryStore";
 import { hydrateInventory } from "@/lib/shared/hydrateInventory";
 
@@ -25,9 +26,16 @@ export async function POST(req: Request) {
         return Response.json({ inventory: hydrateInventory(inventory) });
     }
 
-    if (slot === "armor") {
-        if (!inventory.armor) {
-            return Response.json({ error: "No armor equipped" }, { status: 400 });
+    if (
+        slot === "helmet" ||
+        slot === "arms" ||
+        slot === "chest" ||
+        slot === "legs"
+    ) {
+        const equippedArmor = inventory[slot];
+
+        if (!equippedArmor) {
+            return Response.json({ error: `No ${slot} equipped` }, { status: 400 });
         }
 
         const openIndex = inventory.miscArmor.findIndex(item => item === null);
@@ -36,8 +44,8 @@ export async function POST(req: Request) {
             return Response.json({ error: "No open armor slot" }, { status: 400 });
         }
 
-        inventory.miscArmor[openIndex] = inventory.armor;
-        inventory.armor = null;
+        inventory.miscArmor[openIndex] = equippedArmor;
+        inventory[slot] = null;
 
         return Response.json({ inventory: hydrateInventory(inventory) });
     }

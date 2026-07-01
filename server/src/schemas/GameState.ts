@@ -19,7 +19,11 @@ export class PlayerState extends Schema {
   @type("number") moveX = 0;
   @type("number") moveY = 0;
   @type("number") rotation: number = 0;
+  @type("number") damage: number = 0;
+  @type("number") crit: number = 0;
   @type("number") hp: number = 100;
+  @type("number") maxHp: number = 100;
+  @type("number") armor: number = 0;
   @type("number") lastMoveTime: number = Date.now();
 
   @type("boolean") isDashing = false;

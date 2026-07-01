@@ -17,6 +17,8 @@ import materialIconSelected from "@/app/game/assets/icons/material_icon_selected
 import { equippableItems } from "../../items/ItemTypes";
 import { colors } from "../../utils/uiUtils"
 import { Armor } from "../../armor/armor";
+import { createClientInventory } from "../../inventory/createClientInventory";
+import { gameState } from "../../gameState/gameState";
 
 type Props = {
     storageOpen: boolean;
@@ -24,6 +26,8 @@ type Props = {
     inventory: Inventory | null;
     storageItems: (Item | Weapon | null)[];
     storage: StorageChest | null;
+    storageData: any;
+    setInventory: React.Dispatch<React.SetStateAction<Inventory>>
 }
 
 type Filter = "all" | "weapons" | "armor" | "material";
@@ -33,14 +37,13 @@ type SelectedSlot = {
     side: "inventory" | "storage" | null;
     itemId: string | null;
 };
-
 type DisplayItem = {
     item: InventoryItem | null;
     realIndex: number;
     source: "weapon" | "armor" | "material" | "empty";
 };
 
-export default function StorageUI({ storageOpen, inventory, storage }: Props) {
+export default function StorageUI({ storageOpen, inventory, storage, storageData, setInventory }: Props) {
     const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
     const [selectedSlot, setSelectedSlot] = useState<SelectedSlot>({
         side: null,
@@ -55,6 +58,15 @@ export default function StorageUI({ storageOpen, inventory, storage }: Props) {
     const [hoveredInventoryFilter, setHoveredInventoryFilter] = useState<string | null>(null);
     const [hoveredStorageFilter, setHoveredStorageFilter] = useState<string | null>(null);
 
+    const [clientStorage, setClientStorage] = useState<StorageChest | null>(null);
+
+    useEffect(() => {
+        if (!storage || !storageData) return;
+
+        storage.applyServerStorage(storageData);
+        setClientStorage(storage);
+    }, [storage, storageData]);
+
     useEffect(() => {
         if (!storageOpen) {
             setSelectedItem(null);
@@ -63,39 +75,60 @@ export default function StorageUI({ storageOpen, inventory, storage }: Props) {
         }
     }, [storageOpen]);
 
-    function openItemPanel(slot: any) {
-        setSelectedItem(slot);
-        if (slot) {
-            setItemPanelOpen(true);
+    function getKind(item: InventoryItem): "weapon" | "armor" | "material" | null {
+        if (item.type === "Weapon") return "weapon";
+        if (item.type === "Armor") return "armor";
+        if (item.type === "Material") return "material";
+        return null;
+    }
+
+    async function transferItem(item: InventoryItem | null, direction: "inventory-to-storage" | "storage-to-inventory") {
+        if (!item || !inventory || !storage) return;
+
+        const kind = getKind(item);
+        if (!kind) return;
+
+        const res = await fetch("/api/transfer-storage-item", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                uid: item.uid,
+                kind,
+                direction,
+            }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            console.error(data.error);
+            return;
         }
+
+        const clientInventory = createClientInventory(data.inventory, gameState);
+
+        gameState.inventory = clientInventory;
+        setInventory(clientInventory);
+
+        storage.applyServerStorage(data.storage);
+        setClientStorage(storage);
+
+        setSelectedItem(item);
+        setItemPanelOpen(true);
+        setSelectedSlot({
+            side: direction === "inventory-to-storage" ? "storage" : "inventory",
+            itemId: item.uid,
+        });
     }
 
     function transferToStorage(item: InventoryItem | null) {
-        if (!item || !storage || !inventory) return;
-
-        storage.addItem(item);
-        inventory.removeItem(item);
-
-        setSelectedItem(item);
-        setItemPanelOpen(true);
-        setSelectedSlot({
-            side: "storage",
-            itemId: item.id,
-        });
+        transferItem(item, "inventory-to-storage");
     }
 
     function transferToInventory(item: InventoryItem | null) {
-        if (!item || !storage || !inventory) return;
-
-        inventory.addItem(item);
-        storage.removeItem(item);
-
-        setSelectedItem(item);
-        setItemPanelOpen(true);
-        setSelectedSlot({
-            side: "inventory",
-            itemId: item.id,
-        });
+        transferItem(item, "storage-to-inventory");
     }
 
     function getFilteredItems(container: Inventory | StorageChest | null, filter: Filter): DisplayItem[] {
@@ -163,7 +196,7 @@ export default function StorageUI({ storageOpen, inventory, storage }: Props) {
         return [...filledSlots, ...emptySlots];
     }
 
-    const filteredStorageItems = getFilteredItems(storage, storageFilter);
+    const filteredStorageItems = getFilteredItems(clientStorage, storageFilter);
     const filteredInventoryItems = getFilteredItems(inventory, inventoryFilter);
 
     return (
@@ -230,7 +263,7 @@ export default function StorageUI({ storageOpen, inventory, storage }: Props) {
                                         className={`${styles.slot} ${slot ? styles[slot.rarity] : ""} ${
                                             slot &&
                                             selectedSlot.side === "storage" &&
-                                            selectedSlot.itemId === slot.id
+                                            selectedSlot.itemId === slot.uid
                                                 ? styles.selected
                                                 : ""
                                         }`}
@@ -241,7 +274,7 @@ export default function StorageUI({ storageOpen, inventory, storage }: Props) {
                                             setItemPanelOpen(true);
                                             setSelectedSlot({
                                                 side: "storage",
-                                                itemId: slot.id,
+                                                itemId: slot.uid,
                                             });
                                         }}
                                         onContextMenu={(e) => {
@@ -252,7 +285,13 @@ export default function StorageUI({ storageOpen, inventory, storage }: Props) {
                                         }}
                                     >
                                         {slot?.icon && (
-                                            <img src={slot.icon} className={styles.slotImg} />
+                                            <div className={styles.slotIconContainer}>
+                                                {slot.type === "Weapon" || slot.type === "Armor" ? (
+                                                    <img src={slot.icon} className={styles.slotIconWeapon} />
+                                                ) : (
+                                                    <img src={slot.icon} className={styles.slotIconOther} />
+                                                )}
+                                            </div>
                                         )}
                                         {slot?.level !== undefined && (
                                             <p className={styles.weaponLevel} style={{ color: `${slot?.level === 10 ? "#FFE500" : "#fff"}` }}>+{slot?.level}</p>
@@ -335,7 +374,7 @@ export default function StorageUI({ storageOpen, inventory, storage }: Props) {
                                         className={`${styles.slot} ${slot ? styles[slot.rarity] : ""} ${
                                             slot &&
                                             selectedSlot.side === "inventory" &&
-                                            selectedSlot.itemId === slot.id
+                                            selectedSlot.itemId === slot.uid
                                                 ? styles.selected
                                                 : ""
                                         }`}
@@ -346,7 +385,7 @@ export default function StorageUI({ storageOpen, inventory, storage }: Props) {
                                             setItemPanelOpen(true);
                                             setSelectedSlot({
                                                 side: "inventory",
-                                                itemId: slot.id,
+                                                itemId: slot.uid,
                                             });
                                         }}
                                         onContextMenu={(e) => {
@@ -357,7 +396,13 @@ export default function StorageUI({ storageOpen, inventory, storage }: Props) {
                                         }}
                                     >
                                         {slot?.icon && (
-                                            <img src={slot.icon} className={styles.slotImg} />
+                                            <div className={styles.slotIconContainer}>
+                                                {slot.type === "Weapon" || slot.type === "Armor" ? (
+                                                    <img src={slot.icon} className={styles.slotIconWeapon} />
+                                                ) : (
+                                                        <img src={slot.icon} className={styles.slotIconOther} />
+                                                )}
+                                            </div>
                                         )}
                                         {slot?.level !== undefined && (
                                             <p className={styles.weaponLevel} style={{ color: `${slot?.level === 10 ? "#FFE500" : "#fff"}` }}>+{slot?.level}</p>

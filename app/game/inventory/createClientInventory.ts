@@ -12,8 +12,20 @@ export function createClientInventory(serverInventory: any, gameState: any) {
         ? hydrateClientItem(serverInventory.weapon, gameState)
         : null;
 
-    inv.armor = serverInventory.armor
-        ? hydrateClientItem(serverInventory.armor, gameState)
+    inv.helmet = serverInventory.helmet
+        ? hydrateClientItem(serverInventory.helmet, gameState)
+        : null;
+
+    inv.arms = serverInventory.arms
+        ? hydrateClientItem(serverInventory.arms, gameState)
+        : null;
+
+    inv.chest = serverInventory.chest
+        ? hydrateClientItem(serverInventory.chest, gameState)
+        : null;
+
+    inv.legs = serverInventory.legs
+        ? hydrateClientItem(serverInventory.legs, gameState)
         : null;
 
     inv.miscWeapons = serverInventory.miscWeapons.map((slot: any) =>
@@ -41,10 +53,7 @@ function hydrateClientItem(item: any, gameState: any) {
     }
 
     if (item.type === "Armor") {
-        return new Armor({
-            ...item,
-            stats: item.stats,
-        });
+        return item;
     }
 
     if (item.type === "Material") {

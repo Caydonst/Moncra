@@ -1,23 +1,13 @@
 import { getTestInventory } from "@/lib/server/testInventoryStore";
-import { hydrateItem } from "@/lib/shared/hydrateItem";
-
-function hydrateSlot(item: any) {
-    return item ? hydrateItem(item) : null;
-}
+import { getTestStorage } from "@/lib/server/testStorageStore";
+import { hydrateInventory } from "@/lib/shared/hydrateInventory";
+import { hydrateStorage } from "@/lib/shared/hydrateStorage";
 
 export async function GET() {
     try {
-        const inventory = getTestInventory();
-
         return Response.json({
-            inventory: {
-                gold: inventory.gold,
-                weapon: hydrateSlot(inventory.weapon),
-                armor: hydrateSlot(inventory.armor),
-                miscWeapons: inventory.miscWeapons.map(hydrateSlot),
-                miscArmor: inventory.miscArmor.map(hydrateSlot),
-                miscMaterial: inventory.miscMaterial.map(hydrateSlot),
-            },
+            inventory: hydrateInventory(getTestInventory()),
+            storage: hydrateStorage(getTestStorage()),
         });
     } catch (error) {
         console.error("Inventory API error:", error);

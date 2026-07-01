@@ -184,4 +184,9 @@ export class StorageChest extends ex.Actor {
             material: this.miscMaterial,
         };
     }
+    applyServerStorage(serverStorage: Partial<StorageChest>) {
+        this.miscWeapons = serverStorage.miscWeapons ?? Array(12).fill(null);
+        this.miscArmor = serverStorage.miscArmor ?? Array(12).fill(null);
+        this.miscMaterial = serverStorage.miscMaterial ?? Array(12).fill(null);
+    }
 }
