@@ -4,6 +4,8 @@ import { GameState } from "../schemas/GameState.js";
 import { registerPlayerMessages } from "../game_systems/registerPlayerMessages.js";
 import { runPlayerMovement } from "../game_systems/runPlayerMovement.js";
 import { spawnPlayer } from "../game_systems/spawnPlayer.js";
+import { registerInventoryMessages } from "../game_systems/registerInventoryMessages.js";
+import { deleteInventoryForSession } from "../game_systems/inventory/testInventoryStore.js";
 
 export class HubRoom extends Room<GameState> {
   maxClients = 1;
@@ -12,6 +14,7 @@ export class HubRoom extends Room<GameState> {
 
   onCreate() {
     registerPlayerMessages(this);
+    registerInventoryMessages(this);
 
     this.setSimulationInterval((deltaTime) => {
       runPlayerMovement(this.state.players, deltaTime);
@@ -33,5 +36,7 @@ export class HubRoom extends Room<GameState> {
     this.state.players.delete(client.sessionId);
 
     console.log(`${client.sessionId} left hub`);
+    //this.state.players.delete(client.sessionId);
+    //deleteInventoryForSession(client.sessionId);
   }
 }

@@ -1,6 +1,6 @@
 // lib/shared/inventoryTypes.ts
 
-import type { ItemId } from "./itemDefinitions";
+import type { ItemId } from "../items/itemDefinitions.js";
 
 export type InventoryItemInstance = {
     uid: string;

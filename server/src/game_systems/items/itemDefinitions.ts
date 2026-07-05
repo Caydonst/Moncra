@@ -1,6 +1,6 @@
 // lib/shared/itemDefinitions.ts
 
-import type { ItemDefinition } from "./itemTypes";
+import type { ItemDefinition } from "./itemTypes.js";
 
 export const itemDefinitions = {
     great_sword0: {
@@ -18,6 +18,7 @@ export const itemDefinitions = {
         baseStats: {
             power: 10,
             damage: 10,
+            crit: 5,
         },
         maxLevel: 10,
         enchantmentIds: [],
@@ -38,6 +39,7 @@ export const itemDefinitions = {
         baseStats: {
             power: 130,
             damage: 40,
+            crit: 20,
         },
         maxLevel: 10,
         enchantmentIds: ["critical_hit", "chain_lightning"],
@@ -52,7 +54,7 @@ export const itemDefinitions = {
         rarity: "epic",
         baseStats: {
             hp: 50,
-            defense: 15,
+            armor: 15,
             power: 130,
         },
         maxLevel: 10,
@@ -68,7 +70,7 @@ export const itemDefinitions = {
         rarity: "epic",
         baseStats: {
             hp: 50,
-            defense: 15,
+            armor: 15,
             power: 130,
         },
         maxLevel: 10,
@@ -84,7 +86,7 @@ export const itemDefinitions = {
         rarity: "epic",
         baseStats: {
             hp: 50,
-            defense: 15,
+            armor: 15,
             power: 130,
         },
         maxLevel: 10,
@@ -100,7 +102,7 @@ export const itemDefinitions = {
         rarity: "epic",
         baseStats: {
             hp: 50,
-            defense: 15,
+            armor: 15,
             power: 130,
         },
         maxLevel: 10,

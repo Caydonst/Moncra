@@ -51,25 +51,33 @@
     display: flex;
     justify-content: start;
     align-items: center;
-    /*background: linear-gradient(to bottom, #141414, #030303);*/
+    flex-direction: column;
     background: #080808;
-    color: white;
-    font-family: sans-serif;
     transform: translateY(100%);
     transition: 0.2s;
     overflow: hidden;
+}
+.inventoryContainerInner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    color: white;
+    overflow: hidden;
     gap: 30px;
-    padding: 50px 0;
+    padding: 0 0 50px 0;
 }
 .inventoryHeader {
-    position: absolute;
-    left: 30px;
-    top: 30px;
+    width: 100%;
+    padding: 20px;
     color: #fff;
     display: flex;
-    justify-content: center;
+    justify-content: start;
     align-items: center;
     gap: 50px;
+    z-index: -1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 .inventoryHeader h3 {
     font-weight: 300;
@@ -105,6 +113,7 @@
     width: 30%;
     height: 100%;
     position: relative;
+    margin-top: 30px;
 }
 .inventory h3 {
     font-size: 20px;
@@ -191,12 +200,99 @@
 }
 .gearContainer {
     display: flex;
-    justify-content: center;
+    justify-content: start;
     align-items: start;
-    gap: 10px;
+    flex-direction: column;
+    gap: 20px;
     width: calc(75% / 2);
     height: 100%;
-    padding-top: 80px;
+}
+.playerLevel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: 100%;
+}
+.playerLevel p:first-child {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+}
+.playerLevel p:last-child {
+    color: #DC00FF;
+    font-size: 35px;
+}
+.gearContainerHeader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+}
+.playerStatsContainer {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 30px;
+}
+.playerGearStatsContainer {
+    display: flex;
+    justify-content: center;
+    align-items: end;
+    flex-direction: column;
+}
+.playerPowerContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-left: 5px;
+    gap: 20px;
+}
+.powerArrowIcon {
+    width: 15px;
+    image-rendering: pixelated;
+    transform: rotate(-45deg);
+}
+.gearPower {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 35px;
+    color: #FFD800;
+    text-shadow: 0 5px #000;
+    gap: 15px;
+}
+.gearPower img {
+    width: 15px;
+    image-rendering: pixelated;
+    transform: rotate(45deg);
+}
+.gearPowerLabel {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    margin-left: 35px;
+    align-self: start;
+}
+.playerStatsInner {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    gap: 40px;
+    margin-left: 5px;
+}
+.stat {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 12px;
+    text-shadow: 0 3px #000;
+}
+.stat img {
+    width: 16px;
+    image-rendering: pixelated;
 }
 .weaponSlotWrapper {
     width: 100%;
@@ -250,6 +346,9 @@
     position: relative;
     overflow: hidden;
 }
+.noneText {
+    text-shadow: 0 4px #000;
+}
 .gearSlot .gearWeaponImg {
     position: absolute;
     left: -30px;
@@ -271,15 +370,12 @@
 .equippedWeaponInfoContainer {
     display: flex;
     justify-content: center;
-    align-items: start;
-    flex-direction: column;
-    gap: 5px;
-}
-.equippedWeaponInfoContainer h3 {
-    font-weight: 300;
-    text-shadow: 5px 5px rgba(0, 0, 0, 0.3);
+    align-items: center;
+    width: 100%;
 }
 .equippedWeaponInfoContainer p {
+    font-weight: 300;
+    text-shadow: 0 3px #000;
     font-size: 13px;
 }
 .armorSlots {
@@ -532,8 +628,8 @@
     width: calc(75% / 2);
     padding: 0;
     color: white;
-    padding-top: 80px;
     overflow: visible;
+    padding-top: 60px;
 }
 .itemInfoPanel.open {
     display: flex;
@@ -811,9 +907,39 @@
     box-shadow: 0 1px 0 #080808;
 }
 
+.levelCircle {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: conic-gradient(
+        #DC00FF calc(var(--xp-progress) * 1%),
+        rgba(255, 255, 255, 0.15) 0
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.levelCircleInner {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: #080808;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
 @media (max-width: 1600px) {
     .nameContainer h3 {
         max-width: 250px;
+    }
+}
+@media (max-width: 1550px) {
+    .playerPowerContainer {
+        gap: 10px;
     }
 }
 @media (max-width: 1500px) {
@@ -821,6 +947,19 @@
         left: 0;
         width: 460px;
         height: 460px;
+    }
+}
+@media (max-width: 1350px) {
+    .playerPowerContainer {
+        flex-direction: column;
+        gap: 5px;
+    }
+    .gearPowerLabel {
+        margin-left: 0;
+        align-self: center;
+    }
+    .powerArrowIcon {
+        transform: rotate(45deg);
     }
 }
 @media (max-width: 1300px) {

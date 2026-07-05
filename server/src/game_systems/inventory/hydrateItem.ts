@@ -1,7 +1,7 @@
 // lib/shared/hydrateItem.ts
 
-import { itemDefinitions } from "./itemDefinitions";
-import type { InventoryItemInstance } from "./inventoryTypes";
+import { itemDefinitions } from "../items/itemDefinitions.js";
+import type { InventoryItemInstance } from "./inventoryTypes.js";
 
 export function hydrateItem(instance: InventoryItemInstance) {
     const def = itemDefinitions[instance.itemId];

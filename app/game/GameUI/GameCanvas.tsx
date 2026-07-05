@@ -72,31 +72,21 @@ export default function GameCanvas() {
     }, []);
 
     useEffect(() => {
-        loadInventory()
-    }, [])
+        function handleInventoryUpdated(e: Event) {
+            const event = e as CustomEvent;
 
-    async function loadInventory() {
-        const res = await fetch("/api/inventory");
+            const clientInventory = createClientInventory(event.detail, gameState);
 
-        const text = await res.text();
-
-        console.log("inventory status:", res.status);
-        console.log("inventory response:", text);
-
-        if (!res.ok) return;
-        if (!text) return;
-
-        const data = JSON.parse(text);
-
-        const clientInventory = createClientInventory(data.inventory, gameState);
-
-        //gameState.inventory = clientInventory;
-        setInventory(clientInventory);
-        console.log("STROAGE DATA: ", data.storage)
-        if (data.storage) {
-            setStorageData(data.storage);
+            gameState.inventory = clientInventory;
+            setInventory(clientInventory);
         }
-    }
+
+        window.addEventListener("inventory_updated", handleInventoryUpdated);
+
+        return () => {
+            window.removeEventListener("inventory_updated", handleInventoryUpdated);
+        };
+    }, []);
 
     const isMenuScene = sceneName === "menu";
     const isHubScene = sceneName === "hub";

@@ -11,6 +11,7 @@ import { spawnPlayer } from "../game_systems/spawnPlayer.js";
 import { spawnDemon } from "../game_systems/spawnDemon.js";
 import { generateDungeon } from "../shared/dungeon/dungeonGenerator.js";
 import { registerDungeonMessages } from "../game_systems/registerDungeonMessages.js";
+import { registerInventoryMessages } from "../game_systems/registerInventoryMessages.js";
 
 export class DungeonRoom extends Room<GameState> {
     maxClients = 4;
@@ -26,6 +27,7 @@ export class DungeonRoom extends Room<GameState> {
         registerPlayerMessages(this);
         registerCombatMessages(this);
         registerDungeonMessages(this);
+        registerInventoryMessages(this);
 
         this.onMessage("get_dungeon", (client) => {
             client.send("dungeon_data", {
@@ -94,6 +96,8 @@ export class DungeonRoom extends Room<GameState> {
         this.state.players.delete(client.sessionId);
 
         console.log(`${client.sessionId} left dungeon`);
+        //this.state.players.delete(client.sessionId);
+        //deleteInventoryForSession(client.sessionId);
     }
 
     private addDemon(x: number, y: number) {

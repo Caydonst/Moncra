@@ -244,7 +244,8 @@
     font-size: 8px;
 }
 .filterBtn img {
-    width: 20px;
+    width: 24px;
+    image-rendering: pixelated;
 }
 .filterBtn:hover img {
     color: #fff;
@@ -311,7 +312,6 @@
     align-items: center;
     position: relative;
     gap: 10px;
-    padding: 8px;
     font-size: 14px;
     border: 3px solid transparent;
 }
@@ -419,6 +419,8 @@
     flex-direction: column;
     color: #fff;
     gap: 5px;
+    position: absolute;
+    left: 120px;
 }
 .selectedWeaponLevel {
     font-size: 12px;
@@ -455,16 +457,36 @@
 }
 .miscSlotIconContainer {
     height: 100%;
+    width: 140px;
     display: flex;
     justify-content: center;
     align-items: center;
-    aspect-ratio: 1;
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
 }
-.slot .slotImg {
-    height: 100%;
+.slotWeaponImg {
+    position: absolute;
+    left: -65px;
+    bottom: -20px;
+    width: 180%;
+    height: 180%;
     object-fit: contain;
     image-rendering: pixelated;
-    filter: drop-shadow(-5px 5px rgba(0,0,0,0.3));
+    filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
+    transform: rotate(30deg);
+}
+.slotArmorImg {
+    position: absolute;
+    left: -35px;
+    bottom: 50%;
+    transform: translateY(50%);
+    width: 130%;
+    height: 130%;
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
 }
 .blacksmithFunctionContainer {
     display: flex;

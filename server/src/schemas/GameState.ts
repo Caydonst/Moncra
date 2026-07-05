@@ -24,7 +24,11 @@ export class PlayerState extends Schema {
   @type("number") hp: number = 100;
   @type("number") maxHp: number = 100;
   @type("number") armor: number = 0;
+  @type("number") power: number = 0;
   @type("number") lastMoveTime: number = Date.now();
+
+  @type("number") currentXp: number = 0;
+  @type("number") xpToNextLvl: number = 100;
 
   @type("boolean") isDashing = false;
   @type("number") dashStartedAt = 0;

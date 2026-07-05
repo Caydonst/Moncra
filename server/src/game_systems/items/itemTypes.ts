@@ -27,6 +27,7 @@ export type WeaponDefinition = {
     baseStats: {
         power: number;
         damage: number;
+        crit: number;
     };
     maxLevel: number;
     enchantmentIds: string[];
@@ -41,7 +42,7 @@ export type ArmorDefinition = {
     rarity: Rarity;
     baseStats: {
         hp: number;
-        defense: number;
+        armor: number;
         power: number;
     };
     maxLevel: number;

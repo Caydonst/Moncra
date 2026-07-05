@@ -6,6 +6,7 @@ import { RemotePlayer } from "../network/RemotePlayer";
 import { Demon } from "../enemies/demon";
 import type { DungeonFloor, ServerDungeonData } from "@/lib/shared/dungeon/dungeonTypes";
 import { ServerPlayerDebug } from "../player/ServerPlayerDebug";
+import {gameState} from "../gameState/gameState"
 
 type RoomKind = "hub" | "party" | "dungeon";
 
@@ -78,6 +79,7 @@ class MultiplayerManager {
     console.log("Joined dungeon:", this.room.sessionId);
 
     this.setupDungeonRoomListeners(engine, scene, resources);
+    this.setupInventoryListeners();
 
     this.room.send("get_existing_players");
     this.room.send("get_dungeon");
@@ -252,6 +254,8 @@ class MultiplayerManager {
     console.log("Joined hub:", this.room.sessionId);
 
     this.setupHubRoomListeners();
+    this.setupInventoryListeners();
+    this.sendGetInventory();
   }
 
   private setupHubRoomListeners() {
@@ -293,8 +297,47 @@ class MultiplayerManager {
     this.room.send("weapon_attack", data);
   }
 
-  private setupLocalPlayerCallbacks(player: any) {
+  private setupLocalPlayerCallbacks(player: PlayerState) {
     if (!this.callbacks) return;
+
+    this.callbacks.onChange(player, () => {
+      window.dispatchEvent(
+        new CustomEvent("player_stats_updated", {
+          detail: {
+            hp: player.hp,
+            maxHp: player.maxHp,
+            damage: player.damage,
+            armor: player.armor,
+            crit: player.crit,
+            power: player.power,
+          },
+        })
+      );
+    });
+  }
+
+  private setupInventoryListeners() {
+    if (!this.room) return;
+
+    this.room.onMessage("inventory_updated", (message: any) => {
+      window.dispatchEvent(
+        new CustomEvent("inventory_updated", {
+          detail: message.inventory,
+        })
+      );
+    });
+
+    this.room.onMessage("item_upgraded", (message: any) => {
+      window.dispatchEvent(
+        new CustomEvent("item_upgraded", {
+          detail: message,
+        })
+      );
+    });
+
+    this.room.onMessage("inventory_error", (message: any) => {
+      console.error("Inventory error:", message.error);
+    });
   }
 
   sendSwordHit(data: {
@@ -318,6 +361,22 @@ class MultiplayerManager {
     this.room.send("equip_weapon", {
       weaponId,
     });
+  }
+
+  sendGetInventory() {
+    this.room?.send("get_inventory");
+  }
+
+  sendEquipItem(uid: string) {
+    this.room?.send("equip_item", { uid });
+  }
+
+  sendUnequipItem(slot: "weapon" | "helmet" | "arms" | "chest" | "legs") {
+    this.room?.send("unequip_item", { slot });
+  }
+
+  sendUpgradeItem(uid: string) {
+    this.room?.send("upgrade_item", { uid });
   }
 
   sendFloorChange(targetFloor: number) {

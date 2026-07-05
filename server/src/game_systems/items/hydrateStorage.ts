@@ -1,7 +1,7 @@
 // lib/shared/hydrateStorage.ts
 
-import { hydrateSlot } from "./hydrateItem";
-import type { ServerStorage } from "./inventoryTypes";
+import { hydrateSlot } from "./hydrateItem.js";
+import type { ServerStorage } from "./inventoryTypes.js";
 
 export function hydrateStorage(storage: ServerStorage) {
     return {

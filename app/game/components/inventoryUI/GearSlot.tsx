@@ -21,8 +21,8 @@ export function GearSlot({ slotIndex, item, selectedSlot, openItemPanel, setSele
                 `${styles.gearSlot} ${(selectedSlot.displayIndex === slotIndex && selectedSlot.filter === "equipment") ? styles.selected : ""}`
             }
             style={{
-                background: `${colors[item?.rarity]?.rgba ?? "rgba(255,255,255,0.1)"}`,
-                borderColor: `${colors[item?.rarity]?.hex ?? "#606060"
+                background: `${colors[item?.rarity]?.rgba ?? "transparent"}`,
+                borderColor: `${colors[item?.rarity]?.hex ?? "rgba(255, 255, 255, 0.2)"
                     }`
             }}
             onClick={() => {
@@ -45,14 +45,13 @@ export function GearSlot({ slotIndex, item, selectedSlot, openItemPanel, setSele
                     )}
                 </div>
             ) : (
-                <div className={styles.equippedWeaponInfoContainer} style={{ paddingLeft: "20px" }}>
-                    <p>Weapon</p>
-                    <h3>None</h3>
+                <div className={styles.gearSlotIconContainer}>
+                    <p className={styles.noneText}>None</p>
                 </div>
             )}
             {item?.level !== undefined && (
                 <div className={styles.weaponLevel} style={{ color: `${item.level === 10 ? "#FFE500" : "#fff"}` }}>
-                    <img src={plusIcon.src} />{item.level}
+                    +{item.level}
                 </div>
             )}
             {item?.stats?.power !== undefined && (

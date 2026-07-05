@@ -18,7 +18,7 @@ export async function createGame(canvas: HTMLCanvasElement) {
                 compositeStrategy: "separate",
             },
         },
-        //maxFps: 60
+        maxFps: 40
     });
 
     return game;

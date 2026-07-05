@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./blacksmith.module.css"
 import { Item, Material, Weapon } from "../../items/ItemTypes";
 import { Inventory } from "../../inventory/inventory";
@@ -91,14 +91,29 @@ export default function Upgrading({ blacksmithOpen, inventory, setInventory }: P
             case "armor":
                 sourceItems = [
                     {
-                        item: inventory.armor,
+                        item: inventory.helmet,
                         realIndex: -2,
-                        source: "equippedArmor" as const,
+                        source: "equippedHelmet" as const,
+                    },
+                    {
+                        item: inventory.arms,
+                        realIndex: -3,
+                        source: "equippedArms" as const,
+                    },
+                    {
+                        item: inventory.chest,
+                        realIndex: -4,
+                        source: "equippedChest" as const,
+                    },
+                    {
+                        item: inventory.legs,
+                        realIndex: -5,
+                        source: "equippedLegs" as const,
                     },
                     ...inventory.miscArmor.map((item, realIndex) => ({
-                    item,
-                    realIndex,
-                    source: "armor" as const,
+                        item,
+                        realIndex,
+                        source: "armor" as const,
                     })),
                 ];
                 break;
@@ -111,9 +126,24 @@ export default function Upgrading({ blacksmithOpen, inventory, setInventory }: P
                         source: "equippedWeapon" as const,
                     },
                     {
-                        item: inventory.armor,
-                        realIndex: -2,
-                        source: "equippedArmor" as const,
+                        item: inventory.helmet,
+                        realIndex: -3,
+                        source: "equippedHelmet" as const,
+                    },
+                    {
+                        item: inventory.arms,
+                        realIndex: -4,
+                        source: "equippedArms" as const,
+                    },
+                    {
+                        item: inventory.chest,
+                        realIndex: -5,
+                        source: "equippedChest" as const,
+                    },
+                    {
+                        item: inventory.legs,
+                        realIndex: -6,
+                        source: "equippedLegs" as const,
                     },
                     ...inventory.miscWeapons.map((item, realIndex) => ({
                         item,
@@ -132,33 +162,6 @@ export default function Upgrading({ blacksmithOpen, inventory, setInventory }: P
 
         return [...filledSlots];
     })();
-    /*
-    function upgradeItem(goldCost: number) {
-        if (!selectedItem) return;
-
-        const upgradedItem = upgrade(selectedItem, goldCost);
-        if (!upgradedItem) return;
-
-        setSelectedItem(upgradedItem);
-        //filteredInventoryItems[selectedItemIndex] = upgradedItem;
-        
-        if (selectedItem === inventory.weapon) {
-            inventory.weapon = upgradedItem as Weapon;
-        } else if (selectedItem === inventory.armor) {
-            inventory.armor = upgradedItem as Armor;
-        } else {
-            if (selectedItem.type === "Weapon") {
-                inventory.miscWeapons[selectedSlot.realIndex] = upgradedItem;
-            } else if (selectedItem.type === "Armor") {
-                inventory.miscArmor[selectedSlot.realIndex] = upgradedItem;
-            
-            }
-        
-
-        //filteredInventoryItems[selectedItemIndex] = upgradedItem;
-        }
-    }
-        */
 
     async function upgradeItem() {
         if (!selectedItem || !inventory || !gameState.engine) return;
@@ -168,35 +171,54 @@ export default function Upgrading({ blacksmithOpen, inventory, setInventory }: P
             selectedItem.uid === inventory.weapon?.uid;
 
         if (wasEquippedWeapon) {
-            inventory.removeEquippedWeaponActor(gameState.engine);
+            await inventory.removeEquippedWeaponActor(gameState.engine);
         }
 
-        const res = await fetch("/api/upgrade-item", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                uid: selectedItem.uid,
-            }),
-        });
+        const { multiplayer } = await import("../../network/multiplayer");
 
-        const data = await res.json();
-
-        if (!res.ok) return;
-
-        const clientInventory = createClientInventory(data.inventory, gameState);
-
-        gameState.inventory = clientInventory;
-        setInventory(clientInventory);
-
-        if (wasEquippedWeapon && clientInventory.weapon) {
-            await clientInventory.spawnEquippedWeapon(gameState.engine);
-            setSelectedItem(clientInventory.weapon);
-        } else {
-            setSelectedItem(data.upgradedItem);
-        }
+        multiplayer.sendUpgradeItem(selectedItem.uid);
     }
+
+    useEffect(() => {
+        function handleItemUpgraded(e: Event) {
+            const event = e as CustomEvent;
+
+            const clientInventory = createClientInventory(event.detail.inventory, gameState);
+
+            gameState.inventory = clientInventory;
+            setInventory(clientInventory);
+
+            const upgradedUid = event.detail.upgradedItem.uid;
+
+            const upgradedSelected =
+                clientInventory.weapon?.uid === upgradedUid
+                    ? clientInventory.weapon
+                    : clientInventory.helmet?.uid === upgradedUid
+                        ? clientInventory.helmet
+                        : clientInventory.arms?.uid === upgradedUid
+                            ? clientInventory.arms
+                            : clientInventory.chest?.uid === upgradedUid
+                                ? clientInventory.chest
+                                : clientInventory.legs?.uid === upgradedUid
+                                    ? clientInventory.legs
+                                    : [
+                                        ...clientInventory.miscWeapons,
+                                        ...clientInventory.miscArmor,
+                                    ].find(item => item?.uid === upgradedUid) ?? null;
+
+            setSelectedItem(upgradedSelected);
+
+            if (upgradedSelected?.type === "Weapon" && upgradedSelected.uid === clientInventory.weapon?.uid) {
+                clientInventory.spawnEquippedWeapon(gameState.engine);
+            }
+        }
+
+        window.addEventListener("item_upgraded", handleItemUpgraded);
+
+        return () => {
+            window.removeEventListener("item_upgraded", handleItemUpgraded);
+        };
+    }, []);
 
     return (
         <div className={styles.evolvingContainer}>
@@ -264,7 +286,11 @@ export default function Upgrading({ blacksmithOpen, inventory, setInventory }: P
                             >
                                 {slot?.icon && (
                                     <div className={styles.miscSlotIconContainer}>
-                                        <img src={slot.icon} className={styles.slotImg} />
+                                        {slot.type === "Weapon" ? (
+                                            <img src={slot.icon} className={styles.slotWeaponImg} />
+                                        ) : (
+                                            <img src={slot.icon} className={styles.slotArmorImg} />
+                                        )}
                                     </div>
                                 )}
                                 <div className={styles.miscItemNameContainer}>
@@ -314,7 +340,7 @@ export default function Upgrading({ blacksmithOpen, inventory, setInventory }: P
                                 )}
                                 <p className={styles.stats}>Damage: {selectedItem?.stats.damage}</p>
                             </div>
-                            <p>{"-->"}</p>
+                            <p>{">"}</p>
                             <div className={styles.nextLevelContainer}>
                                 {selectedItem?.level !== undefined && (
                                     <p className={styles.level}>Level +{selectedItem.level + 1}</p>
@@ -354,7 +380,9 @@ export default function Upgrading({ blacksmithOpen, inventory, setInventory }: P
                                 </div>
                             ))}
                         </div>
-                        <button className={styles.upgradeBtn} onClick={() => upgradeItem(getUpgradeCost(selectedItem).gold)}>UPGRADE</button>
+                            <button className={styles.upgradeBtn} onClick={upgradeItem}>
+                                UPGRADE
+                            </button>
                         </>
                     )}
                     </>
