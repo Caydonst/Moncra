@@ -1,9 +1,10 @@
 import { Inventory } from "../../inventory/inventory";
-import styles from "./inventory.module.css"
+import styles from "./newInventory.module.css"
 import { colors, specializationColors } from "../../utils/uiUtils"
 import powerIconImg from "../../assets/misc/power_icon.png"
 import { Weapon, Armor } from "../../items/ItemTypes";
 import plusIcon from "@/app/game/assets/icons/plus_icon.png"
+import lockIcon from "@/app/game/assets/icons/lock_icon.png"
 
 type Props = {
     slotIndex: number;
@@ -11,9 +12,22 @@ type Props = {
     selectedSlot: any;
     openItemPanel: any;
     setSelectedSlot: any;
+    setSelectedItem: React.Dispatch<React.SetStateAction<any>>;
+    setItemInfoOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    showItemTooltip: (item: Weapon | Armor, e: React.MouseEvent) => void;
+    moveItemTooltip: (e: React.MouseEvent) => void;
+    hideItemTooltip: () => void;
 }
 
-export function GearSlot({ slotIndex, item, selectedSlot, openItemPanel, setSelectedSlot }: Props) {
+export function GearSlot({ slotIndex, item, selectedSlot, openItemPanel, setSelectedSlot, setSelectedItem, setItemInfoOpen, showItemTooltip, moveItemTooltip, hideItemTooltip }: Props) {
+
+    const indexToType = {
+        0: "Weapon",
+        3: "Helmet",
+        4: "Arms",
+        5: "Chest",
+        6: "Legs",
+    }
 
     return (
         <div
@@ -28,41 +42,52 @@ export function GearSlot({ slotIndex, item, selectedSlot, openItemPanel, setSele
             onClick={() => {
                 if (!item) return;
 
-                openItemPanel(item);
                 setSelectedSlot({
                     filter: "equipment",
                     displayIndex: slotIndex,
                     realIndex: -1,
                 });
-            }}>
+            }}
+            onMouseEnter={(e) => showItemTooltip(item, e)}
+            onMouseMove={moveItemTooltip}
+            onMouseLeave={hideItemTooltip}
+            onContextMenu={(e) => {
+                e.preventDefault(); // Prevent browser context menu
+                setSelectedItem(item)
+                setItemInfoOpen(true);
+            }}
+            >
 
             {item ? (
-                <div className={styles.gearSlotIconContainer}>
-                    {item.type === "Weapon" ? (
-                        <img src={item.icon} className={styles.gearWeaponImg} />
-                    ) : (
+                <>
+                    <div className={styles.gearSlotIconContainer}>
+                        {item.type === "Weapon" ? (
+                            <img src={item.icon} className={styles.gearWeaponImg} />
+                        ) : (
                             <img src={item.icon} className={styles.gearOtherImg} />
+                        )}
+                    </div>
+                    <div className={styles.weaponXpContainer}>
+                        <div className={styles.weaponXp} style={{ width: `${(item.currentXp / item.nextLvlXp) * 100}%` }}></div>
+                    </div>
+                    {item.upgradePoints !== 0 && (
+                        <div className={styles.levelAvailableContainer}>
+                            <img src={plusIcon.src} />
+                        </div>
                     )}
-                </div>
+                </>
+                
             ) : (
-                <div className={styles.gearSlotIconContainer}>
-                    <p className={styles.noneText}>None</p>
-                </div>
+                indexToType[slotIndex] !== undefined ? (
+                    <div className={styles.gearSlotEmptyContainer}>
+                        <p className={styles.noneText}>{indexToType[slotIndex]}</p>
+                    </div>
+                ) : (
+                    <div className={styles.gearSlotEmptyContainer}>
+                        <img src={lockIcon.src} />
+                    </div>
+                )
             )}
-            {item?.level !== undefined && (
-                <div className={styles.weaponLevel} style={{ color: `${item.level === 10 ? "#FFE500" : "#fff"}` }}>
-                    +{item.level}
-                </div>
-            )}
-            {item?.stats?.power !== undefined && (
-                <p className={styles.powerLevel}><img src={powerIconImg.src} />{item.stats.power}</p>
-            )}
-            <div className={styles.hoverContainer}>
-                <div className={styles.topRight}></div>
-                <div className={styles.bottomLeft}></div>
-                <div className={styles.topLeft}></div>
-                <div className={styles.bottomRight}></div>
-            </div>
         </div>
     )
 }

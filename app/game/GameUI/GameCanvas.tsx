@@ -8,7 +8,7 @@ import type { TestScene } from "../scenes/TestScene";
 import type { DungeonScene } from "../scenes/DungeonScene";
 import {Inventory} from "@/app/game/inventory/inventory";
 import styles from "../page.module.css"
-import InventoryUI from "@/app/game/components/inventoryUI/inventoryUI";
+import InventoryUI from "@/app/game/components/inventoryUI/newInventoryUI";
 import DungeonMenu from "../components/dungeonMenu/dungeonMenu";
 import LandingPage from "../components/landingPage/landingPage";
 import { gameState } from "../gameState/gameState";
@@ -40,6 +40,33 @@ export default function GameCanvas() {
     const [storage, setStorage] = useState(null);
     const [storageData, setStorageData] = useState(null);
     const [blacksmithOpen, setBlacksmithOpen] = useState(false);
+
+    useEffect(() => {
+        function preventZoomKeys(e: KeyboardEvent) {
+            if (
+                (e.ctrlKey || e.metaKey) &&
+                (e.key === "+" || e.key === "-" || e.key === "=" || e.key === "0")
+            ) {
+                e.preventDefault();
+            }
+        }
+
+        function preventZoomWheel(e: WheelEvent) {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+            }
+        }
+
+        window.addEventListener("keydown", preventZoomKeys);
+        window.addEventListener("wheel", preventZoomWheel, {
+            passive: false,
+        });
+
+        return () => {
+            window.removeEventListener("keydown", preventZoomKeys);
+            window.removeEventListener("wheel", preventZoomWheel);
+        };
+    }, []);
 
     useEffect(() => {
         let cleanup: (() => void) | undefined;

@@ -51,6 +51,10 @@ export type Weapon = {
     stats?: any;
     level: number;
     maxLevel: number;
+    currentLevel: number;
+    currentXp: number;
+    nextLvlXp: number;
+    upgradePoints: number;
     enchantments?: Enchantment[];
 
     createWeapon?: () => ex.Actor & {
@@ -75,6 +79,10 @@ export type Armor = {
     stats?: any;
     level: number;
     maxLevel: number;
+    currentLevel: number;
+    currentXp: number;
+    nextLvlXp: number;
+    upgradePoints: number;
     enchantments?: Enchantment[];
 }
 

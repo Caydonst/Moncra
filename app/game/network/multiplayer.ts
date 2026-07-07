@@ -80,6 +80,7 @@ class MultiplayerManager {
 
     this.setupDungeonRoomListeners(engine, scene, resources);
     this.setupInventoryListeners();
+    this.sendGetInventory();
 
     this.room.send("get_existing_players");
     this.room.send("get_dungeon");

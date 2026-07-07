@@ -366,13 +366,19 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                         </div>
                         <div className={styles.weaponSlotWrapper}>
                             <div className={styles.weaponContainer}>
-                                <p>Weapon</p>
+                                <div className={styles.weaponContainerHeader}>
+                                    <img src={weaponIcon.src} />
+                                    <p>Weapon</p>
+                                </div>
                                 <div className={styles.slotsContainer}>
                                     <GearSlot slotIndex={0} item={inventory?.weapon} selectedSlot={selectedSlot} openItemPanel={openItemPanel} setSelectedSlot={setSelectedSlot} />
                                 </div>
                             </div>
                             <div className={styles.armorContainer}>
-                                <p>Armor</p>
+                                <div className={styles.weaponContainerHeader}>
+                                    <img src={armorIcon.src} />
+                                    <p>Armor</p>
+                                </div>
                                 <div className={styles.slotsContainer}>
                                     <GearSlot slotIndex={1} item={inventory?.helmet} selectedSlot={selectedSlot} openItemPanel={openItemPanel} setSelectedSlot={setSelectedSlot} />
                                     <GearSlot slotIndex={2} item={inventory?.arms} selectedSlot={selectedSlot} openItemPanel={openItemPanel} setSelectedSlot={setSelectedSlot} />

@@ -20,7 +20,6 @@ export type WeaponDefinition = {
     name: string;
     type: "Weapon";
     kind: WeaponKind;
-    specialization: Specialization;
     icon: string;
     rarity: Rarity;
     attackStyle: "Melee" | "Ranged";
@@ -30,6 +29,10 @@ export type WeaponDefinition = {
         crit: number;
     };
     maxLevel: number;
+    level: number;
+    currentXp: number;
+    nextLvlXp: number;
+    upgradePoints: number;
     enchantmentIds: string[];
 };
 
@@ -46,6 +49,10 @@ export type ArmorDefinition = {
         power: number;
     };
     maxLevel: number;
+    level: number;
+    currentXp: number;
+    nextLvlXp: number;
+    upgradePoints: number;
     enchantmentIds: string[];
 };
 

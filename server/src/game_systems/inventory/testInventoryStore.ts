@@ -36,6 +36,11 @@ function createStartingInventory(): ServerInventory {
         miscWeapons: [
             { uid: randomUUID(), itemId: "great_sword0", kind: "Great Sword", level: 0 },
             { uid: randomUUID(), itemId: "great_sword1", kind: "Great Sword", level: 0 },
+
+            { uid: randomUUID(), itemId: "great_sword1", kind: "Great Sword", level: 0 },
+            { uid: randomUUID(), itemId: "great_sword0", kind: "Great Sword", level: 0 },
+            { uid: randomUUID(), itemId: "great_sword2", kind: "Great Sword", level: 0 },
+            { uid: randomUUID(), itemId: "great_sword3", kind: "Great Sword", level: 0 },
             ...Array(10).fill(null),
         ],
 
@@ -44,6 +49,25 @@ function createStartingInventory(): ServerInventory {
             { uid: randomUUID(), itemId: "iron_arms", kind: "arms", level: 0 },
             { uid: randomUUID(), itemId: "iron_chest", kind: "chest", level: 0 },
             { uid: randomUUID(), itemId: "iron_legs", kind: "legs", level: 0 },
+
+            { uid: randomUUID(), itemId: "iron_legs", kind: "legs", level: 0 },
+            { uid: randomUUID(), itemId: "iron_legs", kind: "legs", level: 0 },
+            { uid: randomUUID(), itemId: "iron_legs", kind: "legs", level: 0 },
+            { uid: randomUUID(), itemId: "iron_chest", kind: "chest", level: 0 },
+            { uid: randomUUID(), itemId: "iron_chest", kind: "chest", level: 0 },
+            { uid: randomUUID(), itemId: "iron_chest", kind: "chest", level: 0 },
+            { uid: randomUUID(), itemId: "iron_chest", kind: "chest", level: 0 },
+            { uid: randomUUID(), itemId: "iron_arms", kind: "arms", level: 0 },
+            { uid: randomUUID(), itemId: "iron_arms", kind: "arms", level: 0 },
+            { uid: randomUUID(), itemId: "iron_arms", kind: "arms", level: 0 },
+            { uid: randomUUID(), itemId: "iron_helmet", kind: "helmet", level: 0 },
+            { uid: randomUUID(), itemId: "iron_helmet", kind: "helmet", level: 0 },
+            { uid: randomUUID(), itemId: "iron_helmet", kind: "helmet", level: 0 },
+            { uid: randomUUID(), itemId: "iron_helmet", kind: "helmet", level: 0 },
+            { uid: randomUUID(), itemId: "iron_helmet", kind: "helmet", level: 0 },
+            { uid: randomUUID(), itemId: "iron_helmet", kind: "helmet", level: 0 },
+            { uid: randomUUID(), itemId: "iron_helmet", kind: "helmet", level: 0 },
+
             ...Array(8).fill(null),
         ],
 

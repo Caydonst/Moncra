@@ -50,7 +50,7 @@ import arrowImage from './assets/projectiles/arrow.png';
 import greatSword0 from "./assets/weapons/great_sword/stone_sword.png";
 import greatSword from "./assets/weapons/great_sword/forged.png";
 import greatSword1 from "./assets/weapons/great_sword/ruby_sword.png";
-import greatSword2 from "./assets/weapons/great_sword/diamond_sword.png";
+import greatSword2 from "./assets/weapons/great_sword/obsidian_sword2.png";
 import greatSword3 from "./assets/weapons/great_sword/iron_sword.png";
 import greatSword4 from "./assets/weapons/great_sword/gold_sword.png";
 import greatSword5 from "./assets/weapons/great_sword/emerald_sword.png";
