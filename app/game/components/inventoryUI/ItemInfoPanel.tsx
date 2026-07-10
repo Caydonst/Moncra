@@ -14,8 +14,21 @@ type Props = {
     inventoryOpen: boolean;
 }
 
+type StatPoints = {
+    damage: number;
+    crit: number;
+    hp: number;
+    armor: number;
+};
+
 export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpen }: Props) {
     const [upgradePoints, setUpgradePoints] = useState(selectedItem?.upgradePoints);
+    const [statPoints, setStatPoints] = useState<StatPoints>({
+        damage: 0,
+        crit: 0,
+        hp: 0,
+        armor: 0,
+    });
 
     function getRollColor(percentage: number) {
 
@@ -28,8 +41,34 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
     }
 
     useEffect(() => {
-        setUpgradePoints(selectedItem?.upgradePoints);
-    }, [selectedItem])
+        setUpgradePoints(selectedItem?.upgradePoints ?? 0);
+
+        setStatPoints({
+            damage: selectedItem?.upgradedStats?.damagePoints ?? 0,
+            crit: selectedItem?.upgradedStats?.critPoints ?? 0,
+            hp: selectedItem?.upgradedStats?.hpPoints ?? 0,
+            armor: selectedItem?.upgradedStats?.armorPoints ?? 0,
+        });
+    }, [selectedItem]);
+
+    type UpgradeableStat = keyof StatPoints;
+
+    function setPointsForStat(
+        stat: UpgradeableStat,
+        value: React.SetStateAction<number>
+    ) {
+        setStatPoints(previous => {
+            const nextValue =
+                typeof value === "function"
+                    ? value(previous[stat])
+                    : value;
+
+            return {
+                ...previous,
+                [stat]: nextValue,
+            };
+        });
+    }
 
     return (
         <div className={itemInfoOpen ? `${styles.itemInfoPanel} ${styles.open}` : styles.itemInfoPanel}>
@@ -92,7 +131,19 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
                                             <p>{selectedItem?.stats.damage}</p>
                                             <p style={{ color: getRollColor(selectedItem?.stats?.rollPercentage.damage) }}>{selectedItem?.stats?.rollPercentage.damage}%</p>
                                         </div>
-                                        <PointUpgrader pointAmt={0} availablePoints={selectedItem.upgradePoints} upgradePoints={upgradePoints} setUpgradePoints={setUpgradePoints} />
+                                        <PointUpgrader
+                                            statPoints={statPoints.damage}
+                                            minimumPoints={selectedItem?.upgradedStats?.damagePoints ?? 0}
+                                            upgradePoints={upgradePoints}
+                                            onChange={(newDamagePoints, newUpgradePoints) => {
+                                                setStatPoints(previous => ({
+                                                    ...previous,
+                                                    damage: newDamagePoints,
+                                                }));
+
+                                                setUpgradePoints(newUpgradePoints);
+                                            }}
+                                        />
                                     </div>
                                     <div className={styles.statContainer}>
                                         <img src={critIcon.src} className={styles.damageIcon} />
@@ -111,7 +162,19 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
                                             <p>{selectedItem?.stats.crit}</p>
                                             <p style={{ color: getRollColor(selectedItem?.stats?.rollPercentage.crit) }}>{selectedItem?.stats?.rollPercentage.crit}%</p>
                                         </div>
-                                        <PointUpgrader pointAmt={0} availablePoints={selectedItem.upgradePoints} upgradePoints={upgradePoints} setUpgradePoints={setUpgradePoints} />
+                                        <PointUpgrader
+                                            statPoints={statPoints.crit}
+                                            minimumPoints={selectedItem?.upgradedStats?.critPoints ?? 0}
+                                            upgradePoints={upgradePoints}
+                                            onChange={(newCritPoints, newUpgradePoints) => {
+                                                setStatPoints(previous => ({
+                                                    ...previous,
+                                                    crit: newCritPoints,
+                                                }));
+
+                                                setUpgradePoints(newUpgradePoints);
+                                            }}
+                                        />
                                     </div>
                                 </>
                             )}

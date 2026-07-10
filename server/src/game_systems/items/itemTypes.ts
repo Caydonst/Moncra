@@ -15,6 +15,20 @@ export type ItemDefinition =
     | ArmorDefinition
     | MaterialDefinition;
 
+type weaponUpgradedStats = {
+    damage: number;
+    crit: number;
+    damagePoints: number;
+    critPoints: number;
+}
+
+type armorUpgradedStats = {
+    hp: number;
+    armor: number;
+    hpPoints: number;
+    armorPoints: number;
+}
+
 export type WeaponDefinition = {
     id: string;
     name: string;
@@ -28,6 +42,7 @@ export type WeaponDefinition = {
         damage: number;
         crit: number;
     };
+    upgradedStats: weaponUpgradedStats;
     maxLevel: number;
     level: number;
     currentXp: number;
@@ -48,6 +63,7 @@ export type ArmorDefinition = {
         armor: number;
         power: number;
     };
+    upgradedStats: armorUpgradedStats;
     maxLevel: number;
     level: number;
     currentXp: number;

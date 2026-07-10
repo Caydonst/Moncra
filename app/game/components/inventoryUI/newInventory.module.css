@@ -525,10 +525,10 @@
 }
 .gearWeaponImg {
     position: absolute;
-    left: -18px;
-    bottom: -18px;
-    width: 160%;
-    height: 160%;
+    left: -20px;
+    bottom: -20px;
+    width: 170%;
+    height: 170%;
     object-fit: contain;
     image-rendering: pixelated;
     filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
