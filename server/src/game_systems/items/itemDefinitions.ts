@@ -1,6 +1,7 @@
 // lib/shared/itemDefinitions.ts
 
 import type { ItemDefinition } from "./itemTypes.js";
+import { rollItemStats } from "./itemRolls.js"
 
 export const itemDefinitions = {
     great_sword0: {

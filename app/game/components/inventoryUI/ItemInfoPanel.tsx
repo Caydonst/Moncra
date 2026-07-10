@@ -5,6 +5,8 @@ import damageIcon from "../../assets/icons/damage_icon.png"
 import critIcon from "../../assets/icons/crit_icon.png"
 import hpIcon from "../../assets/icons/hp_icon.png"
 import armorStatIcon from "../../assets/icons/armor_stat_icon.png"
+import { useEffect, useState } from "react"
+import PointUpgrader from "./pointUpgrader"
 
 type Props = {
     selectedItem: any;
@@ -13,6 +15,22 @@ type Props = {
 }
 
 export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpen }: Props) {
+    const [upgradePoints, setUpgradePoints] = useState(selectedItem?.upgradePoints);
+
+    function getRollColor(percentage: number) {
+
+        if (percentage >= 100) return "#32FFFF";
+        if (percentage >= 90) return "#ea00ff";
+        if (percentage >= 65) return "#76FF32";
+        if (percentage >= 45) return "#FFE032";
+        if (percentage >= 20) return "#FF8C32";
+        if (percentage < 20) return "#E53935";
+    }
+
+    useEffect(() => {
+        setUpgradePoints(selectedItem?.upgradePoints);
+    }, [selectedItem])
+
     return (
         <div className={itemInfoOpen ? `${styles.itemInfoPanel} ${styles.open}` : styles.itemInfoPanel}>
             {selectedItem && (
@@ -41,38 +59,99 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
                             </div>
                         </div>
                         <div className={styles.weaponTypeContainer}>
-                            <p className={styles.weaponTypeName}>{selectedItem.type}</p>
+                            <p className={styles.weaponTypeName}>{selectedItem.kind.charAt(0).toUpperCase() + selectedItem.kind.slice(1)}</p>
                         </div>
-                        {selectedItem?.level !== undefined && (
-                            <div className={styles.selectedWeaponLevel} style={{ color: `${selectedItem?.level === 10 ? "#FFE500" : "#fff"}` }}>
-                                Level
-                                <div>
-                                    +{selectedItem?.level}
-                                </div>
-                            </div>
-                        )}
                         <div className={styles.itemStatsContainer}>
+                            {selectedItem?.level !== undefined && (
+                                <div className={styles.selectedWeaponLevel} style={{ color: `${selectedItem?.level === 10 ? "#FFE500" : "#fff"}` }}>
+                                    <p>Level {selectedItem?.level}</p>
+                                    {upgradePoints > 0 && (
+                                        <div className={styles.upgradePointsNotif}>
+                                            <h3>i</h3>
+                                            <p>{upgradePoints} upgrade points available!</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             {selectedItem.stats?.damage && (
                                 <>
                                     <div className={styles.statContainer}>
-                                        <div className={styles.statIconContainer}><img src={damageIcon.src} className={styles.damageIcon} /></div>
-                                        <p>{selectedItem.stats?.damage} Damage</p>
+                                        <img src={damageIcon.src} className={styles.damageIcon} />
+                                        <div className={styles.statMeter} style={{ outline: `${selectedItem?.stats?.rollPercentage.damage === 100 ? "2px solid #FFE900" : ""}` }}>
+                                            <div
+                                                className={styles.percentage}
+                                                style={{
+                                                    width: `${selectedItem?.stats?.rollPercentage.damage}%`,
+                                                    background: getRollColor(
+                                                        selectedItem?.stats?.rollPercentage.damage
+                                                    ),
+                                                }}
+                                            />
+                                        </div>
+                                        <div className={styles.tooltipStatPercentage}>
+                                            <p>{selectedItem?.stats.damage}</p>
+                                            <p style={{ color: getRollColor(selectedItem?.stats?.rollPercentage.damage) }}>{selectedItem?.stats?.rollPercentage.damage}%</p>
+                                        </div>
+                                        <PointUpgrader pointAmt={0} availablePoints={selectedItem.upgradePoints} upgradePoints={upgradePoints} setUpgradePoints={setUpgradePoints} />
                                     </div>
                                     <div className={styles.statContainer}>
-                                        <div className={styles.statIconContainer}><img src={critIcon.src} className={styles.damageIcon} /></div>
-                                        <p>10 Crit</p>
+                                        <img src={critIcon.src} className={styles.damageIcon} />
+                                        <div className={styles.statMeter} style={{ outline: `${selectedItem?.stats?.rollPercentage.crit === 100 ? "2px solid #FFE900" : ""}` }}>
+                                            <div
+                                                className={styles.percentage}
+                                                style={{
+                                                    width: `${selectedItem?.stats?.rollPercentage.crit}%`,
+                                                    background: getRollColor(
+                                                        selectedItem?.stats?.rollPercentage.crit
+                                                    ),
+                                                }}
+                                            />
+                                        </div>
+                                        <div className={styles.tooltipStatPercentage}>
+                                            <p>{selectedItem?.stats.crit}</p>
+                                            <p style={{ color: getRollColor(selectedItem?.stats?.rollPercentage.crit) }}>{selectedItem?.stats?.rollPercentage.crit}%</p>
+                                        </div>
+                                        <PointUpgrader pointAmt={0} availablePoints={selectedItem.upgradePoints} upgradePoints={upgradePoints} setUpgradePoints={setUpgradePoints} />
                                     </div>
                                 </>
                             )}
                             {selectedItem.stats?.hp && (
                                 <>
                                     <div className={styles.statContainer}>
-                                        <div className={styles.statIconContainer}><img src={hpIcon.src} className={styles.hpIcon} /></div>
-                                        <p>{selectedItem.stats?.hp} HP</p>
+                                        <img src={hpIcon.src} className={styles.hpIcon} />
+                                        <div className={styles.statMeter} style={{ outline: `${selectedItem?.stats?.rollPercentage.hp === 100 ? "2px solid #FFE900" : ""}` }}>
+                                            <div
+                                                className={styles.percentage}
+                                                style={{
+                                                    width: `${selectedItem?.stats?.rollPercentage.hp}%`,
+                                                    background: getRollColor(
+                                                        selectedItem?.stats?.rollPercentage.hp
+                                                    ),
+                                                }}
+                                            />
+                                        </div>
+                                        <div className={styles.tooltipStatPercentage}>
+                                            <p>{selectedItem?.stats.hp}</p>
+                                            <p style={{ color: getRollColor(selectedItem?.stats?.rollPercentage.hp) }}>{selectedItem?.stats?.rollPercentage.hp}%</p>
+                                        </div>
                                     </div>
                                     <div className={styles.statContainer}>
-                                        <div className={styles.statIconContainer}><img src={armorStatIcon.src} className={styles.hpIcon} /></div>
-                                        <p>10 Armor</p>
+                                        <img src={armorStatIcon.src} className={styles.hpIcon} />
+                                        <div className={styles.statMeter} style={{ outline: `${selectedItem?.stats?.rollPercentage.armor === 100 ? "2px solid #FFE900" : ""}` }}>
+                                            <div
+                                                className={styles.percentage}
+                                                style={{
+                                                    width: `${selectedItem?.stats?.rollPercentage.armor}%`,
+                                                    background: getRollColor(
+                                                        selectedItem?.stats?.rollPercentage.armor
+                                                    ),
+                                                }}
+                                            />
+                                        </div>
+                                        <div className={styles.tooltipStatPercentage}>
+                                            <p>{selectedItem?.stats.armor}</p>
+                                            <p style={{ color: getRollColor(selectedItem?.stats?.rollPercentage.armor) }}>{selectedItem?.stats?.rollPercentage.armor}%</p>
+                                        </div>
                                     </div>
                                 </>
                             )}

@@ -2,6 +2,7 @@
 
 import { itemDefinitions } from "../items/itemDefinitions.js";
 import type { InventoryItemInstance } from "./inventoryTypes.js";
+import { rollItemStats } from "../items/itemRolls.js"
 
 export function hydrateItem(instance: InventoryItemInstance) {
     const def = itemDefinitions[instance.itemId];
@@ -14,13 +15,21 @@ export function hydrateItem(instance: InventoryItemInstance) {
     // Weapon
     // -------------------------
     if (def.type === "Weapon") {
+        const roll = rollItemStats(def.type, def.rarity);
+        if (!roll) return;
+
         return {
             ...def,
             uid: instance.uid,
-            level: instance.level,
+            
             stats: {
                 power: def.baseStats.power + instance.level * 2,
-                damage: def.baseStats.damage + instance.level * 2,
+                damage: roll.damage?.value,
+                crit: roll.crit?.value,
+                rollPercentage: {
+                    damage: roll.damage?.percentage,
+                    crit: roll.crit?.percentage,
+                }
             },
         };
     }
@@ -29,14 +38,21 @@ export function hydrateItem(instance: InventoryItemInstance) {
     // Armor
     // -------------------------
     if (def.type === "Armor") {
+        const roll = rollItemStats(def.type, def.rarity);
+        if (!roll) return;
+
         return {
             ...def,
             uid: instance.uid,
             level: instance.level,
             stats: {
-                hp: def.baseStats.hp + instance.level * 5,
-                defense: def.baseStats.defense + instance.level * 2,
                 power: def.baseStats.power + instance.level * 2,
+                hp: roll.hp?.value,
+                armor: roll.armor?.value,
+                rollPercentage: {
+                    hp: roll.hp?.percentage,
+                    armor: roll.armor?.percentage,
+                }
             },
         };
     }

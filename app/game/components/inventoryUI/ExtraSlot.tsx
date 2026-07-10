@@ -39,6 +39,7 @@ export default function ExtraSlot({ slot, equipItem, type, setSelectedItem, setI
                             e.preventDefault(); // Prevent browser context menu
                             setSelectedItem(extraItem)
                             setItemInfoOpen(true);
+                            hideItemTooltip();
                         }}>
                             {extraItem && (
                                 <div className={styles.gearSlotIconContainer}>
@@ -83,6 +84,7 @@ export default function ExtraSlot({ slot, equipItem, type, setSelectedItem, setI
                             e.preventDefault(); // Prevent browser context menu
                             setSelectedItem(extraItem)
                             setItemInfoOpen(true);
+                            hideItemTooltip();
                         }}
                         >
                             {extraItem && (

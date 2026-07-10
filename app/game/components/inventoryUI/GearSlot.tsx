@@ -55,6 +55,7 @@ export function GearSlot({ slotIndex, item, selectedSlot, openItemPanel, setSele
                 e.preventDefault(); // Prevent browser context menu
                 setSelectedItem(item)
                 setItemInfoOpen(true);
+                hideItemTooltip();
             }}
             >
 

@@ -270,6 +270,77 @@ class MultiplayerManager {
     });
   }
 
+  async joinPartyRoom(options: {
+    engine: ex.Engine;
+    resources: GameResources;
+    scene: ex.Scene;
+  }) {
+    const { engine, resources, scene } = options;
+
+    if (this.room?.name === "party_room") return;
+
+    if (this.room) {
+      await this.room.leave();
+    }
+
+    this.room = await this.client.joinOrCreate("party_room");
+
+    this.currentRoomKind = "party";
+    this.callbacks = Callbacks.get(this.room);
+
+    this.room.onLeave((code) => {
+      console.warn("Left party room:", code);
+      this.room = null;
+      this.callbacks = null;
+      this.currentRoomKind = null;
+    });
+
+    console.log("Joined party:", this.room.sessionId);
+
+    this.setupPartyRoomListeners(engine, resources, scene);
+    this.setupInventoryListeners();
+    this.sendGetInventory();
+  }
+
+  private setupPartyRoomListeners(
+    engine: ex.Engine,
+    resources: GameResources,
+    scene: ex.Scene
+  ) {
+    if (!this.room || !this.callbacks) return;
+
+    const addRemotePlayer = (player: any, sessionId: string) => {
+      if (sessionId === this.room?.sessionId) {
+        this.setupLocalPlayerCallbacks(player);
+        return;
+      }
+
+      if (this.remotePlayers.has(sessionId)) return;
+
+      const remotePlayer = new RemotePlayer(
+        ex.vec(player.x, player.y),
+        resources
+      );
+
+      scene.add(remotePlayer);
+      this.remotePlayers.set(sessionId, remotePlayer);
+
+      this.callbacks!.onChange(player, () => {
+        remotePlayer.updateFromNetwork(player, engine);
+      });
+    };
+
+    this.callbacks.onAdd("players", addRemotePlayer);
+
+    this.callbacks.onRemove("players", (_player: any, sessionId: string) => {
+      const remotePlayer = this.remotePlayers.get(sessionId);
+      if (!remotePlayer) return;
+
+      remotePlayer.kill();
+      this.remotePlayers.delete(sessionId);
+    });
+  }
+
   sendPlayerMove(data: {
     moveX: number;
     moveY: number;

@@ -83,9 +83,9 @@ export class DungeonRoom extends Room<GameState> {
             spawn.y * 64 + 32
         );
 
-        player.weapon.id = "great_sword1";
-        player.weapon.damage = 10;
-        player.weapon.icon = "great_sword1";
+        //player.weapon.id = "great_sword1";
+        //player.weapon.damage = 10;
+        //player.weapon.icon = "great_sword1";
 
         this.state.players.set(client.sessionId, player);
 

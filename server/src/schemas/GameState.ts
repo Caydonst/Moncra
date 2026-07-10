@@ -27,6 +27,7 @@ export class PlayerState extends Schema {
   @type("number") power: number = 0;
   @type("number") lastMoveTime: number = Date.now();
 
+  @type("number") level: number = 0;
   @type("number") currentXp: number = 0;
   @type("number") xpToNextLvl: number = 100;
 

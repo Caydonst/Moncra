@@ -8,7 +8,7 @@ import { registerInventoryMessages } from "../game_systems/registerInventoryMess
 import { deleteInventoryForSession } from "../game_systems/inventory/testInventoryStore.js";
 
 export class HubRoom extends Room<GameState> {
-  maxClients = 1;
+  maxClients = 4;
   patchRate = 20;
   state = new GameState();
 
