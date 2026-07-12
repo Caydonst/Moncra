@@ -71,7 +71,7 @@ export function GearSlot({ slotIndex, item, selectedSlot, openItemPanel, setSele
                     <div className={styles.weaponXpContainer}>
                         <div className={styles.weaponXp} style={{ width: `${(item.currentXp / item.nextLvlXp) * 100}%` }}></div>
                     </div>
-                    {item.upgradePoints !== 0 && (
+                    {item.availableUpgradePoints > 0 && (
                         <div className={styles.levelAvailableContainer}>
                             <img src={plusIcon.src} />
                         </div>

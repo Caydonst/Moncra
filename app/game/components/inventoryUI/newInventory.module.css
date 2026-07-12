@@ -525,10 +525,10 @@
 }
 .gearWeaponImg {
     position: absolute;
-    left: -20px;
-    bottom: -20px;
-    width: 170%;
-    height: 170%;
+    left: -25px;
+    bottom: -25px;
+    width: 200%;
+    height: 200%;
     object-fit: contain;
     image-rendering: pixelated;
     filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
@@ -628,7 +628,6 @@
     background: rgba(0, 0, 0, 0.6);
 }
 .weaponXp {
-    width: 60%;
     height: 100%;
     background: #5DC669;
 }
@@ -694,26 +693,30 @@
 }
 .selectedWeaponLevel p:nth-child(2) {
     font-size: 12px;
-    color: greenyellow
+    color: #5DC669
 }
 .upgradePointsNotif {
     display: flex;
     justify-content: center;
     align-items: center;
-    color: greenyellow;
-    gap: 10px;
+    color: #5DC669;
+    gap: 6px;
 }
-.upgradePointsNotif h3 {
+.upgradePointsNotifIcon {
     display: flex;
     justify-content: center;
     align-items: center;
     font-weight: 300;
-    border: 2px solid greenyellow;
+    border: 2px solid #5DC669;
     line-height: 1;
     width: 22px;
     height: 22px;
     border-radius: 50%;
     font-size: 7px;
+}
+.upgradePointsNotifIcon img {
+    transform: rotate(-135deg);
+    image-rendering: pixelated;
 }
 .selectedWeaponLevel img {
     width: 8px;
@@ -776,10 +779,10 @@
 }
 .slot .slotIconWeapon {
     position: absolute;
-    left: -30px;
-    bottom: -30px;
-    width: 160%;
-    height: 160%;
+    left: -25px;
+    bottom: -25px;
+    width: 200%;
+    height: 200%;
     object-fit: contain;
     image-rendering: pixelated;
     filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
@@ -1043,10 +1046,10 @@
 }
 .itemInfoHeaderIcon img {
     position: absolute;
-    left: -20px;
-    bottom: -20px;
-    width: 160%;
-    height: 160%;
+    left: -25px;
+    bottom: -25px;
+    width: 200%;
+    height: 200%;
     object-fit: contain;
     image-rendering: pixelated;
     filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
@@ -1095,8 +1098,16 @@
     justify-content: center;
     align-items: start;
     margin-top: 20px;
-    gap: 20px;
+    gap: 30px;
     justify-self: center;
+}
+.statWrapper {
+    display: flex;
+    align-items: start;
+    justify-content: center;
+    flex-direction: column;;
+    gap: 10px;
+    width: 1000px;
 }
 .statContainer {
     display: flex;
@@ -1105,7 +1116,24 @@
     font-size: 16px;
     gap: 15px;
     color: #fff;
-    width: 1000px;
+    width: 100%;
+}
+.masteryContainer {
+    display: flex;
+    align-items: start;
+    justify-content: center;
+    flex-direction: column;
+    gap: 5px;
+}
+.masteryStatsContainer {
+    display: flex;
+    align-items: start;
+    justify-content: center;
+    flex-direction: column;
+    padding-left: 10px;
+}
+.mastery {
+    color: #FFA100;
 }
 .statIconContainer {
     display: flex;
@@ -1205,29 +1233,79 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 20px;
+}
+.upgradePoints {
+    display: flex;
+    align-items: center;
+    justify-content: start;
     gap: 10px;
+    font-size: 30px;
+    color: #FFD800;
+}
+.upgradePoints img {
+    width: 20px;
+    image-rendering: pixelated;
+    transform: rotate(-135deg);
 }
 .pointUpgraderButtons {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 5px;
     position: relative;
     z-index: 10;
 }
-.pointUpgraderButtons button {
+.upgradeButton {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
-    background: transparent;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    width: 40px;
+    height: 40px;
+    background: #5DC669;
+    border: 2px solid #fff;
     border-radius: 50%;
+    position: relative;
 }
-.pointUpgraderButtons button:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: #fff;
+.upgradeButton img {
+    width: 14px;
+    image-rendering: pixelated;
+    transform: rotate(-135deg);
+}
+.upgradeButton:hover {
+    background: transparent;
+}
+.upgradeButton::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    animation: upgradeAnimation 2.5s linear infinite;
+}
+.minusBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    position: relative;
+}
+@keyframes upgradeAnimation {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
 }
 
 @media (max-width: 1550px) {

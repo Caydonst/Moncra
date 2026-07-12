@@ -13,22 +13,21 @@ export const itemDefinitions = {
         rarity: "common",
         attackStyle: "Melee",
         baseStats: {
-            power: 10,
-            damage: 10,
-            crit: 5,
+            power: 130,
+            damage: 40,
+            crit: 20,
         },
-        upgradedStats: {
-            damage: 10,
-            crit: 5,
-            damagePoints: 0,
-            critPoints: 0,
+
+        upgradeValues: {
+            damagePerPoint: 2,
+            critPerPoint: 1,
+            rollPercentagePerPoint: 4,
+            damageMasteryPerPoint: 1,
+            critMasteryPerPoint: 2,
         },
+
         maxLevel: 10,
-        level: 1,
-        currentXp: 190,
-        nextLvlXp: 320,
-        upgradePoints: 1,
-        enchantmentIds: [],
+        enchantmentIds: ["critical_hit", "chain_lightning"],
     },
 
     great_sword1: {
@@ -44,17 +43,16 @@ export const itemDefinitions = {
             damage: 40,
             crit: 20,
         },
-        upgradedStats: {
-            damage: 10,
-            crit: 5,
-            damagePoints: 0,
-            critPoints: 0,
+
+        upgradeValues: {
+            damagePerPoint: 2,
+            critPerPoint: 1,
+            rollPercentagePerPoint: 4,
+            damageMasteryPerPoint: 1,
+            critMasteryPerPoint: 2,
         },
+
         maxLevel: 10,
-        level: 1,
-        currentXp: 190,
-        nextLvlXp: 320,
-        upgradePoints: 1,
         enchantmentIds: ["critical_hit", "chain_lightning"],
     },
 
@@ -66,22 +64,22 @@ export const itemDefinitions = {
         icon: "/weapons/great_sword/ruby_sword.png",
         rarity: "exalted",
         attackStyle: "Melee",
+
         baseStats: {
             power: 130,
             damage: 40,
             crit: 20,
         },
-        upgradedStats: {
-            damage: 10,
-            crit: 5,
-            damagePoints: 0,
-            critPoints: 0,
+
+        upgradeValues: {
+            damagePerPoint: 2,
+            critPerPoint: 1,
+            rollPercentagePerPoint: 4,
+            damageMasteryPerPoint: 1,
+            critMasteryPerPoint: 2,
         },
+
         maxLevel: 10,
-        level: 0,
-        currentXp: 50,
-        nextLvlXp: 240,
-        upgradePoints: 0,
         enchantmentIds: ["critical_hit", "chain_lightning"],
     },
 
@@ -98,17 +96,16 @@ export const itemDefinitions = {
             damage: 40,
             crit: 20,
         },
-        upgradedStats: {
-            damage: 10,
-            crit: 5,
-            damagePoints: 0,
-            critPoints: 0,
+
+        upgradeValues: {
+            damagePerPoint: 2,
+            critPerPoint: 1,
+            rollPercentagePerPoint: 4,
+            damageMasteryPerPoint: 1,
+            critMasteryPerPoint: 2,
         },
+
         maxLevel: 10,
-        level: 3,
-        currentXp: 480,
-        nextLvlXp: 550,
-        upgradePoints: 3,
         enchantmentIds: ["critical_hit", "chain_lightning"],
     },
 
@@ -125,10 +122,24 @@ export const itemDefinitions = {
             power: 130,
         },
         upgradedStats: {
-            hp: 50,
-            armor: 15,
-            hpPoints: 0,
-            armorPoints: 0,
+            hp: {
+                level: 0,
+                value: 100,
+            },
+            armor: {
+                level: 0,
+                value: 20,
+            }
+        },
+        masteryStats: {
+            hp: {
+                level: 0,
+                value: 0,
+            },
+            armor: {
+                level: 0,
+                value: 0,
+            }
         },
         maxLevel: 10,
         level: 0,
@@ -139,7 +150,7 @@ export const itemDefinitions = {
     },
 
     iron_arms: {
-        id: "iron_gauntlet",
+        id: "iron_arms",
         name: "Iron Gauntlet",
         type: "Armor",
         kind: "arms",
@@ -151,10 +162,24 @@ export const itemDefinitions = {
             power: 130,
         },
         upgradedStats: {
-            hp: 50,
-            armor: 15,
-            hpPoints: 0,
-            armorPoints: 0,
+            hp: {
+                level: 0,
+                value: 100,
+            },
+            armor: {
+                level: 0,
+                value: 20,
+            }
+        },
+        masteryStats: {
+            hp: {
+                level: 0,
+                value: 0,
+            },
+            armor: {
+                level: 0,
+                value: 0,
+            }
         },
         maxLevel: 10,
         level: 1,
@@ -177,10 +202,24 @@ export const itemDefinitions = {
             power: 130,
         },
         upgradedStats: {
-            hp: 50,
-            armor: 15,
-            hpPoints: 0,
-            armorPoints: 0,
+            hp: {
+                level: 0,
+                value: 100,
+            },
+            armor: {
+                level: 0,
+                value: 20,
+            }
+        },
+        masteryStats: {
+            hp: {
+                level: 0,
+                value: 0,
+            },
+            armor: {
+                level: 0,
+                value: 0,
+            }
         },
         maxLevel: 10,
         level: 0,
@@ -203,10 +242,24 @@ export const itemDefinitions = {
             power: 130,
         },
         upgradedStats: {
-            hp: 50,
-            armor: 15,
-            hpPoints: 0,
-            armorPoints: 0,
+            hp: {
+                level: 0,
+                value: 100,
+            },
+            armor: {
+                level: 0,
+                value: 20,
+            }
+        },
+        masteryStats: {
+            hp: {
+                level: 0,
+                value: 0,
+            },
+            armor: {
+                level: 0,
+                value: 0,
+            }
         },
         maxLevel: 10,
         level: 0,

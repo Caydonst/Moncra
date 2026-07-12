@@ -82,6 +82,7 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
     useEffect(() => {
         if (!inventoryOpen) {
             setItemInfoOpen(false);
+            console.log("INVENTORY:", inventory)
         }
     }, [inventoryOpen])
 

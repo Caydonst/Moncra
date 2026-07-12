@@ -53,7 +53,7 @@ export default function ExtraSlot({ slot, equipItem, type, setSelectedItem, setI
                             <div className={styles.weaponXpContainer}>
                                 <div className={styles.weaponXp} style={{ width: `${(extraItem.currentXp / extraItem.nextLvlXp) * 100}%` }}></div>
                             </div>
-                            {extraItem.upgradePoints !== 0 && (
+                            {extraItem.availableUpgradePoints !== 0 && (
                                 <div className={styles.levelAvailableContainer}>
                                     <img src={plusIcon.src} />
                                 </div>
@@ -99,7 +99,7 @@ export default function ExtraSlot({ slot, equipItem, type, setSelectedItem, setI
                             <div className={styles.weaponXpContainer}>
                                 <div className={styles.weaponXp} style={{ width: `${(extraItem.currentXp / extraItem.nextLvlXp) * 100}%` }}></div>
                             </div>
-                            {extraItem.upgradePoints !== 0 && (
+                            {extraItem.availableUpgradePoints > 0 && (
                                 <div className={styles.levelAvailableContainer}>
                                     <img src={plusIcon.src} />
                                 </div>

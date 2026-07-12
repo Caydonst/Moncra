@@ -447,8 +447,8 @@ class MultiplayerManager {
     this.room?.send("unequip_item", { slot });
   }
 
-  sendUpgradeItem(uid: string) {
-    this.room?.send("upgrade_item", { uid });
+  sendUpgradeItem(uid: string, statPoints: {damage: number, crit: number, hp: number, armor: number}) {
+    this.room?.send("upgrade_item", { uid, statPoints });
   }
 
   sendFloorChange(targetFloor: number) {

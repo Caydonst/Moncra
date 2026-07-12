@@ -29,6 +29,17 @@ type armorUpgradedStats = {
     armorPoints: number;
 }
 
+type weaponMasteryStats = {
+    damage: number;
+    crit: number;
+}
+
+type armorMasteryStats = {
+    hp: number;
+    armor: number;
+}
+
+/*
 export type WeaponDefinition = {
     id: string;
     name: string;
@@ -42,12 +53,59 @@ export type WeaponDefinition = {
         damage: number;
         crit: number;
     };
-    upgradedStats: weaponUpgradedStats;
+    upgradedStats: {
+        damage: {
+            level: number;
+            value: number;
+        }
+        crit: {
+            level: number;
+            value: number;
+        }
+    };
+    masteryStats: {
+        damage: {
+            level: number;
+            value: number;
+        }
+        crit: {
+            level: number;
+            value: number;
+        }
+    }
     maxLevel: number;
     level: number;
     currentXp: number;
     nextLvlXp: number;
     upgradePoints: number;
+    enchantmentIds: string[];
+};
+*/
+
+export type WeaponDefinition = {
+    id: string;
+    name: string;
+    type: "Weapon";
+    kind: WeaponKind;
+    icon: string;
+    rarity: Rarity;
+    attackStyle: "Melee" | "Ranged";
+
+    baseStats: {
+        power: number;
+        damage: number;
+        crit: number;
+    };
+
+    upgradeValues: {
+        damagePerPoint: number;
+        critPerPoint: number;
+        rollPercentagePerPoint: number;
+        damageMasteryPerPoint: number;
+        critMasteryPerPoint: number;
+    };
+
+    maxLevel: number;
     enchantmentIds: string[];
 };
 
@@ -63,7 +121,26 @@ export type ArmorDefinition = {
         armor: number;
         power: number;
     };
-    upgradedStats: armorUpgradedStats;
+    upgradedStats: {
+        hp: {
+            level: number;
+            value: number;
+        }
+        armor: {
+            level: number;
+            value: number;
+        }
+    };
+    masteryStats: {
+        hp: {
+            level: number;
+            value: number;
+        }
+        armor: {
+            level: number;
+            value: number;
+        }
+    };
     maxLevel: number;
     level: number;
     currentXp: number;

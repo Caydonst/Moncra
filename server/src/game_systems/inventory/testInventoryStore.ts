@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import type { ServerInventory } from "./inventoryTypes.js";
 import { itemDefinitions } from "../items/itemDefinitions.js";
 import { PlayerState } from "../../schemas/GameState.js";
+import { createStartingInventory } from "./createStartingInventory.js"
 
 const inventories = new Map<string, ServerInventory>();
 
@@ -23,7 +24,7 @@ export function getInventoryForSession(sessionId: string, player: PlayerState): 
 export function deleteInventoryForSession(sessionId: string) {
     inventories.delete(sessionId);
 }
-
+/*
 function createStartingInventory(): ServerInventory {
     return {
         gold: 100000,
@@ -77,6 +78,7 @@ function createStartingInventory(): ServerInventory {
         ],
     };
 }
+    */
 
 // server/inventory/equipItemInInventory.ts
 

@@ -1,7 +1,7 @@
 import { hydrateInventory } from "./inventory/hydrateInventory.js";
 import { hydrateItem } from "./inventory/hydrateItem.js";
 import { applyInventoryStatsToPlayer, equipItemInInventory, getInventoryForSession, unequipItemInInventory } from "./inventory/testInventoryStore.js";
-import { upgradeItem } from "./upgrading/upgradeItem.js";
+import { upgradeItem } from "./items/itemUpgrading.js";
 
 export function registerInventoryMessages(room: Room<GameState>) {
     room.onMessage("equip_item", (client, message: { uid: string }) => {
@@ -60,21 +60,26 @@ export function registerInventoryMessages(room: Room<GameState>) {
         });
     });
 
-    room.onMessage("upgrade_item", (client, message: { uid: string }) => {
+    room.onMessage("upgrade_item", (client, message: { uid: string, statPoints: { damage: number, crit: number, hp: number, armor: number } }) => {
         const player = room.state.players.get(client.sessionId);
         const inventory = getInventoryForSession(client.sessionId, player);
 
-        const result = upgradeItem(inventory, message.uid);
+        const result = upgradeItem(inventory, message.uid, message.statPoints);
 
-        if (!result.ok) {
+        if (!result) {
+            console.log("Item found but not upgraded", result);
+            return;
+        }
+
+        /*if (!result.ok) {
             client.send("inventory_error", {
                 error: result.error,
             });
             return;
-        }
+        }*/
 
         client.send("item_upgraded", {
-            upgradedItem: hydrateItem(result.item),
+            upgradedItem: hydrateItem(result),
             inventory: hydrateInventory(inventory),
         });
 

@@ -53,3 +53,9 @@ function findItemByUid(inventory: ServerInventory, uid: string): InventoryItemIn
 
     return allItems.find(item => item.uid === uid) ?? null;
 }
+
+function newUpgradeItem(inventory: ServerInventory, uid: string) {
+    const item = findItemByUid(inventory, uid);
+
+    
+}

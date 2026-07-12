@@ -7,6 +7,7 @@ import hpIcon from "../../assets/icons/hp_icon.png"
 import armorStatIcon from "../../assets/icons/armor_stat_icon.png"
 import { useEffect, useState } from "react"
 import PointUpgrader from "./pointUpgrader"
+import PointsAvailableIcon from "../../assets/icons/points_available_icon.png"
 
 type Props = {
     selectedItem: any;
@@ -22,7 +23,7 @@ type StatPoints = {
 };
 
 export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpen }: Props) {
-    const [upgradePoints, setUpgradePoints] = useState(selectedItem?.upgradePoints);
+    const [upgradePoints, setUpgradePoints] = useState(selectedItem?.availableUpgradePoints);
     const [statPoints, setStatPoints] = useState<StatPoints>({
         damage: 0,
         crit: 0,
@@ -41,13 +42,19 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
     }
 
     useEffect(() => {
-        setUpgradePoints(selectedItem?.upgradePoints ?? 0);
+        console.log("SELECTED ITEM:", selectedItem);
+        console.log(
+            "CURRENT UPGRADE POINTS:",
+            selectedItem?.currentUpgradePoints
+        );
+
+        setUpgradePoints(selectedItem?.availableUpgradePoints ?? 0);
 
         setStatPoints({
-            damage: selectedItem?.upgradedStats?.damagePoints ?? 0,
-            crit: selectedItem?.upgradedStats?.critPoints ?? 0,
-            hp: selectedItem?.upgradedStats?.hpPoints ?? 0,
-            armor: selectedItem?.upgradedStats?.armorPoints ?? 0,
+            damage: selectedItem?.currentUpgradePoints?.damage ?? 0,
+            crit: selectedItem?.currentUpgradePoints?.crit ?? 0,
+            hp: selectedItem?.currentUpgradePoints?.hp ?? 0,
+            armor: selectedItem?.currentUpgradePoints?.armor ?? 0,
         });
     }, [selectedItem]);
 
@@ -69,6 +76,37 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
             };
         });
     }
+
+    async function upgrade(
+        stat: keyof StatPoints,
+        newValue: number
+    ) {
+        const { multiplayer } = await import("../../network/multiplayer");
+
+        const updatedStatPoints: StatPoints = {
+            ...statPoints,
+            [stat]: newValue,
+        };
+
+        multiplayer.sendUpgradeItem(
+            selectedItem.uid,
+            updatedStatPoints
+        );
+    }
+
+    const stats: UpgradeableStat[] = [
+        "damage",
+        "crit",
+        "hp",
+        "armor",
+    ];
+
+    const icons: Record<UpgradeableStat, typeof damageIcon> = {
+        damage: damageIcon,
+        crit: critIcon,
+        hp: hpIcon,
+        armor: armorStatIcon,
+    };
 
     return (
         <div className={itemInfoOpen ? `${styles.itemInfoPanel} ${styles.open}` : styles.itemInfoPanel}>
@@ -102,38 +140,96 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
                         </div>
                         <div className={styles.itemStatsContainer}>
                             {selectedItem?.level !== undefined && (
-                                <div className={styles.selectedWeaponLevel} style={{ color: `${selectedItem?.level === 10 ? "#FFE500" : "#fff"}` }}>
+                                <div className={styles.selectedWeaponLevel} style={{ color: `${selectedItem?.level === 10 ? "#FFD000" : "#fff"}` }}>
                                     <p>Level {selectedItem?.level}</p>
                                     {upgradePoints > 0 && (
                                         <div className={styles.upgradePointsNotif}>
-                                            <h3>i</h3>
+                                            <div className={styles.upgradePointsNotifIcon}>
+                                                <img src={PointsAvailableIcon.src} />
+                                            </div>
                                             <p>{upgradePoints} upgrade points available!</p>
                                         </div>
                                     )}
                                 </div>
                             )}
+                            {stats.map((stat) => {
+                                const upgradedStat = selectedItem?.upgradedStats?.[stat];
+
+                                if (upgradedStat === undefined) {
+                                    return null;
+                                }
+
+                                const percentage = upgradedStat.percentage ?? 0;
+                                const value = upgradedStat.value ?? 0;
+                                const minimumPoints =
+                                    selectedItem?.currentUpgradePoints?.[stat] ?? 0;
+
+                                return (
+                                    <div key={stat} className={styles.statWrapper}>
+                                        <PointUpgrader
+                                            statPoints={statPoints[stat]}
+                                            minimumPoints={minimumPoints}
+                                            upgradePoints={upgradePoints}
+                                            onChange={(newStatPoints, newUpgradePoints) => {
+                                                setPointsForStat(stat, newStatPoints);
+                                                setUpgradePoints(newUpgradePoints);
+                                            }}
+                                            upgrade={(newStatPoints) => {
+                                                upgrade(stat, newStatPoints);
+                                            }}
+                                        />
+
+                                        <div className={styles.statContainer}>
+                                            <img
+                                                src={icons[stat].src}
+                                                className={styles.damageIcon}
+                                            />
+
+                                            <div
+                                                className={styles.statMeter}
+                                                style={{
+                                                    outline:
+                                                        percentage === 100
+                                                            ? "2px solid #FFE900"
+                                                            : undefined,
+                                                }}
+                                            >
+                                                <div
+                                                    className={styles.percentage}
+                                                    style={{
+                                                        width: `${percentage}%`,
+                                                        background: getRollColor(percentage),
+                                                    }}
+                                                />
+                                            </div>
+
+                                            <div className={styles.tooltipStatPercentage}>
+                                                <p>
+                                                    {value}
+                                                    {stat === "crit" ? "%" : ""}
+                                                </p>
+
+                                                <p
+                                                    style={{
+                                                        color: getRollColor(percentage),
+                                                    }}
+                                                >
+                                                    {percentage}%
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+
+                            {/*}
                             {selectedItem.stats?.damage && (
                                 <>
-                                    <div className={styles.statContainer}>
-                                        <img src={damageIcon.src} className={styles.damageIcon} />
-                                        <div className={styles.statMeter} style={{ outline: `${selectedItem?.stats?.rollPercentage.damage === 100 ? "2px solid #FFE900" : ""}` }}>
-                                            <div
-                                                className={styles.percentage}
-                                                style={{
-                                                    width: `${selectedItem?.stats?.rollPercentage.damage}%`,
-                                                    background: getRollColor(
-                                                        selectedItem?.stats?.rollPercentage.damage
-                                                    ),
-                                                }}
-                                            />
-                                        </div>
-                                        <div className={styles.tooltipStatPercentage}>
-                                            <p>{selectedItem?.stats.damage}</p>
-                                            <p style={{ color: getRollColor(selectedItem?.stats?.rollPercentage.damage) }}>{selectedItem?.stats?.rollPercentage.damage}%</p>
-                                        </div>
+                                    <div className={styles.statWrapper}>
                                         <PointUpgrader
                                             statPoints={statPoints.damage}
-                                            minimumPoints={selectedItem?.upgradedStats?.damagePoints ?? 0}
+                                            minimumPoints={selectedItem?.upgradedStats?.damage.level ?? 0}
                                             upgradePoints={upgradePoints}
                                             onChange={(newDamagePoints, newUpgradePoints) => {
                                                 setStatPoints(previous => ({
@@ -143,39 +239,81 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
 
                                                 setUpgradePoints(newUpgradePoints);
                                             }}
+                                            upgrade={upgrade}
                                         />
+                                        {selectedItem.masteryStats.damage.level > 0 && (
+                                            
+                                            <div className={styles.masteryContainer}>
+                                                <p className={styles.mastery}>{selectedItem.masteryStats.damage.level} Damage Mastery</p>
+                                                <div className={styles.masteryStatsContainer}>
+                                                    <p>+ {selectedItem.masteryStats.damage.value} Damage</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div className={styles.statContainer}>
+                                            <img src={damageIcon.src} className={styles.damageIcon} />
+                                            <div className={styles.statMeter} style={{ outline: `${selectedItem?.stats?.rollPercentage.damage === 100 ? "2px solid #FFE900" : ""}` }}>
+                                                <div
+                                                    className={styles.percentage}
+                                                    style={{
+                                                        width: `${selectedItem?.stats?.rollPercentage.damage}%`,
+                                                        background: getRollColor(
+                                                            selectedItem?.stats?.rollPercentage.damage
+                                                        ),
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className={styles.tooltipStatPercentage}>
+                                                <p>{selectedItem?.stats.damage}</p>
+                                                <p style={{ color: getRollColor(selectedItem?.stats?.rollPercentage.damage) }}>{selectedItem?.stats?.rollPercentage.damage}%</p>
+                                            </div>
+
+                                        </div>
                                     </div>
-                                    <div className={styles.statContainer}>
-                                        <img src={critIcon.src} className={styles.damageIcon} />
-                                        <div className={styles.statMeter} style={{ outline: `${selectedItem?.stats?.rollPercentage.crit === 100 ? "2px solid #FFE900" : ""}` }}>
-                                            <div
-                                                className={styles.percentage}
-                                                style={{
-                                                    width: `${selectedItem?.stats?.rollPercentage.crit}%`,
-                                                    background: getRollColor(
-                                                        selectedItem?.stats?.rollPercentage.crit
-                                                    ),
-                                                }}
-                                            />
-                                        </div>
-                                        <div className={styles.tooltipStatPercentage}>
-                                            <p>{selectedItem?.stats.crit}</p>
-                                            <p style={{ color: getRollColor(selectedItem?.stats?.rollPercentage.crit) }}>{selectedItem?.stats?.rollPercentage.crit}%</p>
-                                        </div>
+                                    <div className={styles.statWrapper}>
                                         <PointUpgrader
                                             statPoints={statPoints.crit}
-                                            minimumPoints={selectedItem?.upgradedStats?.critPoints ?? 0}
+                                            minimumPoints={selectedItem?.upgradedStats?.crit.level ?? 0}
                                             upgradePoints={upgradePoints}
-                                            onChange={(newCritPoints, newUpgradePoints) => {
+                                            onChange={(newDamagePoints, newUpgradePoints) => {
                                                 setStatPoints(previous => ({
                                                     ...previous,
-                                                    crit: newCritPoints,
+                                                    crit: newDamagePoints,
                                                 }));
 
                                                 setUpgradePoints(newUpgradePoints);
                                             }}
+                                            upgrade={upgrade}
                                         />
+                                        {selectedItem.masteryStats.crit.level > 0 && (
+
+                                            <div className={styles.masteryContainer}>
+                                                <p className={styles.mastery}>{selectedItem.masteryStats.crit.level} Crit Mastery</p>
+                                                <div className={styles.masteryStatsContainer}>
+                                                    <p>+ {selectedItem.masteryStats.crit.value}% Crit</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div className={styles.statContainer}>
+                                            <img src={critIcon.src} className={styles.damageIcon} />
+                                            <div className={styles.statMeter} style={{ outline: `${selectedItem?.stats?.rollPercentage.crit === 100 ? "2px solid #FFE900" : ""}` }}>
+                                                <div
+                                                    className={styles.percentage}
+                                                    style={{
+                                                        width: `${selectedItem?.stats?.rollPercentage.crit}%`,
+                                                        background: getRollColor(
+                                                            selectedItem?.stats?.rollPercentage.crit
+                                                        ),
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className={styles.tooltipStatPercentage}>
+                                                <p>{selectedItem?.stats.crit}%</p>
+                                                <p style={{ color: getRollColor(selectedItem?.stats?.rollPercentage.crit) }}>{selectedItem?.stats?.rollPercentage.crit}%</p>
+                                            </div>
+                                        </div>
                                     </div>
+                                    
                                 </>
                             )}
                             {selectedItem.stats?.hp && (
@@ -218,6 +356,7 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
                                     </div>
                                 </>
                             )}
+                                */}
                         </div>
                     </div>
                     {selectedItem.enchantments !== undefined && (
