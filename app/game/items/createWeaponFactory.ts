@@ -7,7 +7,7 @@ export async function createWeaponFactory(item: any, gameState: any) {
     const swordImages: Record<string, ex.ImageSource> = {
         great_sword0: scene.resources.Images.greatSword0,
         great_sword1: scene.resources.Images.greatSword,
-        great_sword2: scene.resources.Images.greatSword2,
+        great_sword2: scene.resources.Images.greatSword1,
         obsidian_sword: scene.resources.Images.greatSword1,
     };
 

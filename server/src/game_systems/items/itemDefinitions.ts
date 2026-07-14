@@ -61,7 +61,7 @@ export const itemDefinitions = {
         name: "Sword",
         type: "Weapon",
         kind: "Great Sword",
-        icon: "/weapons/great_sword/ruby_sword.png",
+        icon: "/weapons/great_sword/tidal2.png",
         rarity: "exalted",
         attackStyle: "Melee",
 
@@ -121,31 +121,15 @@ export const itemDefinitions = {
             armor: 15,
             power: 130,
         },
-        upgradedStats: {
-            hp: {
-                level: 0,
-                value: 100,
-            },
-            armor: {
-                level: 0,
-                value: 20,
-            }
-        },
-        masteryStats: {
-            hp: {
-                level: 0,
-                value: 0,
-            },
-            armor: {
-                level: 0,
-                value: 0,
-            }
+        upgradeValues: {
+            damagePerPoint: 2,
+            critPerPoint: 1,
+            rollPercentagePerPoint: 4,
+            damageMasteryPerPoint: 1,
+            critMasteryPerPoint: 2,
         },
         maxLevel: 10,
-        level: 0,
-        currentXp: 100,
-        nextLvlXp: 240,
-        upgradePoints: 0,
+        
         enchantmentIds: [],
     },
 
@@ -161,31 +145,14 @@ export const itemDefinitions = {
             armor: 15,
             power: 130,
         },
-        upgradedStats: {
-            hp: {
-                level: 0,
-                value: 100,
-            },
-            armor: {
-                level: 0,
-                value: 20,
-            }
-        },
-        masteryStats: {
-            hp: {
-                level: 0,
-                value: 0,
-            },
-            armor: {
-                level: 0,
-                value: 0,
-            }
+        upgradeValues: {
+            damagePerPoint: 2,
+            critPerPoint: 1,
+            rollPercentagePerPoint: 4,
+            damageMasteryPerPoint: 1,
+            critMasteryPerPoint: 2,
         },
         maxLevel: 10,
-        level: 1,
-        currentXp: 200,
-        nextLvlXp: 240,
-        upgradePoints: 1,
         enchantmentIds: [],
     },
 
@@ -201,31 +168,14 @@ export const itemDefinitions = {
             armor: 15,
             power: 130,
         },
-        upgradedStats: {
-            hp: {
-                level: 0,
-                value: 100,
-            },
-            armor: {
-                level: 0,
-                value: 20,
-            }
-        },
-        masteryStats: {
-            hp: {
-                level: 0,
-                value: 0,
-            },
-            armor: {
-                level: 0,
-                value: 0,
-            }
+        upgradeValues: {
+            damagePerPoint: 2,
+            critPerPoint: 1,
+            rollPercentagePerPoint: 4,
+            damageMasteryPerPoint: 1,
+            critMasteryPerPoint: 2,
         },
         maxLevel: 10,
-        level: 0,
-        currentXp: 100,
-        nextLvlXp: 240,
-        upgradePoints: 0,
         enchantmentIds: [],
     },
 
@@ -241,31 +191,14 @@ export const itemDefinitions = {
             armor: 15,
             power: 130,
         },
-        upgradedStats: {
-            hp: {
-                level: 0,
-                value: 100,
-            },
-            armor: {
-                level: 0,
-                value: 20,
-            }
-        },
-        masteryStats: {
-            hp: {
-                level: 0,
-                value: 0,
-            },
-            armor: {
-                level: 0,
-                value: 0,
-            }
+        upgradeValues: {
+            damagePerPoint: 2,
+            critPerPoint: 1,
+            rollPercentagePerPoint: 4,
+            damageMasteryPerPoint: 1,
+            critMasteryPerPoint: 2,
         },
         maxLevel: 10,
-        level: 0,
-        currentXp: 100,
-        nextLvlXp: 240,
-        upgradePoints: 0,
         enchantmentIds: [],
     },
 

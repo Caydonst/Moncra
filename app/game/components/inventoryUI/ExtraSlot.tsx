@@ -3,6 +3,7 @@ import powerIconImg from "../../assets/misc/power_icon.png"
 import { Armor, Weapon } from "../../items/ItemTypes";
 import { colors } from "../../utils/uiUtils";
 import plusIcon from "../../assets/icons/plus_icon.png"
+import upgradeIcon from "@/app/game/assets/icons/upgrade_button_icon.png"
 
 type Props = {
     slot: any;
@@ -55,7 +56,7 @@ export default function ExtraSlot({ slot, equipItem, type, setSelectedItem, setI
                             </div>
                             {extraItem.availableUpgradePoints !== 0 && (
                                 <div className={styles.levelAvailableContainer}>
-                                    <img src={plusIcon.src} />
+                                    <img src={upgradeIcon.src} />
                                 </div>
                             )}
                         </div>
@@ -101,7 +102,7 @@ export default function ExtraSlot({ slot, equipItem, type, setSelectedItem, setI
                             </div>
                             {extraItem.availableUpgradePoints > 0 && (
                                 <div className={styles.levelAvailableContainer}>
-                                    <img src={plusIcon.src} />
+                                    <img src={upgradeIcon.src} />
                                 </div>
                             )}
                         </div>

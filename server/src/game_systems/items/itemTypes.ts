@@ -121,31 +121,14 @@ export type ArmorDefinition = {
         armor: number;
         power: number;
     };
-    upgradedStats: {
-        hp: {
-            level: number;
-            value: number;
-        }
-        armor: {
-            level: number;
-            value: number;
-        }
-    };
-    masteryStats: {
-        hp: {
-            level: number;
-            value: number;
-        }
-        armor: {
-            level: number;
-            value: number;
-        }
+    upgradeValues: {
+        hpPerPoint: number;
+        armorPerPoint: number;
+        rollPercentagePerPoint: number;
+        hpMasteryPerPoint: number;
+        armorMasteryPerPoint: number;
     };
     maxLevel: number;
-    level: number;
-    currentXp: number;
-    nextLvlXp: number;
-    upgradePoints: number;
     enchantmentIds: string[];
 };
 

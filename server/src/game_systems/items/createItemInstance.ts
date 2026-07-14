@@ -31,10 +31,11 @@ export function createItemInstance(
             itemId: def.id,
             type: "Weapon",
             kind: def.kind,
-
+            rarity: def.rarity,
             level: 3,
             currentXp: 30,
             availableUpgradePoints: 3,
+            power: def.baseStats.power,
 
             rolledStats: {
                 damage: {
@@ -62,6 +63,17 @@ export function createItemInstance(
                 crit: 0,
             },
 
+            masteryStats: {
+                damage: {
+                    level: 0,
+                    value: 0,
+                },
+                crit: {
+                    level: 0,
+                    value: 0,
+                },
+            },
+
             enchantmentIds: [],
         };
 
@@ -80,10 +92,11 @@ export function createItemInstance(
             itemId: def.id,
             type: "Armor",
             kind: def.kind,
-
+            rarity: def.rarity,
             level: 0,
             currentXp: 80,
             availableUpgradePoints: 3,
+            power: def.baseStats.power,
 
             rolledStats: {
                 hp: {
@@ -109,6 +122,17 @@ export function createItemInstance(
             currentUpgradePoints: {
                 hp: 0,
                 armor: 0,
+            },
+
+            masteryStats: {
+                hp: {
+                    level: 0,
+                    value: 0,
+                },
+                armor: {
+                    level: 0,
+                    value: 0,
+                },
             },
 
             enchantmentIds: [],

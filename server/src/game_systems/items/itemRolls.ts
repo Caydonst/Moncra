@@ -8,50 +8,50 @@ const baseArmor = 20;
 const multipliers = {
     common: {
         min: 0.8,
-        max: 1.0,
+        max: 1.8,
         crit: {
-            min: 5,
-            max: 7,
+            min: 1,
+            max: 5,
         }
     },
     uncommon: {
-        min: 0.95,
-        max: 1.2,
+        min: 1.6,
+        max: 2.6,
         crit: {
-            min: 6,
+            min: 4,
             max: 9,
         }
     },
     rare: {
-        min: 1.15,
-        max: 1.45,
+        min: 2.4,
+        max: 3.4,
         crit: {
             min: 8,
-            max: 12,
+            max: 13,
         }
     },
     epic: {
-        min: 1.40,
-        max: 1.75,
+        min: 3.2,
+        max: 4.2,
         crit: {
-            min: 11,
-            max: 16,
+            min: 12,
+            max: 17,
         }
     },
     legendary: {
-        min: 1.70,
-        max: 2.15,
+        min: 4.0,
+        max: 5.0,
         crit: {
-            min: 15,
-            max: 22,
+            min: 16,
+            max: 21,
         }
     },
     exalted: {
-        min: 2.10,
-        max: 2.70,
+        min: 4.8,
+        max: 5.8,
         crit: {
-            min: 21,
-            max: 30,
+            min: 20,
+            max: 25,
         }
     },
 }
@@ -95,4 +95,27 @@ function randomBetween(min: number, max: number, decimals = 0) {
         value: rolledValue,
         percentage: Math.round(percentage)
     };
+}
+
+type UpgradeStat = "damage" | "crit" | "hp" | "armor";
+
+export function getMaxStatValue(
+    rarity: keyof typeof multipliers,
+    stat: UpgradeStat
+): number {
+    const rarityMultiplier = multipliers[rarity];
+
+    switch (stat) {
+        case "damage":
+            return Math.round(baseAttack * rarityMultiplier.max);
+
+        case "hp":
+            return Math.round(baseHp * rarityMultiplier.max);
+
+        case "armor":
+            return Math.round(baseArmor * rarityMultiplier.max);
+
+        case "crit":
+            return rarityMultiplier.crit.max;
+    }
 }

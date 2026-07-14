@@ -162,41 +162,32 @@ export function unequipArmor(
 }
 
 export function getInventoryStats(inventory: ServerInventory) {
-
     const equippedItems = [
         inventory.weapon,
         inventory.helmet,
         inventory.arms,
         inventory.chest,
         inventory.legs,
-    ].filter(Boolean);
+    ].filter((item): item is NonNullable<typeof item> => item !== null);
 
     const stats = {
-        hp: 5245,
-        armor: 2407,
-        damage: 1068,
-        crit: 834,
-        power: 1675,
+        hp: 0,
+        armor: 0,
+        damage: 0,
+        crit: 0,
+        power: 0,
     };
 
     for (const item of equippedItems) {
-        const def = itemDefinitions[item!.itemId];
-        if (!def) continue;
+        stats.power += item.power;
 
-        const level = item!.level ?? 0;
-
-        if (def.type === "Weapon") {
-            stats.damage += def.baseStats.damage + level * 2;
-            stats.power += def.baseStats.power + level * 2;
-            stats.crit += def.baseStats.crit ?? 0;
+        if (item.type === "Weapon") {
+            stats.damage += item.upgradedStats.damage.value;
+            stats.crit += item.upgradedStats.crit.value;
+        } else {
+            stats.hp += item.upgradedStats.hp.value;
+            stats.armor += item.upgradedStats.armor.value;
         }
-
-        if (def.type === "Armor") {
-            stats.hp += def.baseStats.hp + level * 5;
-            stats.armor += def.baseStats.armor + level * 2;
-            stats.power += def.baseStats.power + level * 2;
-        }
-
     }
 
     stats.power = Math.round(stats.power / 5);

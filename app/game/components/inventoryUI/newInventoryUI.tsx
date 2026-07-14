@@ -216,6 +216,46 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
         };
     }, [selectedSlot]);
 
+    useEffect(() => {
+        function handleItemUpgraded(e: Event) {
+            const event = e as CustomEvent<{
+                upgradedItem: Weapon | Armor;
+                inventory: any;
+            }>;
+
+            const { upgradedItem, inventory: updatedInventory } =
+                event.detail;
+
+            const clientInventory = createClientInventory(
+                updatedInventory,
+                gameState
+            );
+
+            gameState.inventory = clientInventory;
+            setInventory(clientInventory);
+
+            setSelectedItem(previous => {
+                if (!previous) return previous;
+
+                return previous.uid === upgradedItem.uid
+                    ? upgradedItem
+                    : previous;
+            });
+        }
+
+        window.addEventListener(
+            "item_upgraded",
+            handleItemUpgraded
+        );
+
+        return () => {
+            window.removeEventListener(
+                "item_upgraded",
+                handleItemUpgraded
+            );
+        };
+    }, [setInventory, setSelectedItem]);
+
     function showItemTooltip(
         item: Weapon | Armor,
         e: React.MouseEvent
@@ -411,8 +451,7 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                 </div>
                             </div>
                         </div>
-                    </div>    
-                    <div className={styles.bgLightInventory}></div>        
+                    </div>          
                 </div>
             </div>
             {hoveredItem && (

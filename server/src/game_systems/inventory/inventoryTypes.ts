@@ -12,31 +12,46 @@ export type WeaponUpgradeStats = {
     rollPercentage: number;
 };
 
-export type WeaponMasteryStats = {
-    damage: number;
-    crit: number;
-};
-
 export type ArmorUpgradeStats = {
     hp: number;
     armor: number;
     rollPercentage: number;
 };
 
-export type ArmorMasteryStats = {
-    hp: number;
-    armor: number;
+export type WeaponMasteryStats = {
+    damage: {
+        level: number,
+        value: number,
+    };
+    crit: {
+        level: number,
+        value: number,
+    };
 };
+
+export type ArmorMasteryStats = {
+    hp: {
+        level: number,
+        value: number,
+    };
+    armor: {
+        level: number,
+        value: number,
+    };
+};
+
+type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary" | "exalted"
 
 export type WeaponItemInstance = {
     uid: string;
     itemId: string;
     type: "Weapon";
     kind: WeaponKind;
-
+    rarity: Rarity;
     level: number;
     currentXp: number;
     availableUpgradePoints: number;
+    power: number;
 
     rolledStats: {
         damage: {
@@ -75,10 +90,11 @@ export type ArmorItemInstance = {
     itemId: string;
     type: "Armor";
     kind: ArmorKind;
-
+    rarity: Rarity;
     level: number;
     currentXp: number;
     availableUpgradePoints: number;
+    power: number;
 
     rolledStats: {
         hp: {

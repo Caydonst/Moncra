@@ -78,8 +78,10 @@ export function registerInventoryMessages(room: Room<GameState>) {
             return;
         }*/
 
+        console.log(inventory);
+
         client.send("item_upgraded", {
-            upgradedItem: hydrateItem(result),
+            upgradedItem: hydrateItem(result.item),
             inventory: hydrateInventory(inventory),
         });
 

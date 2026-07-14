@@ -11,15 +11,15 @@ export const colors = {
     },
     rare: {
         hex: "#32FFFF",
-        rgba: "#14663E",
+        rgba: "#146666",
     },
     epic: {
         hex: "#F132FF",
         rgba: "#5F1466",
     },
     legendary: {
-        hex: "#FFA500",
-        rgba: "#633D00",
+        hex: "#FFAE00",
+        rgba: "#664400",
     },
     relic: {
         hex: "#FF4E32",
@@ -45,3 +45,12 @@ export const specializationColors = {
         background: "#332500"
     },
 } as const;
+
+
+
+export const upgradeNumbers = {
+    "damage": 10,
+    "crit": 0.5,
+    "hp": 10,
+    "armor": 2,
+}

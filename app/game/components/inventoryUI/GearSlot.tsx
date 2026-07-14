@@ -5,6 +5,7 @@ import powerIconImg from "../../assets/misc/power_icon.png"
 import { Weapon, Armor } from "../../items/ItemTypes";
 import plusIcon from "@/app/game/assets/icons/plus_icon.png"
 import lockIcon from "@/app/game/assets/icons/lock_icon.png"
+import upgradeIcon from "@/app/game/assets/icons/upgrade_button_icon.png"
 
 type Props = {
     slotIndex: number;
@@ -73,7 +74,7 @@ export function GearSlot({ slotIndex, item, selectedSlot, openItemPanel, setSele
                     </div>
                     {item.availableUpgradePoints > 0 && (
                         <div className={styles.levelAvailableContainer}>
-                            <img src={plusIcon.src} />
+                            <img src={upgradeIcon.src} />
                         </div>
                     )}
                 </>

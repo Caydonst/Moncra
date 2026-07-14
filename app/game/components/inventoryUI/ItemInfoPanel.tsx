@@ -8,6 +8,7 @@ import armorStatIcon from "../../assets/icons/armor_stat_icon.png"
 import { useEffect, useState } from "react"
 import PointUpgrader from "./pointUpgrader"
 import PointsAvailableIcon from "../../assets/icons/points_available_icon.png"
+import { upgradeNumbers } from "../../utils/uiUtils"
 
 type Props = {
     selectedItem: any;
@@ -60,23 +61,7 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
 
     type UpgradeableStat = keyof StatPoints;
 
-    function setPointsForStat(
-        stat: UpgradeableStat,
-        value: React.SetStateAction<number>
-    ) {
-        setStatPoints(previous => {
-            const nextValue =
-                typeof value === "function"
-                    ? value(previous[stat])
-                    : value;
-
-            return {
-                ...previous,
-                [stat]: nextValue,
-            };
-        });
-    }
-
+    
     async function upgrade(
         stat: keyof StatPoints,
         newValue: number
@@ -120,7 +105,11 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
                                 borderColor: `${colors[selectedItem?.rarity]?.hex ?? "#202020"
                                     }`
                             }}>
-                                <img src={selectedItem.icon} />
+                                {selectedItem.type === "Weapon" ? (
+                                    <img className={styles.gearWeaponImg} src={selectedItem.icon} />
+                                ) : (
+                                    <img className={styles.gearOtherImg} src={selectedItem.icon} />
+                                )}
                             </div>
                             <div>
                                 <div className={styles.header}>
@@ -170,14 +159,23 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
                                             statPoints={statPoints[stat]}
                                             minimumPoints={minimumPoints}
                                             upgradePoints={upgradePoints}
-                                            onChange={(newStatPoints, newUpgradePoints) => {
-                                                setPointsForStat(stat, newStatPoints);
-                                                setUpgradePoints(newUpgradePoints);
-                                            }}
                                             upgrade={(newStatPoints) => {
                                                 upgrade(stat, newStatPoints);
                                             }}
+                                            statUpgradeLevel={statPoints[stat] + selectedItem.masteryStats[stat].level}
                                         />
+                                        {selectedItem.masteryStats[stat].level > 0 && (
+                                            <div className={styles.masteryContainer}>
+                                                <p className={styles.mastery}>{selectedItem.masteryStats[stat].level} Mastery</p>
+                                                <div className={styles.masteryStatsContainer}>
+                                                    <p>
+                                                        + {selectedItem.masteryStats[stat].value}
+                                                        {stat === "crit" ? `% ${stat}` : ` ${stat}`}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        
 
                                         <div className={styles.statContainer}>
                                             <img
@@ -201,162 +199,45 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
                                                         background: getRollColor(percentage),
                                                     }}
                                                 />
+                                                <div className={styles.upgradedPercentage}
+                                                    style={{
+                                                        width: `${10}%`,
+                                                    }}>
+
+                                                </div>
                                             </div>
 
                                             <div className={styles.tooltipStatPercentage}>
-                                                <p>
-                                                    {value}
-                                                    {stat === "crit" ? "%" : ""}
-                                                </p>
+                                                <div className={styles.valueContainer}>
+                                                    <p>
+                                                        {value}
+                                                        {stat === "crit" ? "%" : ""}
+                                                    </p>
+                                                    
+                                                    <p className={styles.upgradedValue}>
+                                                        {value + upgradeNumbers[stat]}
+                                                        {stat === "crit" ? "%" : ""}
+                                                    </p>
+                                                </div>
 
-                                                <p
-                                                    style={{
-                                                        color: getRollColor(percentage),
-                                                    }}
-                                                >
-                                                    {percentage}%
-                                                </p>
+                                                <div className={styles.valueContainer}>
+                                                    <p
+                                                        style={{
+                                                            color: getRollColor(percentage),
+                                                        }}
+                                                    >
+                                                        {percentage}%
+                                                    </p>
+                                                    
+                                                    <p className={styles.upgradedValue}>
+                                                        {percentage + 10}%
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 );
                             })}
-
-
-                            {/*}
-                            {selectedItem.stats?.damage && (
-                                <>
-                                    <div className={styles.statWrapper}>
-                                        <PointUpgrader
-                                            statPoints={statPoints.damage}
-                                            minimumPoints={selectedItem?.upgradedStats?.damage.level ?? 0}
-                                            upgradePoints={upgradePoints}
-                                            onChange={(newDamagePoints, newUpgradePoints) => {
-                                                setStatPoints(previous => ({
-                                                    ...previous,
-                                                    damage: newDamagePoints,
-                                                }));
-
-                                                setUpgradePoints(newUpgradePoints);
-                                            }}
-                                            upgrade={upgrade}
-                                        />
-                                        {selectedItem.masteryStats.damage.level > 0 && (
-                                            
-                                            <div className={styles.masteryContainer}>
-                                                <p className={styles.mastery}>{selectedItem.masteryStats.damage.level} Damage Mastery</p>
-                                                <div className={styles.masteryStatsContainer}>
-                                                    <p>+ {selectedItem.masteryStats.damage.value} Damage</p>
-                                                </div>
-                                            </div>
-                                        )}
-                                        <div className={styles.statContainer}>
-                                            <img src={damageIcon.src} className={styles.damageIcon} />
-                                            <div className={styles.statMeter} style={{ outline: `${selectedItem?.stats?.rollPercentage.damage === 100 ? "2px solid #FFE900" : ""}` }}>
-                                                <div
-                                                    className={styles.percentage}
-                                                    style={{
-                                                        width: `${selectedItem?.stats?.rollPercentage.damage}%`,
-                                                        background: getRollColor(
-                                                            selectedItem?.stats?.rollPercentage.damage
-                                                        ),
-                                                    }}
-                                                />
-                                            </div>
-                                            <div className={styles.tooltipStatPercentage}>
-                                                <p>{selectedItem?.stats.damage}</p>
-                                                <p style={{ color: getRollColor(selectedItem?.stats?.rollPercentage.damage) }}>{selectedItem?.stats?.rollPercentage.damage}%</p>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                    <div className={styles.statWrapper}>
-                                        <PointUpgrader
-                                            statPoints={statPoints.crit}
-                                            minimumPoints={selectedItem?.upgradedStats?.crit.level ?? 0}
-                                            upgradePoints={upgradePoints}
-                                            onChange={(newDamagePoints, newUpgradePoints) => {
-                                                setStatPoints(previous => ({
-                                                    ...previous,
-                                                    crit: newDamagePoints,
-                                                }));
-
-                                                setUpgradePoints(newUpgradePoints);
-                                            }}
-                                            upgrade={upgrade}
-                                        />
-                                        {selectedItem.masteryStats.crit.level > 0 && (
-
-                                            <div className={styles.masteryContainer}>
-                                                <p className={styles.mastery}>{selectedItem.masteryStats.crit.level} Crit Mastery</p>
-                                                <div className={styles.masteryStatsContainer}>
-                                                    <p>+ {selectedItem.masteryStats.crit.value}% Crit</p>
-                                                </div>
-                                            </div>
-                                        )}
-                                        <div className={styles.statContainer}>
-                                            <img src={critIcon.src} className={styles.damageIcon} />
-                                            <div className={styles.statMeter} style={{ outline: `${selectedItem?.stats?.rollPercentage.crit === 100 ? "2px solid #FFE900" : ""}` }}>
-                                                <div
-                                                    className={styles.percentage}
-                                                    style={{
-                                                        width: `${selectedItem?.stats?.rollPercentage.crit}%`,
-                                                        background: getRollColor(
-                                                            selectedItem?.stats?.rollPercentage.crit
-                                                        ),
-                                                    }}
-                                                />
-                                            </div>
-                                            <div className={styles.tooltipStatPercentage}>
-                                                <p>{selectedItem?.stats.crit}%</p>
-                                                <p style={{ color: getRollColor(selectedItem?.stats?.rollPercentage.crit) }}>{selectedItem?.stats?.rollPercentage.crit}%</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                </>
-                            )}
-                            {selectedItem.stats?.hp && (
-                                <>
-                                    <div className={styles.statContainer}>
-                                        <img src={hpIcon.src} className={styles.hpIcon} />
-                                        <div className={styles.statMeter} style={{ outline: `${selectedItem?.stats?.rollPercentage.hp === 100 ? "2px solid #FFE900" : ""}` }}>
-                                            <div
-                                                className={styles.percentage}
-                                                style={{
-                                                    width: `${selectedItem?.stats?.rollPercentage.hp}%`,
-                                                    background: getRollColor(
-                                                        selectedItem?.stats?.rollPercentage.hp
-                                                    ),
-                                                }}
-                                            />
-                                        </div>
-                                        <div className={styles.tooltipStatPercentage}>
-                                            <p>{selectedItem?.stats.hp}</p>
-                                            <p style={{ color: getRollColor(selectedItem?.stats?.rollPercentage.hp) }}>{selectedItem?.stats?.rollPercentage.hp}%</p>
-                                        </div>
-                                    </div>
-                                    <div className={styles.statContainer}>
-                                        <img src={armorStatIcon.src} className={styles.hpIcon} />
-                                        <div className={styles.statMeter} style={{ outline: `${selectedItem?.stats?.rollPercentage.armor === 100 ? "2px solid #FFE900" : ""}` }}>
-                                            <div
-                                                className={styles.percentage}
-                                                style={{
-                                                    width: `${selectedItem?.stats?.rollPercentage.armor}%`,
-                                                    background: getRollColor(
-                                                        selectedItem?.stats?.rollPercentage.armor
-                                                    ),
-                                                }}
-                                            />
-                                        </div>
-                                        <div className={styles.tooltipStatPercentage}>
-                                            <p>{selectedItem?.stats.armor}</p>
-                                            <p style={{ color: getRollColor(selectedItem?.stats?.rollPercentage.armor) }}>{selectedItem?.stats?.rollPercentage.armor}%</p>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-                                */}
                         </div>
                     </div>
                     {selectedItem.enchantments !== undefined && (

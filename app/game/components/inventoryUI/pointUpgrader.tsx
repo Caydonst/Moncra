@@ -8,16 +8,16 @@ type Props = {
     statPoints: number;
     minimumPoints: number;
     upgradePoints: number;
-    onChange: (statPoints: number, upgradePoints: number) => void;
     upgrade: (newStatPoints: number) => void;
+    statUpgradeLevel: number;
 };
 
 export default function PointUpgrader({
     statPoints,
     minimumPoints,
     upgradePoints,
-    onChange,
     upgrade,
+    statUpgradeLevel,
 }: Props) {
     const canAdd = upgradePoints > 0;
     const canSubtract = statPoints > minimumPoints;
@@ -26,9 +26,6 @@ export default function PointUpgrader({
         if (!canAdd) return;
 
         const newStatPoints = statPoints + 1;
-        const newUpgradePoints = upgradePoints - 1;
-
-        onChange(newStatPoints, newUpgradePoints);
         upgrade(newStatPoints);
     }
 
@@ -36,9 +33,6 @@ export default function PointUpgrader({
         if (!canSubtract) return;
 
         const newStatPoints = statPoints - 1;
-        const newUpgradePoints = upgradePoints + 1;
-
-        onChange(newStatPoints, newUpgradePoints);
         upgrade(newStatPoints);
     }
 
@@ -46,7 +40,7 @@ export default function PointUpgrader({
         <div className={styles.pointUpgraderContainer}>
             <div className={styles.upgradePoints}>
                 <img src={UpgradeIcon.src} />
-                <p>{statPoints}</p>
+                <p>{statUpgradeLevel}</p>
             </div>
             {upgradePoints > 0 && (
                 <div className={styles.pointUpgraderButtons}>
