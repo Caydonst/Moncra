@@ -6,11 +6,34 @@ import { runPlayerMovement } from "../game_systems/runPlayerMovement.js";
 import { spawnPlayer } from "../game_systems/spawnPlayer.js";
 import { registerInventoryMessages } from "../game_systems/registerInventoryMessages.js";
 import { deleteInventoryForSession } from "../game_systems/inventory/testInventoryStore.js";
+import { verifySupabaseToken } from "../auth/verifySupabaseToken.js";
 
 export class HubRoom extends Room<GameState> {
   maxClients = 4;
   patchRate = 20;
   state = new GameState();
+
+  async onAuth(
+    client: Client,
+    options: {
+      accessToken?: string;
+    }
+  ) {
+    if (!options.accessToken) {
+      throw new Error(
+        "Missing authentication token."
+      );
+    }
+
+    const user = await verifySupabaseToken(
+      options.accessToken
+    );
+
+    return {
+      userId: user?.id,
+      email: user?.email,
+    };
+  }
 
   onCreate() {
     registerPlayerMessages(this);
@@ -21,7 +44,14 @@ export class HubRoom extends Room<GameState> {
     });
   }
 
-  onJoin(client: Client) {
+  onJoin(
+    client: Client,
+    options: unknown,
+    auth: {
+      userId: string;
+      email?: string;
+    }
+  ) {
     const player = spawnPlayer(400, 400);
     this.state.players.set(client.sessionId, player);
 

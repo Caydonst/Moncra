@@ -78,7 +78,17 @@ export function registerInventoryMessages(room: Room<GameState>) {
             return;
         }*/
 
-        console.log(inventory);
+        console.log("UPGRADE RESULT BEFORE HYDRATION", {
+            uid: message.uid,
+            ok: result.ok,
+            resultItem: result.ok
+                ? {
+                    uid: result.item?.uid,
+                    itemId: result.item?.itemId,
+                    type: result.item?.type,
+                }
+                : undefined,
+        });
 
         client.send("item_upgraded", {
             upgradedItem: hydrateItem(result.item),

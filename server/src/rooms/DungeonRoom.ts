@@ -12,6 +12,10 @@ import { spawnDemon } from "../game_systems/spawnDemon.js";
 import { generateDungeon } from "../shared/dungeon/dungeonGenerator.js";
 import { registerDungeonMessages } from "../game_systems/registerDungeonMessages.js";
 import { registerInventoryMessages } from "../game_systems/registerInventoryMessages.js";
+import { clearEnemyContributors, getEnemyContributors } from "../game_systems/combat/enemyContributors.js";
+import { getInventoryForSession } from "../game_systems/inventory/testInventoryStore.js";
+import { addXpToEquippedGear } from "../game_systems/items/itemXp.js";
+import { hydrateInventory } from "../game_systems/inventory/hydrateInventory.js";
 
 export class DungeonRoom extends Room<GameState> {
     maxClients = 4;
@@ -139,5 +143,71 @@ export class DungeonRoom extends Room<GameState> {
           this.state.chests.set(chestDef.id, chest);
         }
         */
+    }
+    private awardEnemyExperience(
+        enemyId: string,
+        enemy: EnemyState
+    ) {
+        const contributors =
+            getEnemyContributors(enemyId);
+
+        if (!contributors) {
+            return;
+        }
+
+        const xpReward =
+            this.getEnemyXpReward(enemy);
+
+        for (const sessionId of contributors) {
+            const player =
+                this.state.players.get(sessionId);
+
+            if (!player) {
+                continue;
+            }
+
+            const inventory =
+                getInventoryForSession(
+                    sessionId,
+                    player
+                );
+
+            addXpToEquippedGear(
+                inventory,
+                xpReward
+            );
+
+            const client =
+                this.clients.find(
+                    roomClient =>
+                        roomClient.sessionId ===
+                        sessionId
+                );
+
+            client?.send("inventory_updated", {
+                enemyId,
+                xpGained: xpReward,
+                inventory:
+                    hydrateInventory(inventory),
+            });
+
+            console.log("INVENTORY WEAPON AFTER XP GAIN: ", hydrateInventory(inventory).weapon)
+        }
+
+        clearEnemyContributors(enemyId);
+    }
+    private getEnemyXpReward(
+        enemy: EnemyState
+    ) {
+        switch (enemy.type) {
+            case "demon":
+                return 25;
+
+            case "demon_boss":
+                return 250;
+
+            default:
+                return 10;
+        }
     }
 }

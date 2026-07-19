@@ -18,6 +18,9 @@ import LanternImg from "../assets/lantern/lantern_tier3.png"
 import { specializationColors } from "../utils/uiUtils";
 import { createClientInventory } from "../inventory/createClientInventory";
 import ClassResourceUI from "../components/ClassResourceUI/classResource";
+import SocialIcon from "@/app/game/assets/icons/social_icon.png"
+import SocialUI from "../components/socialUI/socialUI";
+import { gameInputDisabled } from "../utils/inputUtils";
 
 type Scenes = GameScene | HubScene | MenuScene | TestScene | DungeonScene
 type SceneKey = "menu" | "hub" | "game" | "dungeon" | "test";
@@ -40,6 +43,7 @@ export default function GameCanvas() {
     const [storage, setStorage] = useState(null);
     const [storageData, setStorageData] = useState(null);
     const [blacksmithOpen, setBlacksmithOpen] = useState(false);
+    const [socialOpen, setSocialOpen] = useState(false);
 
     useEffect(() => {
         function preventZoomKeys(e: KeyboardEvent) {
@@ -70,32 +74,57 @@ export default function GameCanvas() {
 
     useEffect(() => {
         let cleanup: (() => void) | undefined;
+        let cancelled = false;
 
         async function init() {
-            if (!canvasRef.current) return;
-
             const canvas = canvasRef.current;
 
-            // ensure it's real DOM node
+            if (!canvas) return;
+
             if (!(canvas instanceof HTMLCanvasElement)) {
                 console.error("Not a canvas:", canvas);
                 return;
             }
 
-            const { startGame } = await import("../startGame");
-            cleanup = await startGame(canvasRef.current!, () => {
-                setGameLoaded(true);
-            });
+            try {
+                const { startGame } = await import("../startGame");
 
-            const game = getGame()
-            setGame(game);
+                // Do not set gameLoaded inside startGame anymore.
+                cleanup = await startGame(canvas);
 
-            syncScene(game.currentScene as Scenes, "menu");
+                if (cancelled) return;
+
+                const game = getGame();
+
+                if (!game) {
+                    throw new Error("Game engine was not created.");
+                }
+
+                setGame(game);
+
+                await game.goToScene("hub");
+
+                if (cancelled) return;
+
+                syncScene(game.currentScene as Scenes, "hub");
+
+                // Allow React to apply game + scene state first.
+                requestAnimationFrame(() => {
+                    if (!cancelled) {
+                        setGameLoaded(true);
+                    }
+                });
+            } catch (error) {
+                console.error("Failed to initialize game:", error);
+            }
         }
 
-        init();
+        void init();
 
-        return () => cleanup?.();
+        return () => {
+            cancelled = true;
+            cleanup?.();
+        };
     }, []);
 
     useEffect(() => {
@@ -140,6 +169,8 @@ export default function GameCanvas() {
         if (!gameLoaded) return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
+            if (gameInputDisabled) return;
+            
             if (e.key.toLowerCase() === "i") {
                 setInventoryOpen(prev => !prev); // toggle
                 setItemPanelOpen(false);
@@ -264,39 +295,34 @@ export default function GameCanvas() {
     return (
         <div id="game-wrapper" className={styles.gameWrapper}>
             <canvas id="game" ref={canvasRef}></canvas>
-            {gameLoaded && (
+            {gameLoaded && game && (
                 <>
-                    {sceneName === "menu" && game && (
-                        <LandingPage
-                            game={game}
-                        />
+                    <div className={styles.enemiesContainer}>
+                        <p id="enemy-count" className={styles.enemyCount}></p>
+                    </div>
+                    <div className={styles.characterHpWrapper}>
+                        <div className={styles.textContainer}>
+                            <p>HP</p>
+                            <p>{scene?.player?.getStats().hp} / {scene?.player?.getStats().maxHp}</p>
+                        </div>
+                        <div className={styles.characterHpContainer}>
+                            <div className={styles.characterHp} style={{ width: `${characterHp}%` }}></div>
+                        </div>
+                    </div>
+                    <InventoryUI inventoryOpen={inventoryOpen} inventory={inventory} setInventory={setInventory} setInventoryOpen={setInventoryOpen} itemPanelOpen={itemPanelOpen} setItemPanelOpen={setItemPanelOpen} selectedItem={selectedItem} setSelectedItem={setSelectedItem} engine={game} />
+                    <StorageUI storageOpen={storageOpen} inventory={inventory} storage={storage} storageData={storageData} setInventory={setInventory} />
+                    {blacksmithOpen && (
+                        <BlacksmithUI blacksmithOpen={blacksmithOpen} inventory={inventory} setInventory={setInventory} />
                     )}
-                    {(isGameScene || isDungeonScene) && (
-                        <>
-                            <div className={styles.enemiesContainer}>
-                            <p id="enemy-count" className={styles.enemyCount}></p>
-                            </div>
-                            <div className={styles.characterHpWrapper}>
-                                <div className={styles.textContainer}>
-                                    <p>HP</p>
-                                    <p>{scene?.player?.getStats().hp} / {scene?.player?.getStats().maxHp}</p>
-                                </div>
-                                <div className={styles.characterHpContainer}>
-                                    <div className={styles.characterHp} style={{ width: `${characterHp}%` }}></div>
-                                </div>
-                            </div>
-                            <InventoryUI inventoryOpen={inventoryOpen} inventory={inventory} setInventory={setInventory} setInventoryOpen={setInventoryOpen} itemPanelOpen={itemPanelOpen} setItemPanelOpen={setItemPanelOpen} selectedItem={selectedItem} setSelectedItem={setSelectedItem} engine={game} />
-                            <StorageUI storageOpen={storageOpen} inventory={inventory} storage={storage} storageData={storageData} setInventory={setInventory} />
-                            {blacksmithOpen && (
-                                <BlacksmithUI blacksmithOpen={blacksmithOpen} inventory={inventory} setInventory={setInventory} />
-                            )}
-                            <div className={styles.spawnBtns}>
-                                <button id="spawn-enemy-btn" className={styles.spawnEnemyBtn} onClick={() => scene?.spawnEnemy()}>Spawn Enemy</button>
-                                <button id="spawn-boss-btn" className={styles.spawnEnemyBtn} onClick={() => scene?.spawnBoss()}>Spawn Boss</button>
-                            </div>
-                            
-                            <div className={styles.overlayFooter}>
-                                {/*
+                    <div className={styles.socialContainer}>
+                        <button className={styles.socialBtn} onClick={() => setSocialOpen(prev => !prev)}>
+                            <img src={SocialIcon.src} />
+                        </button>
+                    </div>
+                    <SocialUI socialOpen={socialOpen} />
+
+                    <div className={styles.overlayFooter}>
+                        {/*
                                 {inventory && (
                                     <div className={styles.overlayWeaponInfoContainer}>
                                         {inventory.weapon ? (
@@ -312,12 +338,10 @@ export default function GameCanvas() {
 
                                 )}
                                     */}
-                                <div className={styles.lanternContainer}><img src={LanternImg.src} /></div>
-                                <ClassResourceUI />
-                            </div>
-                            <DungeonMenu scene={scene} />
-                        </>
-                    )}
+                        <div className={styles.lanternContainer}><img src={LanternImg.src} /></div>
+                        <ClassResourceUI />
+                    </div>
+                    <DungeonMenu scene={scene} />
                 </>
             )}
 

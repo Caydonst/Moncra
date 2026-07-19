@@ -91,7 +91,7 @@ export default function ItemToolTip({ tooltipRef, hoveredItem, tooltipPos }: Pro
                                 ) : (
                                         <p>{hoveredItem?.upgradedStats?.[stat].value}</p>
                                 )}
-                                <p style={{ color: getRollColor(hoveredItem?.upgradedStats?.[stat].percentage) }}>{hoveredItem?.upgradedStats?.[stat].percentage}%</p>
+                                <p style={{ color: getRollColor(hoveredItem?.upgradedStats?.[stat].percentage) }}>{Math.round(hoveredItem?.upgradedStats?.[stat].percentage)}%</p>
                             </div>
                         </div>
                     )

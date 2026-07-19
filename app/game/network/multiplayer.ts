@@ -7,6 +7,7 @@ import { Demon } from "../enemies/demon";
 import type { DungeonFloor, ServerDungeonData } from "@/lib/shared/dungeon/dungeonTypes";
 import { ServerPlayerDebug } from "../player/ServerPlayerDebug";
 import {gameState} from "../gameState/gameState"
+import { createClient } from "@/lib/supabase/client";
 
 type RoomKind = "hub" | "party" | "dungeon";
 
@@ -64,7 +65,19 @@ class MultiplayerManager {
       await this.room.leave();
     }
 
-    this.room = await this.client.joinOrCreate("dungeon_room");
+    const supabase = createClient();
+
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+
+    this.room = await this.client.joinOrCreate(
+      "dungeon_room",
+      {
+        accessToken: session.access_token,
+      }
+    );
 
     this.currentRoomKind = "dungeon";
     this.callbacks = Callbacks.get(this.room);
@@ -240,7 +253,19 @@ class MultiplayerManager {
       await this.room.leave();
     }
 
-    this.room = await this.client.joinOrCreate("hub_room");
+    const supabase = createClient();
+
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+
+    this.room = await this.client.joinOrCreate(
+      "hub_room",
+      {
+        accessToken: session.access_token,
+      }
+    );
 
     this.currentRoomKind = "hub";
     this.callbacks = Callbacks.get(this.room);
@@ -283,7 +308,19 @@ class MultiplayerManager {
       await this.room.leave();
     }
 
-    this.room = await this.client.joinOrCreate("party_room");
+    const supabase = createClient();
+
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+
+    this.room = await this.client.joinOrCreate(
+      "party_room",
+      {
+        accessToken: session.access_token,
+      }
+    );
 
     this.currentRoomKind = "party";
     this.callbacks = Callbacks.get(this.room);

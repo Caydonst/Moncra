@@ -103,6 +103,41 @@ function hydrateMaterial(instance: MaterialItemInstance) {
 }
 
 export function hydrateItem(instance: InventoryItemInstance) {
+    if (!instance) {
+        throw new Error(
+            "hydrateItem received an undefined item instance."
+        );
+    }
+
+    const def = itemDefinitions[instance.itemId];
+
+    if (!def) {
+        console.error("Missing item definition", {
+            uid: instance.uid,
+            itemId: instance.itemId,
+            type: instance.type,
+            rarity: instance.rarity,
+            instance,
+        });
+
+        throw new Error(
+            `Unknown item definition: ${instance.itemId}`
+        );
+    }
+
+    if (def.type !== instance.type) {
+        console.error("Item type mismatch", {
+            uid: instance.uid,
+            itemId: instance.itemId,
+            instanceType: instance.type,
+            definitionType: def.type,
+        });
+
+        throw new Error(
+            `Item type mismatch for ${instance.itemId}`
+        );
+    }
+
     switch (instance.type) {
         case "Weapon":
             return hydrateWeapon(instance);

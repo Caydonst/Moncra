@@ -1,6 +1,7 @@
 import type { Room, Client } from "@colyseus/core";
 import type { GameState } from "../schemas/GameState.js";
 import { handleGreatSwordAttack } from "./great_sword/GreatSword.js";
+import { addEnemyContributor, getEnemyContributors } from "./combat/enemyContributors.js";
 
 const hitEnemies = new Set<string>();
 
@@ -104,6 +105,11 @@ export function registerCombatMessages(room: Room<GameState>) {
 
         console.log("HIT VALID, APPLYING DAMAGE");
 
+        addEnemyContributor(
+            enemyId,
+            client.sessionId
+        );
+
         const beforeHp = enemy.hp;
 
         enemy.hp = Math.max(0, enemy.hp - player.attackDamage);
@@ -137,6 +143,13 @@ export function registerCombatMessages(room: Room<GameState>) {
             enemy.hp = 0;
             enemy.isDead = true;
             enemy.state = "dead";
+
+            room.awardEnemyExperience(
+                enemyId,
+                enemy
+            );
+
+            console.log("ENEMY CONTRIBUTORS: ", getEnemyContributors(enemyId))
         }
     });
 }

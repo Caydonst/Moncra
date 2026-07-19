@@ -12,13 +12,13 @@ export async function createGame(canvas: HTMLCanvasElement) {
         backgroundColor: ex.Color.fromHex("#483B3A"),
         displayMode: ex.DisplayMode.FillContainer,
         pixelArt: true,
-        pointerScope: ex.PointerScope.Document,
+        pointerScope: ex.PointerScope.Canvas,
         physics: {
             colliders: {
                 compositeStrategy: "separate",
             },
         },
-        //maxFps: 40
+        maxFps: 40
     });
 
     return game;

@@ -1,0 +1,221 @@
+.main {
+    width: 100%;
+    height: 100%;
+    background: #080808;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 50px;
+    position: relative;
+}
+.main h1 {
+    color: #fff;
+    font-size: 80px;
+    font-weight: 300;
+    letter-spacing: 5px;
+}
+.playBtn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 400px;
+    height: 60px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: #fff;
+    transition: 0.3s;
+    text-decoration: none;
+    padding: 20px;
+}
+.playBtn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+.playBtn:hover .playBtnRight .arrowRightIcon {
+    transform: translateX(5px);
+}
+.playBtnContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: #fff;
+    gap: 20px;
+}
+.playBtnContainer p {
+    font-size: 12px;
+}
+.playBtnLeft {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+.playBtnRight {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+.statusLight {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #00FF6A;
+}
+.arrowRightIcon {
+    width: 20px;
+    height: 20px;
+    color: #fff;
+    transition: 0.3s;
+}
+.openLoginBtn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 300px;
+    height: 60px;
+    border: 3px solid red;
+    background: darkred;
+    color: #fff;
+    transition: 0.3s;
+    text-decoration: none;
+}
+.leftSword {
+    position: absolute;
+    height: 1100px;
+    image-rendering: pixelated;
+    left: 0;
+    bottom: -150px;
+    transform: rotate(30deg);
+    z-index: 2;
+    filter: drop-shadow(0 0 12px rgba(0, 0, 0, 1));
+}
+.rightSword {
+    position: absolute;
+    height: 1100px;
+    image-rendering: pixelated;
+    right: 0;
+    bottom: -150px;
+    transform: rotate(-30deg);
+    z-index: 2;
+    filter: drop-shadow(0 0 12px rgba(0, 0, 0, 1));
+}
+.bgLightLeft {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: #fff;
+    border-radius: 50%;
+    left: 50px;
+    filter: blur(100px);
+}
+.bgLightRight {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: #fff;
+    border-radius: 50%;
+    right: 50px;
+    filter: blur(100px);
+}
+.loginWrapper {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.6);
+    visibility: hidden;
+    opacity: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3;
+    transition: 0.2s;
+}
+.loginWrapper.open {
+    visibility: visible;
+    opacity: 1;
+}
+.loginContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 30px;
+    padding: 50px;
+    background: #080808;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    transition: 0.2s;
+    transform: scale(1.1);
+    opacity: 0;
+}
+.loginWrapper.open .loginContainer {
+    transform: scale(1);
+    opacity: 1;
+}
+.loginContainer h1 {
+    font-size: 30px;
+    letter-spacing: unset;
+}
+.loginContainer input {
+    width: 400px;
+    height: 60px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    padding: 0 20px;
+    outline: unset;
+    color: #fff;
+}
+.loginContainer input:focus {
+    border-color: #fff;
+}
+.loginBtn {
+    width: 100%;
+    height: 60px;
+    border: 3px solid red;
+    background: darkred;
+    color: #fff;
+    transition: 0.3s;
+}
+.loginBtn:hover {
+    opacity: 0.8;
+}
+.closeBtn {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+}
+.closeBtn > * {
+    width: 30px;
+    height: 30px;
+    color: #fff;
+}
+.closeBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+.logoutBtn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 300px;
+    height: 60px;
+    border: 3px solid red;
+    background: darkred;
+    color: #fff;
+    transition: 0.3s;
+    text-decoration: none;
+}
+.logoutBtn:hover {
+    opacity: 0.8;
+}

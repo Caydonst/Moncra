@@ -4,7 +4,7 @@ import * as ex from "excalibur";
 import {createGame, destroyGame} from "@/app/game/gameInstance";
 import { gameState } from "./gameState/gameState";
 
-export async function startGame(canvas: HTMLCanvasElement, onLoaded: () => void) {
+export async function startGame(canvas: HTMLCanvasElement) {
     const ex = await import("excalibur");
 
     const { GameScene } = await import("./scenes/GameScene");
@@ -49,8 +49,6 @@ export async function startGame(canvas: HTMLCanvasElement, onLoaded: () => void)
     
 
     await game.start(resources.loader);
-
-    onLoaded();
 
     return () => {
         destroyGame();

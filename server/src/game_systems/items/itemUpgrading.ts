@@ -1,5 +1,5 @@
 import { InventoryItemInstance, ServerInventory } from "../inventory/inventoryTypes.js";
-import { getMaxStatValue } from "./itemRolls.js";
+import { getMaxStatValue, getMinStatValue } from "./itemRolls.js";
 
 
 export function getItemXpRequired(level: number) {
@@ -67,76 +67,39 @@ function getSinglePointUpgrade<K extends keyof StatPoints>(
         upgradedStat: changedStat,
     };
 }
-function canUpgradeStat(
-    item: InventoryItemInstance,
-    stat: UpgradeStat
-): boolean {
-    const maximumValue = getMaxStatValue(
-        item.rarity,
-        stat
-    );
-
-    if (item.type === "Weapon") {
-        if (stat === "damage") {
-            const nextValue =
-                item.upgradedStats.damage.value + 10;
-
-            return (
-                item.upgradedStats.damage.value < maximumValue &&
-                item.upgradedStats.damage.percentage < 100 &&
-                nextValue > item.upgradedStats.damage.value
-            );
-        }
-
-        if (stat === "crit") {
-            const nextValue =
-                item.upgradedStats.crit.value + 1;
-
-            return (
-                item.upgradedStats.crit.value < maximumValue &&
-                item.upgradedStats.crit.percentage < 100 &&
-                nextValue > item.upgradedStats.crit.value
-            );
-        }
-    }
-
-    if (item.type === "Armor") {
-        if (stat === "hp") {
-            return (
-                item.upgradedStats.hp.value < maximumValue &&
-                item.upgradedStats.hp.percentage < 100
-            );
-        }
-
-        if (stat === "armor") {
-            return (
-                item.upgradedStats.armor.value < maximumValue &&
-                item.upgradedStats.armor.percentage < 100
-            );
-        }
-    }
-
-    return false;
-}
 
 function applyStatUpgrade(
     rolledValue: number,
-    rolledPercentage: number,
     allocatedPoints: number,
     valuePerPoint: number,
-    percentagePerPoint: number,
+    minimumValue: number,
     maximumValue: number
 ) {
-    return {
-        value: Math.min(
-            maximumValue,
-            rolledValue + allocatedPoints * valuePerPoint
-        ),
+    const value = Math.min(
+        maximumValue,
+        rolledValue +
+        allocatedPoints * valuePerPoint
+    );
 
-        percentage: Math.min(
-            100,
-            rolledPercentage + allocatedPoints * percentagePerPoint
-        ),
+    const range =
+        maximumValue - minimumValue;
+
+    const percentage =
+        range <= 0
+            ? 100
+            : Math.min(
+                100,
+                Math.max(
+                    0,
+                    ((value - minimumValue) /
+                        range) *
+                    100
+                )
+            );
+
+    return {
+        value,
+        percentage,
     };
 }
 
@@ -144,6 +107,11 @@ function isNormalStatMaxed(
     item: InventoryItemInstance,
     stat: UpgradeableStat
 ): boolean {
+    const minimumValue = getMinStatValue(
+        item.rarity,
+        stat
+    );
+
     const maximumValue = getMaxStatValue(
         item.rarity,
         stat
@@ -151,82 +119,56 @@ function isNormalStatMaxed(
 
     if (item.type === "Weapon") {
         if (stat === "damage") {
-            const normalValue = Math.min(
-                maximumValue,
-                item.rolledStats.damage.value +
-                item.currentUpgradePoints.damage * 10
+            const normalStat = applyStatUpgrade(
+                item.rolledStats.damage.value,
+                item.currentUpgradePoints.damage,
+                10,
+                minimumValue,
+                maximumValue
             );
 
-            const normalPercentage = Math.min(
-                100,
-                item.rolledStats.damage.percentage +
-                item.currentUpgradePoints.damage * 10
-            );
-
-            return (
-                normalValue >= maximumValue ||
-                normalPercentage >= 100
-            );
+            return normalStat.value >= maximumValue;
         }
 
         if (stat === "crit") {
-            const normalValue = Math.min(
-                maximumValue,
-                item.rolledStats.crit.value +
-                item.currentUpgradePoints.crit * 0.5
+            const normalStat = applyStatUpgrade(
+                item.rolledStats.crit.value,
+                item.currentUpgradePoints.crit,
+                0.5,
+                minimumValue,
+                maximumValue
             );
 
-            const normalPercentage = Math.min(
-                100,
-                item.rolledStats.crit.percentage +
-                item.currentUpgradePoints.crit * 10
-            );
-
-            return (
-                normalValue >= maximumValue ||
-                normalPercentage >= 100
-            );
+            return normalStat.value >= maximumValue;
         }
 
         return false;
     }
 
-    if (stat === "hp") {
-        const normalValue = Math.min(
-            maximumValue,
-            item.rolledStats.hp.value +
-            item.currentUpgradePoints.hp * 10
-        );
+    if (item.type === "Armor") {
+        if (stat === "hp") {
+            const normalStat = applyStatUpgrade(
+                item.rolledStats.hp.value,
+                item.currentUpgradePoints.hp,
+                10,
+                minimumValue,
+                maximumValue
+            );
 
-        const normalPercentage = Math.min(
-            100,
-            item.rolledStats.hp.percentage +
-            item.currentUpgradePoints.hp * 10
-        );
+            return normalStat.value >= maximumValue;
+        }
 
-        return (
-            normalValue >= maximumValue ||
-            normalPercentage >= 100
-        );
-    }
+        if (stat === "armor") {
+            const normalStat = applyStatUpgrade(
+                item.rolledStats.armor.value,
+                item.currentUpgradePoints.armor,
+                5,
+                minimumValue,
+                maximumValue
+            );
 
-    if (stat === "armor") {
-        const normalValue = Math.min(
-            maximumValue,
-            item.rolledStats.armor.value +
-            item.currentUpgradePoints.armor * 5
-        );
-
-        const normalPercentage = Math.min(
-            100,
-            item.rolledStats.armor.percentage +
-            item.currentUpgradePoints.armor * 10
-        );
-
-        return (
-            normalValue >= maximumValue ||
-            normalPercentage >= 100
-        );
+            return normalStat.value >= maximumValue;
+        }
     }
 
     return false;
@@ -296,11 +238,23 @@ function applyArmorUpgrade(
     };
 }
 
-function applyUpgradedStats(item: InventoryItemInstance) {
+function applyUpgradedStats(
+    item: InventoryItemInstance
+) {
     if (item.type === "Weapon") {
+        const damageMin = getMinStatValue(
+            item.rarity,
+            "damage"
+        );
+
         const damageMax = getMaxStatValue(
             item.rarity,
             "damage"
+        );
+
+        const critMin = getMinStatValue(
+            item.rarity,
+            "crit"
         );
 
         const critMax = getMaxStatValue(
@@ -310,19 +264,17 @@ function applyUpgradedStats(item: InventoryItemInstance) {
 
         const normalDamage = applyStatUpgrade(
             item.rolledStats.damage.value,
-            item.rolledStats.damage.percentage,
             item.currentUpgradePoints.damage,
             10,
-            10,
+            damageMin,
             damageMax
         );
 
         const normalCrit = applyStatUpgrade(
             item.rolledStats.crit.value,
-            item.rolledStats.crit.percentage,
             item.currentUpgradePoints.crit,
             0.5,
-            10,
+            critMin,
             critMax
         );
 
@@ -339,7 +291,8 @@ function applyUpgradedStats(item: InventoryItemInstance) {
                 normalDamage.value +
                 item.masteryStats.damage.value,
 
-            percentage: normalDamage.percentage,
+            percentage:
+                normalDamage.percentage,
         };
 
         item.upgradedStats.crit = {
@@ -347,63 +300,76 @@ function applyUpgradedStats(item: InventoryItemInstance) {
                 normalCrit.value +
                 item.masteryStats.crit.value,
 
-            percentage: normalCrit.percentage,
+            percentage:
+                normalCrit.percentage,
         };
 
         return;
     }
 
-    const hpMax = getMaxStatValue(
-        item.rarity,
-        "hp"
-    );
+    if (item.type === "Armor") {
+        const hpMin = getMinStatValue(
+            item.rarity,
+            "hp"
+        );
 
-    const armorMax = getMaxStatValue(
-        item.rarity,
-        "armor"
-    );
+        const hpMax = getMaxStatValue(
+            item.rarity,
+            "hp"
+        );
 
-    const normalHp = applyStatUpgrade(
-        item.rolledStats.hp.value,
-        item.rolledStats.hp.percentage,
-        item.currentUpgradePoints.hp,
-        10,
-        10,
-        hpMax
-    );
+        const armorMin = getMinStatValue(
+            item.rarity,
+            "armor"
+        );
 
-    const normalArmor = applyStatUpgrade(
-        item.rolledStats.armor.value,
-        item.rolledStats.armor.percentage,
-        item.currentUpgradePoints.armor,
-        5,
-        10,
-        armorMax
-    );
+        const armorMax = getMaxStatValue(
+            item.rarity,
+            "armor"
+        );
 
-    item.masteryStats.hp.value =
-        item.masteryStats.hp.level *
-        masteryValuePerLevel.hp;
+        const normalHp = applyStatUpgrade(
+            item.rolledStats.hp.value,
+            item.currentUpgradePoints.hp,
+            10,
+            hpMin,
+            hpMax
+        );
 
-    item.masteryStats.armor.value =
-        item.masteryStats.armor.level *
-        masteryValuePerLevel.armor;
+        const normalArmor = applyStatUpgrade(
+            item.rolledStats.armor.value,
+            item.currentUpgradePoints.armor,
+            5,
+            armorMin,
+            armorMax
+        );
 
-    item.upgradedStats.hp = {
-        value:
-            normalHp.value +
-            item.masteryStats.hp.value,
+        item.masteryStats.hp.value =
+            item.masteryStats.hp.level *
+            masteryValuePerLevel.hp;
 
-        percentage: normalHp.percentage,
-    };
+        item.masteryStats.armor.value =
+            item.masteryStats.armor.level *
+            masteryValuePerLevel.armor;
 
-    item.upgradedStats.armor = {
-        value:
-            normalArmor.value +
-            item.masteryStats.armor.value,
+        item.upgradedStats.hp = {
+            value:
+                normalHp.value +
+                item.masteryStats.hp.value,
 
-        percentage: normalArmor.percentage,
-    };
+            percentage:
+                normalHp.percentage,
+        };
+
+        item.upgradedStats.armor = {
+            value:
+                normalArmor.value +
+                item.masteryStats.armor.value,
+
+            percentage:
+                normalArmor.percentage,
+        };
+    }
 }
 
 export function upgradeItem(
@@ -459,32 +425,34 @@ export function upgradeItem(
         };
     }
 
-    const result = getSinglePointUpgrade(
-        item.currentUpgradePoints,
-        statPoints,
-        ["hp", "armor"] as const
-    );
+    if (item.type === "Armor") {
+        const result = getSinglePointUpgrade(
+            item.currentUpgradePoints,
+            statPoints,
+            ["hp", "armor"] as const
+        );
 
-    if (!result.ok) {
-        return result;
+        if (!result.ok) {
+            return result;
+        }
+
+        const appliedUpgrade = applyArmorUpgrade(
+            item,
+            result.upgradedStat,
+            statPoints
+        );
+
+        item.availableUpgradePoints -= 1;
+
+        applyUpgradedStats(item);
+
+        return {
+            ok: true as const,
+            item,
+            upgradedStat: result.upgradedStat,
+            ...appliedUpgrade,
+        };
     }
-
-    const appliedUpgrade = applyArmorUpgrade(
-        item,
-        result.upgradedStat,
-        statPoints
-    );
-
-    item.availableUpgradePoints -= 1;
-
-    applyUpgradedStats(item);
-
-    return {
-        ok: true as const,
-        item,
-        upgradedStat: result.upgradedStat,
-        ...appliedUpgrade,
-    };
 }
 
 export function findInventoryItemByUid(

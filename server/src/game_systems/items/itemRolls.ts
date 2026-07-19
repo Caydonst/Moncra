@@ -119,3 +119,30 @@ export function getMaxStatValue(
             return rarityMultiplier.crit.max;
     }
 }
+
+export function getMinStatValue(
+    rarity: keyof typeof multipliers,
+    stat: UpgradeStat
+): number {
+    const rarityMultiplier = multipliers[rarity];
+
+    switch (stat) {
+        case "damage":
+            return Math.round(
+                baseAttack * rarityMultiplier.min
+            );
+
+        case "hp":
+            return Math.round(
+                baseHp * rarityMultiplier.min
+            );
+
+        case "armor":
+            return Math.round(
+                baseArmor * rarityMultiplier.min
+            );
+
+        case "crit":
+            return rarityMultiplier.crit.min;
+    }
+}

@@ -61,7 +61,7 @@ export class Player extends ex.Actor {
             pos: pos,
             anchor: ex.vec(0.5, 0.5),
             width: 15 * 2,    // set desired width
-            height: 20 * 2,   // set desired height
+            height: 21 * 2,   // set desired height
             color: ex.Color.Yellow,  // optional, for debugging
             collisionType: ex.CollisionType.Active,
             z: 3,

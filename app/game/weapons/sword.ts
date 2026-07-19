@@ -9,6 +9,7 @@ import { GameScene } from '../scenes/GameScene';
 import { multiplayer } from '../network/multiplayer';
 import { damageEnemy } from '../combat/CombatSystem';
 import type { Weapon } from '../items/ItemTypes';
+import { isTypingInInput } from '../utils/inputUtils';
 
 export type AttackType = "slash" | "thrust";
 
@@ -112,7 +113,19 @@ export class GreatSword extends ex.Actor {
     private currentAttackId = 0;
     private hitEnemiesThisAttack = new Set<string>();
 
+    private isPointerOverUI(): boolean {
+        const hoveredElement = document.elementFromPoint(
+            this.engine.input.pointers.primary.lastScreenPos.x,
+            this.engine.input.pointers.primary.lastScreenPos.y
+        );
+
+        return hoveredElement?.closest("[data-game-ui]") !== null;
+    }
+
     private pointerDownHandler = (evt: ex.PointerEvent) => {
+        if (isTypingInInput()) return;
+        if (this.isPointerOverUI()) return;
+
         if (evt.button === ex.PointerButton.Left) {
             this.isHolding = true;
         }
@@ -123,6 +136,12 @@ export class GreatSword extends ex.Actor {
     };
 
     private pointerUpHandler = (evt: ex.PointerEvent) => {
+        if (this.isPointerOverUI()) {
+            this.isHolding = false;
+            this.stopBlock();
+            return;
+        }
+
         if (evt.button === ex.PointerButton.Left) {
             this.isHolding = false;
         }

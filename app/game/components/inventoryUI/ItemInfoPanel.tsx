@@ -226,11 +226,11 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
                                                             color: getRollColor(percentage),
                                                         }}
                                                     >
-                                                        {percentage}%
+                                                        {Math.round(percentage)}%
                                                     </p>
                                                     
                                                     <p className={styles.upgradedValue}>
-                                                        {percentage + 10}%
+                                                        {Math.round(percentage) + 10}%
                                                     </p>
                                                 </div>
                                             </div>

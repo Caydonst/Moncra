@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { Server } from "@colyseus/core";
@@ -5,6 +6,7 @@ import { WebSocketTransport } from "@colyseus/ws-transport";
 import { createServer } from "http";
 import { HubRoom } from "./rooms/HubRoom.js";
 import { DungeonRoom } from "./rooms/DungeonRoom.js";
+import playerRoutes from "./routes/playerRoutes.js";
 
 const port = Number(process.env.PORT || 2567);
 
@@ -16,6 +18,8 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+app.use("/api/player", playerRoutes);
 
 const httpServer = createServer(app);
 
