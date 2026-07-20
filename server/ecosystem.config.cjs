@@ -1,4 +1,4 @@
-const os = require("node:os");
+//const os = require("node:os");
 
 module.exports = {
     apps: [
@@ -9,7 +9,6 @@ module.exports = {
             watch: false,
             instances: 1, //os.cpus().length
             exec_mode: "fork",
-            wait_ready: true,
             env_production: {
                 NODE_ENV: "production",
             },

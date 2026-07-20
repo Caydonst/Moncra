@@ -91,7 +91,17 @@ const gameServer = new Server({
 gameServer.define("hub_room", HubRoom);
 gameServer.define("dungeon_room", DungeonRoom);
 
-await gameServer.listen(port);
+try {
+  await gameServer.listen(port);
+
+  console.log(`Game server running on port ${port}`);
+  console.log(
+    `Allowed client origin: ${JSON.stringify(process.env.CLIENT_URL)}`
+  );
+} catch (error) {
+  console.error("Failed to start Moncra server:", error);
+  process.exit(1);
+}
 
 console.log(`Game server running on port ${port}`);
 console.log("Allowed client origins:", allowedOrigins);
