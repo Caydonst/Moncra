@@ -7,7 +7,7 @@ module.exports = {
             script: "dist/index.js",
             time: true,
             watch: false,
-            instances: 1, //os.cpus().length
+            instances: 1,
             exec_mode: "fork",
             env: {
                 NODE_ENV: "production",
