@@ -5,20 +5,27 @@ import { registerPlayerMessages } from "../game_systems/registerPlayerMessages.j
 import { runPlayerMovement } from "../game_systems/runPlayerMovement.js";
 import { spawnPlayer } from "../game_systems/spawnPlayer.js";
 import { registerInventoryMessages } from "../game_systems/registerInventoryMessages.js";
-import { deleteInventoryForSession } from "../game_systems/inventory/testInventoryStore.js";
+import { deleteInventoryForSession, getInventoryForSession } from "../game_systems/inventory/testInventoryStore.js";
 import { verifySupabaseToken } from "../auth/verifySupabaseToken.js";
 
-export class HubRoom extends Room<GameState> {
+type ClientAuth = {
+  userId: string;
+  email?: string;
+};
+
+export class HubRoom extends Room<{ state: GameState }> {
   maxClients = 4;
   patchRate = 20;
   state = new GameState();
+
+  private userIds = new Map<string, string>();
 
   async onAuth(
     client: Client,
     options: {
       accessToken?: string;
     }
-  ) {
+  ): Promise<ClientAuth> {
     if (!options.accessToken) {
       throw new Error(
         "Missing authentication token."
@@ -29,9 +36,15 @@ export class HubRoom extends Room<GameState> {
       options.accessToken
     );
 
+    if (!user?.id) {
+      throw new Error(
+        "Invalid Supabase authentication token."
+      );
+    }
+
     return {
-      userId: user?.id,
-      email: user?.email,
+      userId: user.id,
+      email: user.email,
     };
   }
 
@@ -40,33 +53,81 @@ export class HubRoom extends Room<GameState> {
     registerInventoryMessages(this);
 
     this.setSimulationInterval((deltaTime) => {
-      runPlayerMovement(this.state.players, deltaTime);
+      runPlayerMovement(
+        this.state.players,
+        deltaTime
+      );
     });
   }
 
   onJoin(
     client: Client,
-    options: unknown,
-    auth: {
-      userId: string;
-      email?: string;
-    }
+    options: unknown
   ) {
+    const auth =
+      client.auth as ClientAuth | undefined;
+
+    if (!auth?.userId) {
+      throw new Error(
+        "Authenticated user ID was not attached to the client."
+      );
+    }
+
+    console.log(
+      "client.auth in onJoin:",
+      client.auth
+    );
+
+    this.userIds.set(
+      client.sessionId,
+      auth.userId
+    );
+
     const player = spawnPlayer(400, 400);
-    this.state.players.set(client.sessionId, player);
 
-    player.weapon.id = "great_sword1";
-    player.weapon.damage = 10;
-    player.weapon.icon = "great_sword1";
+    this.state.players.set(
+      client.sessionId,
+      player
+    );
 
-    console.log(`${client.sessionId} joined hub`);
+    const inventory = getInventoryForSession(auth.userId, player);
+            
+    if (inventory.weapon) {
+        player.weapon.id = inventory.weapon.itemId;
+        player.weapon.damage = inventory.weapon.upgradedStats.damage.value;
+        //player.weapon.icon = inventory.weapon.icon;
+    }
+
+    console.log(
+      `${client.sessionId} ${auth.userId} joined hub`
+    );
+  }
+
+  getUserId(client: Client): string {
+    const userId = this.userIds.get(
+      client.sessionId
+    );
+
+    if (!userId) {
+      throw new Error(
+        "Authenticated user ID was not found."
+      );
+    }
+
+    return userId;
   }
 
   onLeave(client: Client) {
-    this.state.players.delete(client.sessionId);
+    this.state.players.delete(
+      client.sessionId
+    );
 
-    console.log(`${client.sessionId} left hub`);
-    //this.state.players.delete(client.sessionId);
-    //deleteInventoryForSession(client.sessionId);
+    this.userIds.delete(
+      client.sessionId
+    );
+
+    console.log(
+      `${client.sessionId} left hub`
+    );
   }
 }

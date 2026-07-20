@@ -410,6 +410,7 @@
     outline: 3px solid transparent;
     outline-offset: 1px;
     z-index: 5;
+    
 }
 .gearSlot::after {
     content: "";
@@ -460,7 +461,7 @@
 }
 .weaponSlotExtras,
 .armorSlotExtras {
-    --slot-size: 20px;
+    --slot-size: calc((94px / 3) - 2px);
     --slot-gap: 2px;
 
     position: absolute;
@@ -470,10 +471,10 @@
     flex-wrap: wrap;
     gap: var(--slot-gap);
 
-    width: calc((var(--slot-size) * 4) + (var(--slot-gap) * 2));
+    width: calc((var(--slot-size) * 4) + var(--slot-gap));
     transition: 0.2s;
     background: transparent;
-    
+    will-change: width;
 }
 .extraSlot {
     position: relative;
@@ -487,7 +488,7 @@
     outline: 3px solid transparent;
     outline-offset: 1px;
     background: #080808;
-    will-change: width
+    
 }
 .extraSlot > * {
     opacity: 0;
@@ -533,7 +534,7 @@
     height: 200%;
     object-fit: contain;
     image-rendering: pixelated;
-    filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
+    filter: drop-shadow(0 0 12px rgba(0,0,0,1));
     transform: rotate(30deg);
 }
 .gearOtherImg {
@@ -541,7 +542,8 @@
     height: 130%;
     object-fit: contain;
     image-rendering: pixelated;
-    filter: drop-shadow(0px 4px 8px rgba(0,0,0,1));
+    filter: drop-shadow(0 0 12px rgba(0,0,0,1));
+    transform: rotate(10deg);
 }
 .equippedWeaponInfoContainer {
     display: flex;
@@ -658,8 +660,8 @@
     position: absolute;
     bottom: -8px;
     right: -8px;
-    width: 26px;
-    height: 26px;
+    width: 30px;
+    height: 30px;
     background: #fff;
     border: 2px solid #fff;
     background: #5DC669;
@@ -673,7 +675,8 @@
 }
 .levelAvailableContainer img {
     transform: rotate(-135deg);
-    image-rendering: pixelated;
+    
+    width: 10px;
 }
 .quantity {
     position: absolute;

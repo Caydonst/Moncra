@@ -1,7 +1,10 @@
-import { Client, Room } from "@colyseus/core";
+import type { Room, Client } from "@colyseus/core";
+import type { EnemyState, GameState } from "../schemas/GameState.js";
 import { tileToWorld } from "../shared/dungeon/dungeonTypes.js";
+import type { DungeonRoom } from "../rooms/DungeonRoom.js";
 
-export function registerDungeonMessages(room: Room<GameState>) {
+
+export function registerDungeonMessages(room: DungeonRoom) {
     room.onMessage("floor_change", (client: Client, data) => {
         const player = room.state.players.get(client.sessionId);
         if (!player) return;

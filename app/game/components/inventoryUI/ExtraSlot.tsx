@@ -29,9 +29,8 @@ export default function ExtraSlot({ slot, equipItem, type, setSelectedItem, setI
                         onClick={async () => {
                             await equipItem(extraItem);
                         }} style={{
-                            background: `${colors[extraItem?.rarity]?.rgba ?? "transparent"}`,
-                            borderColor: `${colors[extraItem?.rarity]?.hex ?? "#202020"
-                                }`
+                            background: `${colors[extraItem?.rarity]?.hex ?? "transparent"}`,
+                            borderColor: `${colors[extraItem?.rarity]?.hex ?? "#202020"}`
                         }}
                         onMouseEnter={(e) => showItemTooltip(extraItem, e)}
                         onMouseMove={moveItemTooltip}
@@ -74,7 +73,7 @@ export default function ExtraSlot({ slot, equipItem, type, setSelectedItem, setI
                             await equipItem(extraItem);
                         }} 
                         style={{
-                            background: `${colors[extraItem?.rarity]?.rgba ?? "#080808"}`,
+                            background: `${colors[extraItem?.rarity]?.hex ?? "#080808"}`,
                             borderColor: `${colors[extraItem?.rarity]?.hex ?? "#202020"
                                 }`
                         }}

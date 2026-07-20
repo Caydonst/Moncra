@@ -1,5 +1,6 @@
 import { greet } from "@colyseus/greeting-banner";
 import type express from 'express';
+import type { Server as HttpServer } from 'node:http';
 
 import { debugAndPrintError } from './Debug.ts';
 import * as matchMaker from './MatchMaker.ts';
@@ -14,6 +15,7 @@ import { setTransport, Transport } from './Transport.ts';
 import { logger, setLogger } from './Logger.ts';
 import { setDevMode, isDevMode } from './utils/DevMode.ts';
 import { type Router, bindRouterToTransport } from './router/index.ts';
+import { prereadRequestBodies } from './router/node.ts';
 import { type SDKTypes as SharedSDKTypes } from '@colyseus/shared-types';
 import { getDefaultRouter } from './router/default_routes.ts';
 
@@ -206,26 +208,12 @@ export class Server<
     await this._onTransportReady;
 
     return new Promise<void>((resolve, reject) => {
-      // TODO: refactor me!
-      // set transport globally, to be used by matchmaking route
-      setTransport(this.transport);
-
       this.transport.listen(port, hostname, backlog, (err) => {
         if (this.transport.server) {
           this.transport.server.on('error', (err) => reject(err));
         }
 
-        // default router is used if no router is provided
-        if (!this.router) {
-          this.router = getDefaultRouter() as unknown as Routes;
-
-        } else {
-          // make sure default routes are included
-          // https://github.com/Bekacru/better-call/pull/67
-          this.router = this.router.extend({ ...getDefaultRouter().endpoints }) as unknown as Routes;
-        }
-
-        bindRouterToTransport(this.transport, this.router, this.options.express !== undefined);
+        this.bindRoutes();
 
         if (listeningListener) {
           listeningListener(err);
@@ -239,6 +227,84 @@ export class Server<
         }
       });
     });
+  }
+
+  /**
+   * Prepare matchmaking and HTTP routes, then return the underlying
+   * `http.Server` *without* binding to a port.
+   *
+   * Use this on serverless platforms that consume an exported HTTP server
+   * instead of a listening one. Vercel, for example, drives the request handler
+   * of a default-exported server (its Express/Hono WebSocket examples use
+   * `export default server`), whereas calling `listen()` there selects Vercel's
+   * "captured server" path, which does not invoke Express-style app handlers.
+   *
+   * The transport must be created with an `http.Server` so it can be exported.
+   * Vercel additionally needs `package.json` `"main"` pointing at the entrypoint:
+   *
+   * ```ts
+   * import { createServer } from "node:http";
+   * const httpServer = createServer();
+   * const server = new Server({
+   *   transport: new WebSocketTransport({ server: httpServer }),
+   *   express: (app) => { app.get("/hello", (req, res) => res.json({ ok: true })); },
+   * });
+   * server.define("my_room", MyRoom);
+   * export default await server.serverless(); // no listen()
+   * ```
+   */
+  public async serverless(): Promise<HttpServer> {
+    if (this.options.beforeListen) {
+      await this.options.beforeListen();
+    }
+
+    // transport (and its HTTP server) must be ready before binding routes
+    await this._onTransportReady;
+
+    const server = this.transport.server as HttpServer | undefined;
+    if (!server) {
+      throw new Error("serverless() requires a transport backed by an http.Server (pass `{ server }` to the transport).");
+    }
+
+    this.bindRoutes();
+
+    // When the server is consumed via `export default` (rather than listen()),
+    // the request body must be available synchronously — buffer it up-front so
+    // `req.body` is set before the router runs.
+    prereadRequestBodies(server);
+
+    await matchMaker.accept(this.options.isStandaloneMatchMaker);
+
+    if (this.greet) {
+      greet();
+    }
+
+    return server;
+  }
+
+  /**
+   * Set the active transport globally and bind the matchmaking/HTTP routes.
+   * Shared by {@link listen} and {@link serverless}.
+   *
+   * `setTransport()` runs here rather than before `transport.listen()`: the
+   * global transport is only read by the matchmaking route handler, which can't
+   * run until `bindRouterToTransport()` below registers the route.
+   */
+  private bindRoutes() {
+    // set transport globally, to be used by the matchmaking route
+    setTransport(this.transport);
+
+    // default router is used if no router is provided
+    if (!this.router) {
+      this.router = getDefaultRouter() as unknown as Routes;
+
+    } else {
+      // make sure default routes are included
+      // https://github.com/Bekacru/better-call/pull/67
+      this.router = this.router.extend({ ...getDefaultRouter().endpoints }) as unknown as Routes;
+    }
+
+    bindRouterToTransport(this.transport, this.router, this.options.express !== undefined);
   }
 
   /**

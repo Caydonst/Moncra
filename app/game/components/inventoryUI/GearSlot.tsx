@@ -36,9 +36,8 @@ export function GearSlot({ slotIndex, item, selectedSlot, openItemPanel, setSele
                 `${styles.gearSlot} ${(selectedSlot.displayIndex === slotIndex && selectedSlot.filter === "equipment") ? styles.selected : ""}`
             }
             style={{
-                background: `${colors[item?.rarity]?.rgba ?? "transparent"}`,
-                borderColor: `${colors[item?.rarity]?.hex ?? "rgba(255, 255, 255, 0.2)"
-                    }`
+                background: `${colors[item?.rarity]?.hex ?? "transparent"}`,
+                borderColor: `${colors[item?.rarity]?.hex ?? "rgba(255, 255, 255, 0.2)"}`
             }}
             onClick={() => {
                 if (!item) return;

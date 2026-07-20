@@ -9,6 +9,7 @@ export type Specialization = {
 };
 
 export type WeaponKind = "Great Sword" | "Bow" | "War Hammer";
+export type ArmorKind = "helmet" | "arms" | "chest" | "legs";
 
 export type ItemDefinition =
     | WeaponDefinition
@@ -96,15 +97,6 @@ export type WeaponDefinition = {
         damage: number;
         crit: number;
     };
-
-    upgradeValues: {
-        damagePerPoint: number;
-        critPerPoint: number;
-        rollPercentagePerPoint: number;
-        damageMasteryPerPoint: number;
-        critMasteryPerPoint: number;
-    };
-
     maxLevel: number;
     enchantmentIds: string[];
 };
@@ -113,20 +105,13 @@ export type ArmorDefinition = {
     id: string;
     name: string;
     type: "Armor";
-    kind: "helmet" | "arms" | "chest" | "legs";
+    kind: ArmorKind;
     icon: string;
     rarity: Rarity;
     baseStats: {
         hp: number;
         armor: number;
         power: number;
-    };
-    upgradeValues: {
-        hpPerPoint: number;
-        armorPerPoint: number;
-        rollPercentagePerPoint: number;
-        hpMasteryPerPoint: number;
-        armorMasteryPerPoint: number;
     };
     maxLevel: number;
     enchantmentIds: string[];

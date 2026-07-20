@@ -8,7 +8,7 @@ type PlayerInput = {
     aimAngle?: number;
 };
 
-export function registerPlayerMessages(room: Room<GameState>) {
+export function registerPlayerMessages(room: Room<{ state: GameState }>) {
     room.onMessage("player_move", (client: Client, data: PlayerInput) => {
         const player = room.state.players.get(client.sessionId);
         if (!player) return;

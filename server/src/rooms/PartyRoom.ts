@@ -7,7 +7,7 @@ import { spawnPlayer } from "../game_systems/spawnPlayer.js";
 import { registerInventoryMessages } from "../game_systems/registerInventoryMessages.js";
 import { deleteInventoryForSession } from "../game_systems/inventory/testInventoryStore.js";
 
-export class PartyRoom extends Room<GameState> {
+export class PartyRoom extends Room<{ state: GameState }> {
   maxClients = 4;
   patchRate = 20;
   state = new GameState();
@@ -30,6 +30,10 @@ export class PartyRoom extends Room<GameState> {
     player.weapon.icon = "great_sword1";
 
       console.log(`${client.sessionId} joined party`);
+  }
+
+  public getUserId(client: Client): string {
+    return client.auth?.userId ?? client.sessionId;
   }
 
   onLeave(client: Client) {

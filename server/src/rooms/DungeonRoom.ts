@@ -1,6 +1,6 @@
 import { Room } from "@colyseus/core";
 import type { Client } from "@colyseus/core";
-import { GameState } from "../schemas/GameState.js";
+import { EnemyState, GameState } from "../schemas/GameState.js";
 import { generateDungeonFloor } from "../shared/dungeon/mapGenerator.js";
 
 import { registerPlayerMessages } from "../game_systems/registerPlayerMessages.js";
@@ -16,16 +16,52 @@ import { clearEnemyContributors, getEnemyContributors } from "../game_systems/co
 import { getInventoryForSession } from "../game_systems/inventory/testInventoryStore.js";
 import { addXpToEquippedGear } from "../game_systems/items/itemXp.js";
 import { hydrateInventory } from "../game_systems/inventory/hydrateInventory.js";
+import { verifySupabaseToken } from "../auth/verifySupabaseToken.js";
 
-export class DungeonRoom extends Room<GameState> {
+type ClientAuth = {
+    userId: string;
+    email?: string;
+};
+
+export class DungeonRoom extends Room<{ state: GameState }> {
     maxClients = 4;
     patchRate = 1;
     state = new GameState();
 
+    private userIds = new Map<string, string>();
+
     private numFloors = 5;
-    private dungeon = generateDungeon(this.numFloors, 60, 60);
+    public dungeon = generateDungeon(this.numFloors, 60, 60);
     private enemyIdCounter = 0;
-    private currentFloor = 1;
+    public currentFloor = 1;
+
+    async onAuth(
+        client: Client,
+        options: {
+          accessToken?: string;
+        }
+      ): Promise<ClientAuth> {
+        if (!options.accessToken) {
+          throw new Error(
+            "Missing authentication token."
+          );
+        }
+    
+        const user = await verifySupabaseToken(
+          options.accessToken
+        );
+    
+        if (!user?.id) {
+          throw new Error(
+            "Invalid Supabase authentication token."
+          );
+        }
+    
+        return {
+          userId: user.id,
+          email: user.email,
+        };
+      }
 
     onCreate() {
         registerPlayerMessages(this);
@@ -80,6 +116,25 @@ export class DungeonRoom extends Room<GameState> {
     }
 
     onJoin(client: Client) {
+        const auth =
+            client.auth as ClientAuth | undefined;
+
+        if (!auth?.userId) {
+            throw new Error(
+                "Authenticated user ID was not attached to the client."
+            );
+        }
+
+        console.log(
+            "client.auth in onJoin:",
+            client.auth
+        );
+
+        this.userIds.set(
+            client.sessionId,
+            auth.userId
+        );
+
         const spawn = this.dungeon.floors[1].playerSpawn;
 
         const player = spawnPlayer(
@@ -87,13 +142,31 @@ export class DungeonRoom extends Room<GameState> {
             spawn.y * 64 + 32
         );
 
-        //player.weapon.id = "great_sword1";
-        //player.weapon.damage = 10;
-        //player.weapon.icon = "great_sword1";
+        const inventory = getInventoryForSession(auth.userId, player);
 
+        if (inventory.weapon) {
+            player.weapon.id = inventory.weapon.itemId;
+            player.weapon.damage = inventory.weapon.upgradedStats.damage.value;
+            //player.weapon.icon = inventory.weapon.icon;
+        }
+        
         this.state.players.set(client.sessionId, player);
 
         console.log(`${client.sessionId} joined dungeon`);
+    }
+
+    getUserId(client: Client): string {
+        const userId = this.userIds.get(
+            client.sessionId
+        );
+
+        if (!userId) {
+            throw new Error(
+                "Authenticated user ID was not found."
+            );
+        }
+
+        return userId;
     }
 
     onLeave(client: Client) {
@@ -111,14 +184,14 @@ export class DungeonRoom extends Room<GameState> {
         this.state.enemies.set(id, enemy);
     }
 
-    private loadFloorState(floorIndex: number) {
+    public loadFloorState(floorIndex: number) {
         const floor = this.dungeon.floors[floorIndex];
         if (!floor) return;
 
         this.currentFloor = floorIndex;
 
         this.state.enemies.clear();
-        this.state.chests?.clear?.(); // only if you have chests in schema
+        //this.state.chests?.clear?.(); // only if you have chests in schema
 
         for (const enemyDef of floor.enemies) {
             const enemy = spawnDemon(enemyDef.x, enemyDef.y);
@@ -144,7 +217,7 @@ export class DungeonRoom extends Room<GameState> {
         }
         */
     }
-    private awardEnemyExperience(
+    public awardEnemyExperience(
         enemyId: string,
         enemy: EnemyState
     ) {
@@ -166,23 +239,23 @@ export class DungeonRoom extends Room<GameState> {
                 continue;
             }
 
-            const inventory =
-                getInventoryForSession(
-                    sessionId,
-                    player
-                );
-
-            addXpToEquippedGear(
-                inventory,
-                xpReward
-            );
-
             const client =
                 this.clients.find(
                     roomClient =>
                         roomClient.sessionId ===
                         sessionId
                 );
+
+            const userId = this.getUserId(client);
+
+            const inventory = getInventoryForSession(userId, player);
+
+            addXpToEquippedGear(
+                inventory,
+                xpReward
+            );
+
+            
 
             client?.send("inventory_updated", {
                 enemyId,

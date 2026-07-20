@@ -8,12 +8,12 @@ import { createStartingInventory } from "./createStartingInventory.js"
 
 const inventories = new Map<string, ServerInventory>();
 
-export function getInventoryForSession(sessionId: string, player: PlayerState): ServerInventory {
-    let inventory = inventories.get(sessionId);
+export function getInventoryForSession(userId: string, player: PlayerState): ServerInventory {
+    let inventory = inventories.get(userId);
 
     if (!inventory) {
         inventory = createStartingInventory();
-        inventories.set(sessionId, inventory);
+        inventories.set(userId, inventory);
     }
 
     applyInventoryStatsToPlayer(player, inventory);

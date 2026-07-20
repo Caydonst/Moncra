@@ -1,102 +1,213 @@
+import type { Client, Room } from "@colyseus/core";
+import type { GameState } from "../schemas/GameState.js";
+
 import { hydrateInventory } from "./inventory/hydrateInventory.js";
 import { hydrateItem } from "./inventory/hydrateItem.js";
-import { applyInventoryStatsToPlayer, equipItemInInventory, getInventoryForSession, unequipItemInInventory } from "./inventory/testInventoryStore.js";
+
+import {
+    applyInventoryStatsToPlayer,
+    equipItemInInventory,
+    getInventoryForSession,
+    unequipItemInInventory,
+} from "./inventory/testInventoryStore.js";
+
 import { upgradeItem } from "./items/itemUpgrading.js";
 
-export function registerInventoryMessages(room: Room<GameState>) {
-    room.onMessage("equip_item", (client, message: { uid: string }) => {
-        const player = room.state.players.get(client.sessionId);
-        if (!player) return;
+type InventoryRoom = Room<{ state: GameState }> & {
+    getUserId(client: Client): string;
+};
 
-        const inventory = getInventoryForSession(client.sessionId, player);
+type UpgradeStatPoints = {
+    damage: number;
+    crit: number;
+    hp: number;
+    armor: number;
+};
 
-        const equipped = equipItemInInventory(inventory, message.uid);
+type UnequipSlot =
+    | "weapon"
+    | "helmet"
+    | "arms"
+    | "chest"
+    | "legs";
 
-        if (!equipped) {
-            client.send("inventory_error", {
-                error: "Item not found",
+export function registerInventoryMessages(
+    room: InventoryRoom
+) {
+    room.onMessage(
+        "equip_item",
+        (
+            client: Client,
+            message: { uid: string }
+        ) => {
+            const player = room.state.players.get(
+                client.sessionId
+            );
+
+            if (!player) return;
+
+            const userId = room.getUserId(client);
+            const inventory = getInventoryForSession(
+                userId,
+                player
+            );
+
+            const equipped = equipItemInInventory(
+                inventory,
+                message.uid
+            );
+
+            if (!equipped) {
+                client.send("inventory_error", {
+                    error: "Item not found",
+                });
+
+                return;
+            }
+
+            if (inventory.weapon) {
+                player.weapon.id = inventory.weapon.itemId;
+                player.weapon.damage =
+                    inventory.weapon.upgradedStats.damage.value;
+            } else {
+                player.weapon.id = "";
+                player.weapon.damage = 0;
+                player.weapon.icon = "";
+            }
+
+            applyInventoryStatsToPlayer(
+                player,
+                inventory
+            );
+
+            client.send("inventory_updated", {
+                inventory: hydrateInventory(inventory),
             });
-            return;
         }
+    );
 
-        applyInventoryStatsToPlayer(player, inventory);
+    room.onMessage(
+        "get_inventory",
+        (client: Client) => {
+            const player = room.state.players.get(
+                client.sessionId
+            );
 
-        client.send("inventory_updated", {
-            inventory: hydrateInventory(inventory),
-        });
-    });
-    room.onMessage("get_inventory", (client) => {
-        const player = room.state.players.get(client.sessionId);
-        if (!player) return;
+            if (!player) return;
 
-        const inventory = getInventoryForSession(client.sessionId, player);
+            const userId = room.getUserId(client);
+            const inventory = getInventoryForSession(
+                userId,
+                player
+            );
 
-        applyInventoryStatsToPlayer(player, inventory);
+            applyInventoryStatsToPlayer(
+                player,
+                inventory
+            );
 
-        client.send("inventory_updated", {
-            inventory: hydrateInventory(inventory),
-        });
-    });
-
-    room.onMessage("unequip_item", (client, message: { slot: "weapon" | "helmet" | "arms" | "chest" | "legs" }) => {
-        const player = room.state.players.get(client.sessionId);
-        if (!player) return;
-
-        const inventory = getInventoryForSession(client.sessionId, player);
-
-        const unequipped = unequipItemInInventory(inventory, message.slot);
-
-        if (!unequipped) {
-            client.send("inventory_error", {
-                error: "Could not unequip item",
+            client.send("inventory_updated", {
+                inventory: hydrateInventory(inventory),
             });
-            return;
         }
+    );
 
-        applyInventoryStatsToPlayer(player, inventory);
+    room.onMessage(
+        "unequip_item",
+        (
+            client: Client,
+            message: { slot: UnequipSlot }
+        ) => {
+            const player = room.state.players.get(
+                client.sessionId
+            );
 
-        client.send("inventory_updated", {
-            inventory: hydrateInventory(inventory),
-        });
-    });
+            if (!player) return;
 
-    room.onMessage("upgrade_item", (client, message: { uid: string, statPoints: { damage: number, crit: number, hp: number, armor: number } }) => {
-        const player = room.state.players.get(client.sessionId);
-        const inventory = getInventoryForSession(client.sessionId, player);
+            const userId = room.getUserId(client);
+            const inventory = getInventoryForSession(
+                userId,
+                player
+            );
 
-        const result = upgradeItem(inventory, message.uid, message.statPoints);
+            const unequipped = unequipItemInInventory(
+                inventory,
+                message.slot
+            );
 
-        if (!result) {
-            console.log("Item found but not upgraded", result);
-            return;
-        }
+            if (!unequipped) {
+                client.send("inventory_error", {
+                    error: "Could not unequip item",
+                });
 
-        /*if (!result.ok) {
-            client.send("inventory_error", {
-                error: result.error,
+                return;
+            }
+
+            if (!inventory.weapon) {
+                player.weapon.id = "";
+                player.weapon.damage = 0;
+                player.weapon.icon = "";
+            }
+
+            applyInventoryStatsToPlayer(
+                player,
+                inventory
+            );
+
+            client.send("inventory_updated", {
+                inventory: hydrateInventory(inventory),
             });
-            return;
-        }*/
+        }
+    );
 
-        console.log("UPGRADE RESULT BEFORE HYDRATION", {
-            uid: message.uid,
-            ok: result.ok,
-            resultItem: result.ok
-                ? {
-                    uid: result.item?.uid,
-                    itemId: result.item?.itemId,
-                    type: result.item?.type,
-                }
-                : undefined,
-        });
+    room.onMessage(
+        "upgrade_item",
+        (
+            client: Client,
+            message: {
+                uid: string;
+                statPoints: UpgradeStatPoints;
+            }
+        ) => {
+            const player = room.state.players.get(
+                client.sessionId
+            );
 
-        client.send("item_upgraded", {
-            upgradedItem: hydrateItem(result.item),
-            inventory: hydrateInventory(inventory),
-        });
+            if (!player) return;
 
-        client.send("inventory_updated", {
-            inventory: hydrateInventory(inventory),
-        });
-    });
+            const userId = room.getUserId(client);
+            const inventory = getInventoryForSession(
+                userId,
+                player
+            );
+
+            const result = upgradeItem(
+                inventory,
+                message.uid,
+                message.statPoints
+            );
+
+            if (result.ok === false) {
+                client.send("inventory_error", {
+                    error: result.error,
+                });
+
+                return;
+            }
+
+            applyInventoryStatsToPlayer(
+                player,
+                inventory
+            );
+
+            client.send("item_upgraded", {
+                upgradedItem: hydrateItem(result.item),
+                inventory: hydrateInventory(inventory),
+            });
+
+            client.send("inventory_updated", {
+                inventory: hydrateInventory(inventory),
+            });
+        }
+    );
 }

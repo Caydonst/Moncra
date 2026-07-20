@@ -13,6 +13,7 @@ export function addXpToItem(
     item: InventoryItemInstance,
     xp: number
 ) {
+    if (item.type === "Material") return;
     item.currentXp += xp;
 
     while (item.level < getItemMaxLevel(item)) {

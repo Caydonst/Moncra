@@ -425,7 +425,7 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                                 </div>
                                 <div className={styles.stat}>
                                     <img src={critIcon.src} />
-                                    <p>{playerStats.crit}</p>
+                                    <p>{playerStats.crit}%</p>
                                 </div>
                                 <div className={styles.stat}>
                                     <img src={armorStatIcon.src} />

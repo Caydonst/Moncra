@@ -4,20 +4,25 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "tsx src/index.ts",
+    "start:production": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@colyseus/core": "^0.17.43",
     "@colyseus/schema": "^4.0.25",
+    "@colyseus/tools": "^0.17.19",
     "@colyseus/ws-transport": "^0.17.13",
     "@supabase/supabase-js": "^2.110.7",
+    "colyseus": "^0.17.10",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "tsx": "latest",
-    "typescript": "latest"
+    "typescript": "5.9.3"
   }
 }

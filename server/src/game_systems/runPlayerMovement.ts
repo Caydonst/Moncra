@@ -3,7 +3,7 @@ import type { PlayerState } from "../schemas/GameState.js";
 import {
     BASE_SPEED,
     DASH_SPEED,
-    DASH_TIME,
+    //DASH_TIME,
 } from "./player/player.js";
 import { canMoveTo } from "./collisions/collisions.js";
 import type { TileType } from "../shared/dungeon/dungeonTypes.js";

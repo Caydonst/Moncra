@@ -11,6 +11,8 @@ export class GreatSwordState extends Schema {
   @type("number") lastAttackTime: number = 0;
   @type("number") lastComboTime: number = 0;
   @type("number") attackId: number = 0;
+
+  hitTargets: Set<string> = new Set<string>();
 }
 
 export class PlayerState extends Schema {
@@ -45,6 +47,11 @@ export class PlayerState extends Schema {
   @type("number") aimAngle: number = 0;
   @type("boolean") isAttacking: boolean = false;
   @type("number") attackId: number = 0;
+
+  @type("number") attackAimAngle: number = 0;
+  @type("string") attackType: string = "";
+  @type("number") attackDuration: number = 0;
+  @type("number") attackDamage: number = 0;
 
   // Sentinel
   @type("number") resolve: number = 100;

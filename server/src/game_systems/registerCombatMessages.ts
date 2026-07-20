@@ -1,11 +1,18 @@
 import type { Room, Client } from "@colyseus/core";
-import type { GameState } from "../schemas/GameState.js";
+import type { EnemyState, GameState } from "../schemas/GameState.js";
 import { handleGreatSwordAttack } from "./great_sword/GreatSword.js";
 import { addEnemyContributor, getEnemyContributors } from "./combat/enemyContributors.js";
 
 const hitEnemies = new Set<string>();
 
-export function registerCombatMessages(room: Room<GameState>) {
+type CombatRoom = Room<{ state: GameState }> & {
+    awardEnemyExperience(
+        enemyId: string,
+        enemy: EnemyState
+    ): void;
+};
+
+export function registerCombatMessages(room: CombatRoom) {
     room.onMessage("equip_weapon", (client, data) => {
         const player = room.state.players.get(client.sessionId);
         if (!player) return;
@@ -19,6 +26,9 @@ export function registerCombatMessages(room: Room<GameState>) {
 
         const weaponId = String(data.weaponId);
         const aimAngle = Number(data.aimAngle);
+
+        console.log("WEAPONID: ", weaponId);
+        console.log("PLAYER WEAPONID: ", player.weapon.id);        
 
         if (!Number.isFinite(aimAngle)) return;
         if (weaponId !== player.weapon.id) return;

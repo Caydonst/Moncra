@@ -18,14 +18,6 @@ export const itemDefinitions = {
             crit: 20,
         },
 
-        upgradeValues: {
-            damagePerPoint: 2,
-            critPerPoint: 1,
-            rollPercentagePerPoint: 4,
-            damageMasteryPerPoint: 1,
-            critMasteryPerPoint: 2,
-        },
-
         maxLevel: 10,
         enchantmentIds: ["critical_hit", "chain_lightning"],
     },
@@ -42,14 +34,6 @@ export const itemDefinitions = {
             power: 130,
             damage: 40,
             crit: 20,
-        },
-
-        upgradeValues: {
-            damagePerPoint: 2,
-            critPerPoint: 1,
-            rollPercentagePerPoint: 4,
-            damageMasteryPerPoint: 1,
-            critMasteryPerPoint: 2,
         },
 
         maxLevel: 10,
@@ -71,14 +55,6 @@ export const itemDefinitions = {
             crit: 20,
         },
 
-        upgradeValues: {
-            damagePerPoint: 2,
-            critPerPoint: 1,
-            rollPercentagePerPoint: 4,
-            damageMasteryPerPoint: 1,
-            critMasteryPerPoint: 2,
-        },
-
         maxLevel: 10,
         enchantmentIds: ["critical_hit", "chain_lightning"],
     },
@@ -97,14 +73,6 @@ export const itemDefinitions = {
             crit: 20,
         },
 
-        upgradeValues: {
-            damagePerPoint: 2,
-            critPerPoint: 1,
-            rollPercentagePerPoint: 4,
-            damageMasteryPerPoint: 1,
-            critMasteryPerPoint: 2,
-        },
-
         maxLevel: 10,
         enchantmentIds: ["critical_hit", "chain_lightning"],
     },
@@ -120,13 +88,6 @@ export const itemDefinitions = {
             hp: 50,
             armor: 15,
             power: 130,
-        },
-        upgradeValues: {
-            damagePerPoint: 2,
-            critPerPoint: 1,
-            rollPercentagePerPoint: 4,
-            damageMasteryPerPoint: 1,
-            critMasteryPerPoint: 2,
         },
         maxLevel: 10,
         
@@ -145,13 +106,6 @@ export const itemDefinitions = {
             armor: 15,
             power: 130,
         },
-        upgradeValues: {
-            damagePerPoint: 2,
-            critPerPoint: 1,
-            rollPercentagePerPoint: 4,
-            damageMasteryPerPoint: 1,
-            critMasteryPerPoint: 2,
-        },
         maxLevel: 10,
         enchantmentIds: [],
     },
@@ -168,13 +122,6 @@ export const itemDefinitions = {
             armor: 15,
             power: 130,
         },
-        upgradeValues: {
-            damagePerPoint: 2,
-            critPerPoint: 1,
-            rollPercentagePerPoint: 4,
-            damageMasteryPerPoint: 1,
-            critMasteryPerPoint: 2,
-        },
         maxLevel: 10,
         enchantmentIds: [],
     },
@@ -190,13 +137,6 @@ export const itemDefinitions = {
             hp: 50,
             armor: 15,
             power: 130,
-        },
-        upgradeValues: {
-            damagePerPoint: 2,
-            critPerPoint: 1,
-            rollPercentagePerPoint: 4,
-            damageMasteryPerPoint: 1,
-            critMasteryPerPoint: 2,
         },
         maxLevel: 10,
         enchantmentIds: [],

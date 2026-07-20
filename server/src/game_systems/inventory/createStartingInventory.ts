@@ -7,7 +7,9 @@ import type {
 
 import { createItemInstance } from "../items/createItemInstance.js";
 
-function createWeapon(itemId: string): WeaponItemInstance {
+import type { ItemId } from "../items/itemDefinitions.js";
+
+function createWeapon(itemId: ItemId): WeaponItemInstance {
     const item = createItemInstance(itemId);
 
     if (item.type !== "Weapon") {
@@ -17,7 +19,7 @@ function createWeapon(itemId: string): WeaponItemInstance {
     return item;
 }
 
-function createArmor(itemId: string): ArmorItemInstance {
+function createArmor(itemId: ItemId): ArmorItemInstance {
     const item = createItemInstance(itemId);
 
     if (item.type !== "Armor") {
@@ -28,7 +30,7 @@ function createArmor(itemId: string): ArmorItemInstance {
 }
 
 function createMaterial(
-    itemId: string,
+    itemId: ItemId,
     quantity: number
 ): MaterialItemInstance {
     const item = createItemInstance(itemId, quantity);

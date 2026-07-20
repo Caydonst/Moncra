@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { itemDefinitions } from "../items/itemDefinitions.js";
+import { itemDefinitions, type ItemId } from "../items/itemDefinitions.js";
 import { rollItemStats } from "../items/itemRolls.js";
 
 import type {
@@ -10,7 +10,7 @@ import type {
 } from "../inventory/inventoryTypes.js";
 
 export function createItemInstance(
-    itemId: string,
+    itemId: ItemId,
     quantity = 1
 ): InventoryItemInstance {
     const def = itemDefinitions[itemId];
@@ -146,6 +146,7 @@ export function createItemInstance(
             uid: randomUUID(),
             itemId: def.id,
             type: "Material",
+            rarity: def.rarity,
             quantity,
         };
 

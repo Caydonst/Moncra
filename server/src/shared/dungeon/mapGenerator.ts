@@ -66,13 +66,24 @@ export function generateDungeonFloor(rows: number, cols: number): DungeonFloor {
     return {
         map,
         rooms,
+
         playerSpawn: {
             x: rooms[0].centerX,
             y: rooms[0].centerY,
         },
+
         exitSpawn: {
             x: rooms[rooms.length - 1].centerX,
             y: rooms[rooms.length - 1].centerY,
+        },
+
+        enemies: [],
+        chests: [],
+
+        portal: {
+            x: rooms[rooms.length - 1].centerX,
+            y: rooms[rooms.length - 1].centerY,
+            targetFloor: 0, 
         },
     };
 }

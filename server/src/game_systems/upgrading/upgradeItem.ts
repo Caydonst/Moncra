@@ -1,5 +1,5 @@
 // server/inventory/upgradeItemInInventory.ts
-
+/*
 import type { ServerInventory, InventoryItemInstance } from "../inventory/inventoryTypes.js";
 import { itemDefinitions } from "../items/itemDefinitions.js";
 
@@ -59,3 +59,4 @@ function newUpgradeItem(inventory: ServerInventory, uid: string) {
 
     
 }
+    */

@@ -86,6 +86,8 @@ export function handleGreatSwordAttack(
     now = Date.now()
 ) {
     if (input.weaponId !== player.weaponId) {
+        console.log("INPUT WEAPONID: ", input.weaponId);
+        console.log("PLAYER WEAPONID: ", player.weaponId);
         return null;
     }
 

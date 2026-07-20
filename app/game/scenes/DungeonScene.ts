@@ -87,6 +87,7 @@ export class DungeonScene extends ex.Scene {
       this.add(this.gameState.inventory.weapon.instance);
       this.gameState.inventory.weapon.instance.attachToScene(this);
     }
+    console.log("GAME STATE: ", this.gameState.inventory);
 
     this.projectileManager = new ProjectileManager(
       this.resources,

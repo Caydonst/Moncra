@@ -14,7 +14,7 @@ export const colors = {
         rgba: "#146666",
     },
     epic: {
-        hex: "#F132FF",
+        hex: "#B200FF", // F132FF
         rgba: "#5F1466",
     },
     legendary: {
@@ -30,6 +30,8 @@ export const colors = {
         rgba: "#661414",
     },
 }
+
+//ENCHANT COLOR: FFF200
 
 export const specializationColors = {
     Duelist: {

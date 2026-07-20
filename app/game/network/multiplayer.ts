@@ -257,8 +257,13 @@ class MultiplayerManager {
 
     const {
       data: { session },
-      error,
     } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      throw new Error(
+        "No Supabase access token is available."
+      );
+    }
 
     this.room = await this.client.joinOrCreate(
       "hub_room",

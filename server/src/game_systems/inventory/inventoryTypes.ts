@@ -44,7 +44,7 @@ type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary" | "exalted"
 
 export type WeaponItemInstance = {
     uid: string;
-    itemId: string;
+    itemId: ItemId;
     type: "Weapon";
     kind: WeaponKind;
     rarity: Rarity;
@@ -87,7 +87,7 @@ export type WeaponItemInstance = {
 
 export type ArmorItemInstance = {
     uid: string;
-    itemId: string;
+    itemId: ItemId;
     type: "Armor";
     kind: ArmorKind;
     rarity: Rarity;
@@ -130,8 +130,9 @@ export type ArmorItemInstance = {
 
 export type MaterialItemInstance = {
     uid: string;
-    itemId: string;
+    itemId: ItemId;
     type: "Material";
+    rarity: Rarity;
     quantity: number;
 };
 

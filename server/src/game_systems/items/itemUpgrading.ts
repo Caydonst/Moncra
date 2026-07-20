@@ -1,6 +1,32 @@
-import { InventoryItemInstance, ServerInventory } from "../inventory/inventoryTypes.js";
+import type {
+    ArmorItemInstance,
+    InventoryItemInstance,
+    ServerInventory,
+    WeaponItemInstance,
+} from "../inventory/inventoryTypes.js";
 import { getMaxStatValue, getMinStatValue } from "./itemRolls.js";
 
+type EquipmentItemInstance =
+    | WeaponItemInstance
+    | ArmorItemInstance;
+
+type UpgradeItemSuccess = {
+    ok: true;
+    item: EquipmentItemInstance;
+    upgradedStat: UpgradeableStat;
+    upgradeType: "normal" | "mastery";
+    masteryLevel?: number;
+    masteryValue?: number;
+};
+
+type UpgradeItemFailure = {
+    ok: false;
+    error: string;
+};
+
+export type UpgradeItemResult =
+    | UpgradeItemSuccess
+    | UpgradeItemFailure;
 
 export function getItemXpRequired(level: number) {
     return 100 + level * 50;
@@ -376,7 +402,7 @@ export function upgradeItem(
     inventory: ServerInventory,
     uid: string,
     statPoints: StatPoints
-) {
+): UpgradeItemResult  {
     const item = findInventoryItemByUid(
         inventory,
         uid
@@ -386,6 +412,13 @@ export function upgradeItem(
         return {
             ok: false as const,
             error: "Item not found.",
+        };
+    }
+
+    if (item.type === "Material") {
+        return {
+            ok: false as const,
+            error: "Materials cannot be upgraded.",
         };
     }
 
@@ -404,7 +437,10 @@ export function upgradeItem(
         );
 
         if (!result.ok) {
-            return result;
+            return {
+                ok: false as const,
+                error: result.error,
+            };
         }
 
         const appliedUpgrade = applyWeaponUpgrade(
@@ -433,7 +469,10 @@ export function upgradeItem(
         );
 
         if (!result.ok) {
-            return result;
+            return {
+                ok: false as const,
+                error: result.error,
+            };
         }
 
         const appliedUpgrade = applyArmorUpgrade(
