@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { Server } from "@colyseus/core";
+import { matchMaker, Server } from "@colyseus/core";
 import { WebSocketTransport } from "@colyseus/ws-transport";
 import { createServer } from "http";
 
@@ -11,11 +11,27 @@ import playerRoutes from "./routes/playerRoutes.js";
 
 const port = Number(process.env.PORT || 2567);
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  process.env.CLIENT_URL,
+].filter((origin): origin is string => Boolean(origin));
+
+const isAllowedOrigin = (origin: string | undefined): boolean => {
+  return !origin || allowedOrigins.includes(origin);
+};
+
 const expressApp = express();
 
 expressApp.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin(origin, callback) {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS blocked origin: ${origin}`));
+    },
     credentials: true,
   })
 );
@@ -37,6 +53,26 @@ expressApp.get("/health", (_req, res) => {
   });
 });
 
+/**
+ * Colyseus matchmaking routes do not use the Express CORS middleware.
+ * Configure their CORS headers separately.
+ */
+matchMaker.controller.getCorsHeaders = (headers) => {
+  const origin = headers.get("origin");
+
+  if (origin && allowedOrigins.includes(origin)) {
+    return {
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Credentials": "true",
+      "Vary": "Origin",
+    };
+  }
+
+  return {
+    "Vary": "Origin",
+  };
+};
+
 const httpServer = createServer(expressApp);
 
 const gameServer = new Server({
@@ -50,10 +86,5 @@ gameServer.define("dungeon_room", DungeonRoom);
 
 await gameServer.listen(port);
 
-console.log(
-  `Game server running on port ${port}`
-);
-
-console.log(
-  `Allowed client origin: ${process.env.CLIENT_URL}`
-);
+console.log(`Game server running on port ${port}`);
+console.log("Allowed client origins:", allowedOrigins);
