@@ -9,7 +9,7 @@ module.exports = {
             watch: false,
             instances: 1, //os.cpus().length
             exec_mode: "fork",
-            env_production: {
+            env: {
                 NODE_ENV: "production",
             },
         },
