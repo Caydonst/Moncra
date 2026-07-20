@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 type RoomKind = "hub" | "party" | "dungeon";
 
 class MultiplayerManager {
-  client = new Client("ws://localhost:2567");
+  client = new Client(process.env.NEXT_PUBLIC_COLYSEUS_URL!);
   room: Room | null = null;
   callbacks: any = null;
 

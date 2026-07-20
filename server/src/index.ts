@@ -15,7 +15,7 @@ const expressApp = express();
 
 expressApp.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: process.env.CLIENT_URL,
     credentials: true,
   })
 );
@@ -51,5 +51,9 @@ gameServer.define("dungeon_room", DungeonRoom);
 await gameServer.listen(port);
 
 console.log(
-  `Game server running on ws://localhost:${port}`
+  `Game server running on port ${port}`
+);
+
+console.log(
+  `Allowed client origin: ${process.env.CLIENT_URL}`
 );
