@@ -11,6 +11,9 @@ import playerRoutes from "./routes/playerRoutes.js";
 
 const port = Number(process.env.PORT || 2567);
 
+console.log("MONCRA SERVER BUILD: cors-fix-2026-07-20");
+console.log("CLIENT_URL:", JSON.stringify(process.env.CLIENT_URL));
+
 const allowedOrigins = [
   "http://localhost:3000",
   process.env.CLIENT_URL,
@@ -24,6 +27,17 @@ const expressApp = express();
 
 expressApp.use(
   cors({
+    origin: [
+      "http://localhost:3000",
+      "https://moncra.vercel.app",
+    ],
+    credentials: true,
+  })
+);
+
+/*
+expressApp.use(
+  cors({
     origin(origin, callback) {
       if (isAllowedOrigin(origin)) {
         callback(null, true);
@@ -35,6 +49,7 @@ expressApp.use(
     credentials: true,
   })
 );
+*/
 
 expressApp.use(express.json());
 
@@ -57,18 +72,10 @@ expressApp.get("/health", (_req, res) => {
  * Colyseus matchmaking routes do not use the Express CORS middleware.
  * Configure their CORS headers separately.
  */
-matchMaker.controller.getCorsHeaders = (headers) => {
-  const origin = headers.get("origin");
-
-  if (origin && allowedOrigins.includes(origin)) {
-    return {
-      "Access-Control-Allow-Origin": origin,
-      "Access-Control-Allow-Credentials": "true",
-      "Vary": "Origin",
-    };
-  }
-
+matchMaker.controller.getCorsHeaders = () => {
   return {
+    "Access-Control-Allow-Origin": "https://moncra.vercel.app",
+    "Access-Control-Allow-Credentials": "true",
     "Vary": "Origin",
   };
 };
