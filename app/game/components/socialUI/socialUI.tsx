@@ -77,6 +77,16 @@ export default function SocialUI({
         setAcceptingRequestId,
     ] = useState<number | null>(null);
 
+    const [
+        removingFriendUid,
+        setRemovingFriendUid,
+    ] = useState<string | null>(null);
+
+    const [
+        decliningRequestId,
+        setDecliningRequestId,
+    ] = useState<string | number | null>(null);
+
     async function loadFriends() {
         setLoadingFriends(true);
         setFriendsError(null);
@@ -232,6 +242,86 @@ export default function SocialUI({
         }
     }
 
+    async function removeFriend(
+        friendUid: string,
+        username: string
+    ) {
+        if (removingFriendUid) {
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `Remove ${username} from your friends list?`
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        setRemovingFriendUid(friendUid);
+        setRequestStatus(null);
+
+        try {
+            const response = await fetch(
+                "/api/friends/remove",
+                {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+                    },
+                    body: JSON.stringify({
+                        friendUid,
+                    }),
+                }
+            );
+
+            const data = (await response.json()) as {
+                success?: boolean;
+                message?: string;
+                error?: string;
+            };
+
+            if (!response.ok) {
+                setRequestStatus({
+                    type: "error",
+                    message:
+                        data.error ??
+                        "Failed to remove friend.",
+                });
+
+                return;
+            }
+
+            setFriends((currentFriends) =>
+                currentFriends.filter(
+                    (friend) =>
+                        friend.uid !== friendUid
+                )
+            );
+
+            setRequestStatus({
+                type: "success",
+                message:
+                    data.message ??
+                    `${username} was removed.`,
+            });
+        } catch (error) {
+            console.error(
+                "Failed to remove friend:",
+                error
+            );
+
+            setRequestStatus({
+                type: "error",
+                message:
+                    "Could not connect to the server.",
+            });
+        } finally {
+            setRemovingFriendUid(null);
+        }
+    }
+
     async function acceptFriendRequest(
         requestId: number
     ) {
@@ -303,6 +393,81 @@ export default function SocialUI({
             });
         } finally {
             setAcceptingRequestId(null);
+        }
+    }
+
+    async function declineFriendRequest(
+        requestId: string | number
+    ) {
+        if (
+            decliningRequestId !== null ||
+            acceptingRequestId !== null
+        ) {
+            return;
+        }
+
+        setDecliningRequestId(requestId);
+        setRequestStatus(null);
+
+        try {
+            const response = await fetch(
+                "/api/friends/decline",
+                {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+                    },
+                    body: JSON.stringify({
+                        requestId,
+                    }),
+                }
+            );
+
+            const data = (await response.json()) as {
+                success?: boolean;
+                message?: string;
+                error?: string;
+            };
+
+            if (!response.ok) {
+                setRequestStatus({
+                    type: "error",
+                    message:
+                        data.error ??
+                        "Failed to decline friend request.",
+                });
+
+                return;
+            }
+
+            setFriendRequests(
+                (currentRequests) =>
+                    currentRequests.filter(
+                        (request) =>
+                            request.id !== requestId
+                    )
+            );
+
+            setRequestStatus({
+                type: "success",
+                message:
+                    data.message ??
+                    "Friend request declined.",
+            });
+        } catch (error) {
+            console.error(
+                "Failed to decline friend request:",
+                error
+            );
+
+            setRequestStatus({
+                type: "error",
+                message:
+                    "Could not connect to the server.",
+            });
+        } finally {
+            setDecliningRequestId(null);
         }
     }
 
@@ -503,6 +668,27 @@ export default function SocialUI({
                                             Friend
                                         </p>
                                     </div>
+                                    <button
+                                        type="button"
+                                        className={
+                                            styles.removeFriendBtn
+                                        }
+                                        disabled={
+                                            removingFriendUid ===
+                                            friend.uid
+                                        }
+                                        onClick={() =>
+                                            void removeFriend(
+                                                friend.uid,
+                                                friend.username
+                                            )
+                                        }
+                                    >
+                                        {removingFriendUid ===
+                                            friend.uid
+                                            ? "Removing..."
+                                            : "Remove"}
+                                    </button>
                                 </div>
                             ))
                         )}
@@ -563,8 +749,8 @@ export default function SocialUI({
                                                 styles.acceptRequestBtn
                                             }
                                             disabled={
-                                                acceptingRequestId ===
-                                                request.id
+                                                acceptingRequestId === request.id ||
+                                                decliningRequestId === request.id
                                             }
                                             onClick={() =>
                                                 void acceptFriendRequest(
@@ -583,11 +769,18 @@ export default function SocialUI({
                                                 styles.declineRequestBtn
                                             }
                                             disabled={
-                                                acceptingRequestId ===
-                                                request.id
+                                                decliningRequestId === request.id ||
+                                                acceptingRequestId === request.id
+                                            }
+                                            onClick={() =>
+                                                void declineFriendRequest(
+                                                    request.id
+                                                )
                                             }
                                         >
-                                            Decline
+                                            {decliningRequestId === request.id
+                                                ? "Declining..."
+                                                : "Decline"}
                                         </button>
                                     </div>
                                 </div>
