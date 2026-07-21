@@ -83,6 +83,11 @@ class MultiplayerManager {
     this.callbacks = Callbacks.get(this.room);
 
     this.room.onLeave((code) => {
+      if (code === 4001) {
+        window.location.href =
+          "/?reason=logged_in_elsewhere";
+      }
+
       console.warn("Left dungeon room:", code);
       this.room = null;
       this.callbacks = null;
@@ -276,6 +281,11 @@ class MultiplayerManager {
     this.callbacks = Callbacks.get(this.room);
 
     this.room.onLeave((code) => {
+      if (code === 4001) {
+        window.location.href =
+          "/?reason=logged_in_elsewhere";
+      }
+
       console.warn("Left hub room:", code);
       this.room = null;
       this.callbacks = null;
@@ -331,6 +341,11 @@ class MultiplayerManager {
     this.callbacks = Callbacks.get(this.room);
 
     this.room.onLeave((code) => {
+      if (code === 4001) {
+        window.location.href =
+          "/?reason=logged_in_elsewhere";
+      }
+
       console.warn("Left party room:", code);
       this.room = null;
       this.callbacks = null;

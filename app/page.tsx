@@ -10,6 +10,7 @@ import { useAuth } from "./providers/AuthProvider";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {ChevronRightIcon} from "@heroicons/react/24/solid"
+import { LoggedOutMessage } from "./game/components/misc/loggedOutMessage";
 
 export default function Home() {
   const [loginOpen, setLoginOpen] = useState(false);
@@ -90,13 +91,15 @@ export default function Home() {
   }
 
   return (
-    <main className={styles.main}>
-      <h1>MONCRA</h1>
-      <div className={styles.playBtnContainer}>
-        {!authLoaded ? (
-          <p>Checking authentication...</p>
-        ) : user ? (
-          <>
+    <main className={styles.mainWrapper}>
+      <LoggedOutMessage />
+      <div className={styles.mainContainer}>
+        <h1>MONCRA</h1>
+        <div className={styles.playBtnContainer}>
+          {!authLoaded ? (
+            <p>Checking authentication...</p>
+          ) : user ? (
+            <>
               <div
                 className={styles.playBtn}
                 onClick={() => {
@@ -113,20 +116,21 @@ export default function Home() {
                 </div>
               </div>
               <button className={styles.logoutBtn} onClick={() => void logout()}>Log out</button>
-          </>
-        ) : (
-          <>
-            <p>Login to play</p>
+            </>
+          ) : (
+            <>
+              <p>Login to play</p>
 
-            <button
-              className={styles.openLoginBtn}
-              type="button"
-              onClick={() => setLoginOpen(true)}
-            >
-              Login
-            </button>
-          </>
-        )}
+              <button
+                className={styles.openLoginBtn}
+                type="button"
+                onClick={() => setLoginOpen(true)}
+              >
+                Login
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       <img

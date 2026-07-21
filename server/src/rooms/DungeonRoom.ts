@@ -17,6 +17,11 @@ import { getInventoryForSession } from "../game_systems/inventory/testInventoryS
 import { addXpToEquippedGear } from "../game_systems/items/itemXp.js";
 import { hydrateInventory } from "../game_systems/inventory/hydrateInventory.js";
 import { verifySupabaseToken } from "../auth/verifySupabaseToken.js";
+import {
+    getActivePlayer,
+    removeActivePlayer,
+    setActivePlayer,
+} from "../auth/activePlayers.js";
 
 type ClientAuth = {
     userId: string;
@@ -125,6 +130,30 @@ export class DungeonRoom extends Room<{ state: GameState }> {
             );
         }
 
+        const previousConnection =
+            getActivePlayer(auth.userId);
+
+        if (
+            previousConnection &&
+            previousConnection.client.sessionId !==
+            client.sessionId
+        ) {
+            previousConnection.client.send(
+                "account_logged_in_elsewhere",
+                {
+                    message:
+                        "This account was logged in from another device.",
+                }
+            );
+
+            previousConnection.client.leave(4001);
+        }
+
+        setActivePlayer(auth.userId, {
+            client,
+            roomId: this.roomId,
+        });
+
         console.log(
             "client.auth in onJoin:",
             client.auth
@@ -170,11 +199,24 @@ export class DungeonRoom extends Room<{ state: GameState }> {
     }
 
     onLeave(client: Client) {
+        const userId = client.userData?.userId;
+
+        if (userId) {
+            removeActivePlayer(
+                userId,
+                client.sessionId
+            );
+        }
+
         this.state.players.delete(client.sessionId);
 
-        console.log(`${client.sessionId} left dungeon`);
-        //this.state.players.delete(client.sessionId);
-        //deleteInventoryForSession(client.sessionId);
+        this.userIds.delete(
+            client.sessionId
+        );
+
+        console.log(
+            `${client.sessionId} left dungeon`
+        );
     }
 
     private addDemon(x: number, y: number) {

@@ -534,7 +534,7 @@
     height: 200%;
     object-fit: contain;
     image-rendering: pixelated;
-    filter: drop-shadow(0 0 12px rgba(0,0,0,1));
+    filter: drop-shadow(0 0 15px rgba(0,0,0,1));
     transform: rotate(30deg);
 }
 .gearOtherImg {
@@ -542,7 +542,7 @@
     height: 130%;
     object-fit: contain;
     image-rendering: pixelated;
-    filter: drop-shadow(0 0 12px rgba(0,0,0,1));
+    filter: drop-shadow(0 0 15px rgba(0,0,0,1));
     transform: rotate(10deg);
 }
 .equippedWeaponInfoContainer {

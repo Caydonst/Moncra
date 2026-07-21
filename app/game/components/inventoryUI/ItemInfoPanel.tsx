@@ -101,7 +101,7 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
                         <div className={styles.itemInfoHeader}>
                             <div className={styles.itemInfoHeaderIcon} 
                             style={{
-                                background: `${colors[selectedItem?.rarity]?.rgba ?? "#080808"}`,
+                                background: `${colors[selectedItem?.rarity]?.hex ?? "#080808"}`,
                                 borderColor: `${colors[selectedItem?.rarity]?.hex ?? "#202020"
                                     }`
                             }}>

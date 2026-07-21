@@ -315,11 +315,11 @@ export default function GameCanvas() {
                         <BlacksmithUI blacksmithOpen={blacksmithOpen} inventory={inventory} setInventory={setInventory} />
                     )}
                     <div className={styles.socialContainer}>
-                        <button className={styles.socialBtn} onClick={() => setSocialOpen(prev => !prev)}>
+                        <button className={styles.socialBtn} onClick={() => setSocialOpen(true)}>
                             <img src={SocialIcon.src} />
                         </button>
                     </div>
-                    <SocialUI socialOpen={socialOpen} />
+                    <SocialUI socialOpen={socialOpen} setSocialOpen={setSocialOpen} />
 
                     <div className={styles.overlayFooter}>
                         {/*
