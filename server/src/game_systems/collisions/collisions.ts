@@ -1,4 +1,7 @@
-import { TileType, TILE_SIZE } from "../../shared/dungeon/dungeonTypes.js";
+import {
+    TileType,
+    TILE_SIZE,
+} from "../../shared/dungeon/dungeonTypes.js";
 
 function worldToTile(x: number, y: number) {
     return {
@@ -7,12 +10,26 @@ function worldToTile(x: number, y: number) {
     };
 }
 
-function isWalkableTile(map: TileType[][], tx: number, ty: number) {
-    if (ty < 0 || ty >= map.length) return false;
-    if (tx < 0 || tx >= map[0].length) return false;
+function isWalkableTile(
+    map: TileType[][],
+    tileX: number,
+    tileY: number
+): boolean {
+    if (
+        tileY < 0 ||
+        tileY >= map.length ||
+        tileX < 0 ||
+        tileX >= map[0].length
+    ) {
+        return false;
+    }
 
-    const tile = map[ty][tx];
-    return tile === TileType.Floor || tile === TileType.Door;
+    const tile = map[tileY][tileX];
+
+    return (
+        tile === TileType.Floor ||
+        tile === TileType.Door
+    );
 }
 
 export function canMoveTo(
@@ -21,19 +38,39 @@ export function canMoveTo(
     y: number,
     width: number,
     height: number
-) {
+): boolean {
     const halfW = width / 2;
     const halfH = height / 2;
 
     const points = [
-        { x: x - halfW, y: y - halfH },
-        { x: x + halfW, y: y - halfH },
-        { x: x - halfW, y: y + halfH },
-        { x: x + halfW, y: y + halfH },
+        {
+            x: x - halfW,
+            y: y - halfH,
+        },
+        {
+            x: x + halfW,
+            y: y - halfH,
+        },
+        {
+            x: x - halfW,
+            y: y + halfH,
+        },
+        {
+            x: x + halfW,
+            y: y + halfH,
+        },
     ];
 
-    return points.every((p) => {
-        const { tx, ty } = worldToTile(p.x, p.y);
-        return isWalkableTile(map, tx, ty);
+    return points.every((point) => {
+        const { tx, ty } = worldToTile(
+            point.x,
+            point.y
+        );
+
+        return isWalkableTile(
+            map,
+            tx,
+            ty
+        );
     });
 }

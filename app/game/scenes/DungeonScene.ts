@@ -55,7 +55,9 @@ type ServerDungeonData = {
 export class DungeonScene extends ex.Scene {
   private currentFloorIndex = 1;
   private currentFloor: Floor | null = null;
-  public currentEnemies: Demon[] = [];
+  public get currentEnemies(): Demon[] {
+    return multiplayer.getCurrentEnemyActors();
+  }
 
   private numFloors = 5;
   private worldBounds!: { width: number; height: number };
@@ -161,21 +163,37 @@ export class DungeonScene extends ex.Scene {
   loadFloor() {
     this.currentFloor?.kill();
 
-    this.currentFloor = this.dungeon.floors[this.currentFloorIndex];
+    this.currentFloor =
+      this.dungeon.floors[
+      this.currentFloorIndex
+      ];
 
     if (!this.currentFloor) {
-      console.warn("Missing floor:", this.currentFloorIndex);
+      console.warn(
+        "Missing floor:",
+        this.currentFloorIndex
+      );
+
       return;
     }
 
     this.currentFloor.draw(this);
 
-    const spawn = this.currentFloor.tileLayer.playerSpawn;
-    this.player.pos = tileVec(spawn.x, spawn.y);
+    const spawn =
+      this.currentFloor.tileLayer.playerSpawn;
 
-    this.currentEnemies = this.currentFloor.enemies;
+    this.player.pos = tileVec(
+      spawn.x,
+      spawn.y
+    );
 
-    console.log(`Dungeon floor ${this.currentFloorIndex} loaded`);
+    multiplayer.setCurrentDungeonFloor(
+      this.currentFloorIndex
+    );
+
+    console.log(
+      `Dungeon floor ${this.currentFloorIndex} loaded`
+    );
   }
 
   private buildDungeonFromServerDungeon(dungeonData: ServerDungeonData) {
@@ -201,7 +219,6 @@ class Floor {
   public chests: Chest[] = [];
   public portal!: Portal;
   public portalTarget!: number | "hub";
-  public enemies: Demon[] = [];
 
   public tileLayer!: ServerDungeonFloor;
   public tileMap!: ex.TileMap;
@@ -215,7 +232,6 @@ class Floor {
   kill() {
     this.tileMap?.kill();
     this.chests.forEach(chest => chest.kill());
-    this.enemies.forEach(enemy => enemy.destroyEnemy());
     this.portal?.kill();
   }
 }
@@ -247,29 +263,6 @@ function buildClientFloor(
     floorData.map,
     resources.mapSpritesheet
   );
-
-  floorData.enemies.forEach(enemyData => {
-    if (enemyData.type !== "demon") return;
-
-    const demon = new Demon(
-      {
-        id: enemyData.id,
-        type: enemyData.type,
-        x: enemyData.x,
-        y: enemyData.y,
-        vx: 0,
-        vy: 0,
-        hp: enemyData.hp,
-        maxHp: enemyData.maxHp,
-        isDead: false,
-        isAggro: false,
-        state: "idle",
-      },
-      resources
-    );
-
-    floor.enemies.push(demon);
-  });
 
   floorData.chests.forEach(chestData => {
     const chest = new Chest(

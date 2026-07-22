@@ -1,24 +1,56 @@
 import type { MapSchema } from "@colyseus/schema";
-import type { EnemyState, PlayerState } from "../schemas/GameState.js";
-import { updateDemon } from "./enemy/demon.js";
-import type { TileType } from "../shared/dungeon/dungeonTypes.js";
+import type {
+    EnemyState,
+    PlayerState,
+} from "../schemas/GameState.js";
+import type {
+    DungeonFloor,
+} from "../shared/dungeon/dungeonTypes.js";
+import { updateEnemy } from "./enemy/demon.js";
 
 export function runEnemySimulation(
     enemies: MapSchema<EnemyState>,
     players: MapSchema<PlayerState>,
     deltaTime: number,
-    dungeonMap: TileType[][],
-    now: number
+    getFloor: (
+        floorNumber: number
+    ) => DungeonFloor | undefined,
+    currentTime: number
 ) {
     enemies.forEach((enemy) => {
-        if (enemy.type !== "demon") return;
+        const floor =
+            getFloor(
+                enemy.currentFloor
+            );
 
-        if (enemy.isDead || enemy.state === "dead") {
-            enemy.vx = 0;
-            enemy.vy = 0;
+        if (!floor) return;
+
+        const playersOnFloor: PlayerState[] = [];
+
+        players.forEach((player) => {
+            if (
+                player.currentFloor !==
+                enemy.currentFloor
+            ) {
+                return;
+            }
+
+            playersOnFloor.push(
+                player
+            );
+        });
+
+        if (playersOnFloor.length === 0) {
+            enemy.state = "idle";
             return;
         }
 
-        updateDemon(enemy, players, deltaTime, dungeonMap, now);
+        updateEnemy(
+            enemy,
+            playersOnFloor,
+            deltaTime,
+            floor.map,
+            currentTime
+        );
     });
 }

@@ -9,9 +9,10 @@ const DEMON_SPEED = 220;
 const DEMON_WIDTH = 30;
 const DEMON_HEIGHT = 40;
 
-export function updateDemon(
+
+export function updateEnemy(
     enemy: EnemyState,
-    players: MapSchema<PlayerState>,
+    players: PlayerState[],
     deltaMs: number,
     dungeonMap: TileType[][],
     now: number

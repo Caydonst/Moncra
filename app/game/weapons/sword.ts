@@ -206,7 +206,6 @@ export class GreatSword extends ex.Actor {
     onPostUpdate(_engine: ex.Engine, delta: number) {
 
         if (this.isHolding) {
-            console.log("WEAPON ATTACK");
             this.requestAttack();
         }
 
@@ -478,7 +477,6 @@ export class GreatSword extends ex.Actor {
     }
 
     private requestAttack() {
-        console.log("REQUESTED ATTACK")
         if (this.waitingForAttack) return;
         if (this.isBlocking) return;
         if (this.swinging || this.thrusting) return;

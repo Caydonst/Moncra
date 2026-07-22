@@ -39,8 +39,6 @@ export default function ItemToolTip({ tooltipRef, hoveredItem, tooltipPos }: Pro
         "armor": armorStatIcon
     }
 
-    console.log(hoveredItem)
-
     return (
         <div
             ref={tooltipRef}

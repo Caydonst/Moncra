@@ -78,10 +78,32 @@ export function registerCombatMessages(room: CombatRoom) {
     room.onMessage("sword_hit", (client, data) => {
         console.log("SWORD_HIT RECEIVED", data);
 
-        const player = room.state.players.get(client.sessionId);
+        const player =
+            room.state.players.get(client.sessionId);
 
         if (!player) {
             console.log("reject: no player");
+            return;
+        } 
+
+        const enemyId = data.enemyId;
+
+        const enemy =
+            room.state.enemies.get(enemyId);
+
+        if (!enemy) {
+            console.log("reject: enemy not found", enemyId);
+            return;
+        }
+
+        if (
+            enemy.currentFloor !==
+            player.currentFloor
+        ) {
+            client.send("combat_error", {
+                error: "Enemy is on another floor.",
+            });
+
             return;
         }
 
@@ -92,16 +114,12 @@ export function registerCombatMessages(room: CombatRoom) {
             return;
         }
 
-        const enemyId = String(data.enemyId);
-        const enemy = room.state.enemies.get(enemyId);
-
-        if (!enemy) {
-            console.log("reject: enemy not found", enemyId);
+        if (enemy.isDead) {
+            console.log("reject: enemy dead");
             return;
         }
 
-        if (enemy.isDead) {
-            console.log("reject: enemy dead");
+        if (enemy.currentFloor !== player.currentFloor) {
             return;
         }
 
@@ -121,6 +139,9 @@ export function registerCombatMessages(room: CombatRoom) {
         );
 
         const beforeHp = enemy.hp;
+
+        console.log("PLAYER ATTACK DAMAGE: ", player.attackDamage)
+        console.log("ENEMY HP: ", enemy.hp)
 
         enemy.hp = Math.max(0, enemy.hp - player.attackDamage);
 

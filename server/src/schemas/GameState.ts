@@ -16,30 +16,34 @@ export class GreatSwordState extends Schema {
 }
 
 export class PlayerState extends Schema {
+  // movement
   @type("number") x: number = 0;
   @type("number") y: number = 0;
   @type("number") moveX = 0;
   @type("number") moveY = 0;
   @type("number") rotation: number = 0;
-  @type("number") damage: number = 0;
-  @type("number") crit: number = 0;
-  @type("number") hp: number = 100;
-  @type("number") maxHp: number = 100;
-  @type("number") armor: number = 0;
-  @type("number") power: number = 0;
-  @type("number") lastMoveTime: number = Date.now();
-
-  @type("number") level: number = 0;
-  @type("number") currentXp: number = 0;
-  @type("number") xpToNextLvl: number = 100;
-
   @type("boolean") isDashing = false;
   @type("number") dashStartedAt = 0;
   @type("number") lastDashTime = 0;
   @type("number") dashDirX = 0;
   @type("number") dashDirY = 0;
   @type("number") dashDistanceRemaining = 0;
+  @type("number") lastMoveTime: number = Date.now();
 
+  // stats
+  @type("number") damage: number = 0;
+  @type("number") crit: number = 0;
+  @type("number") hp: number = 100;
+  @type("number") maxHp: number = 100;
+  @type("number") armor: number = 0;
+  @type("number") power: number = 0;
+
+  @type("number") level: number = 0;
+  @type("number") currentXp: number = 0;
+  @type("number") xpToNextLvl: number = 100;
+
+
+  // combat
   @type(Weapon) weapon: Weapon = new Weapon();
 
   @type(GreatSwordState) greatSword: GreatSwordState = new GreatSwordState();
@@ -52,6 +56,9 @@ export class PlayerState extends Schema {
   @type("string") attackType: string = "";
   @type("number") attackDuration: number = 0;
   @type("number") attackDamage: number = 0;
+
+  // dungeon
+  @type("number") currentFloor = 1;
 
   // Sentinel
   @type("number") resolve: number = 100;
@@ -72,8 +79,8 @@ export class EnemyState extends Schema {
   @type("number") vx = 0;
   @type("number") vy = 0;
 
-  @type("number") hp = 100;
-  @type("number") maxHp = 100;
+  @type("number") hp = 500;
+  @type("number") maxHp = 500;
   @type("number") damage = 15;
   @type("number") speed = 220;
   @type("number") radius = 18;
@@ -90,6 +97,8 @@ export class EnemyState extends Schema {
   @type("number") knockbackX = 0;
   @type("number") knockbackY = 0;
   @type("number") knockbackUntil = 0;
+
+  @type("number") currentFloor = 1;
 }
 
 export class GameState extends Schema {

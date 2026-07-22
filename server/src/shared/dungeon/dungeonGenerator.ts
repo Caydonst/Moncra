@@ -83,8 +83,8 @@ function createEnemies(
             type: "demon",
             x: pos.x,
             y: pos.y,
-            hp: 100,
-            maxHp: 100,
+            hp: 500,
+            maxHp: 500,
             damage: 10,
         });
     }

@@ -1,30 +1,91 @@
-import type { Room, Client } from "@colyseus/core";
-import type { EnemyState, GameState } from "../schemas/GameState.js";
+import type { Client } from "@colyseus/core";
 import { tileToWorld } from "../shared/dungeon/dungeonTypes.js";
 import type { DungeonRoom } from "../rooms/DungeonRoom.js";
 
+type FloorChangeMessage = {
+    targetFloor: number;
+};
 
-export function registerDungeonMessages(room: DungeonRoom) {
-    room.onMessage("floor_change", (client: Client, data) => {
-        const player = room.state.players.get(client.sessionId);
-        if (!player) return;
+export function registerDungeonMessages(
+    room: DungeonRoom
+) {
+    room.onMessage(
+        "floor_change",
+        (
+            client: Client,
+            data: FloorChangeMessage
+        ) => {
+            const player =
+                room.state.players.get(
+                    client.sessionId
+                );
 
-        const targetFloor = Number(data.targetFloor);
-        const floor = room.dungeon.floors[targetFloor];
+            if (!player) return;
 
-        if (!floor) return;
+            const targetFloorNumber =
+                Number(
+                    data.targetFloor
+                );
 
-        room.loadFloorState(targetFloor);
+            if (
+                !Number.isInteger(
+                    targetFloorNumber
+                )
+            ) {
+                return;
+            }
 
-        const spawnPos = tileToWorld(
-            floor.playerSpawn.x,
-            floor.playerSpawn.y
-        );
+            const targetFloor =
+                room.getFloor(
+                    targetFloorNumber
+                );
 
-        player.x = spawnPos.x;
-        player.y = spawnPos.y;
+            if (!targetFloor) {
+                return;
+            }
 
-        room.currentFloor = targetFloor;
-    });
+            const previousFloorNumber =
+                player.currentFloor;
 
+            const spawnPosition =
+                tileToWorld(
+                    targetFloor.playerSpawn.x,
+                    targetFloor.playerSpawn.y
+                );
+
+            player.currentFloor =
+                targetFloorNumber;
+
+            player.x =
+                spawnPosition.x;
+
+            player.y =
+                spawnPosition.y;
+
+            player.moveX = 0;
+            player.moveY = 0;
+
+            player.isDashing = false;
+            player.dashDistanceRemaining =
+                0;
+
+            room.ensureFloorEnemiesLoaded(
+                targetFloorNumber
+            );
+
+            room.unloadFloorEnemiesIfEmpty(
+                previousFloorNumber
+            );
+
+            client.send(
+                "floor_changed",
+                {
+                    floorNumber:
+                        targetFloorNumber,
+                    spawn:
+                        spawnPosition,
+                }
+            );
+        }
+    );
 }

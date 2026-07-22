@@ -1,6 +1,6 @@
 import { Room } from "@colyseus/core";
 import type { Client } from "@colyseus/core";
-import { EnemyState, GameState } from "../schemas/GameState.js";
+import { EnemyState, GameState, PlayerState } from "../schemas/GameState.js";
 import { generateDungeonFloor } from "../shared/dungeon/mapGenerator.js";
 
 import { registerPlayerMessages } from "../game_systems/registerPlayerMessages.js";
@@ -22,6 +22,7 @@ import {
     removeActivePlayer,
     setActivePlayer,
 } from "../auth/activePlayers.js";
+import { DungeonFloor, tileToWorld } from "../shared/dungeon/dungeonTypes.js";
 
 type ClientAuth = {
     userId: string;
@@ -38,7 +39,7 @@ export class DungeonRoom extends Room<{ state: GameState }> {
     private numFloors = 5;
     public dungeon = generateDungeon(this.numFloors, 60, 60);
     private enemyIdCounter = 0;
-    public currentFloor = 1;
+    private loadedEnemyFloors = new Set<number>();
 
     async onAuth(
         client: Client,
@@ -74,50 +75,60 @@ export class DungeonRoom extends Room<{ state: GameState }> {
         registerDungeonMessages(this);
         registerInventoryMessages(this);
 
+        //this.loadAllFloorEnemies();
+
         this.onMessage("get_dungeon", (client) => {
+            const player = this.state.players.get(client.sessionId);
+            if (!player) return;
+
             client.send("dungeon_data", {
                 dungeon: this.dungeon,
+                currentFloor: player.currentFloor,
             });
         });
 
         this.onMessage("get_existing_players", (client) => {
             client.send("existing_players", {
-                players: Array.from(this.state.players.entries()).map(([sessionId, p]) => ({
+                players: Array.from(this.state.players.entries()).map(([sessionId, player]) => ({
                     sessionId,
-                    x: p.x,
-                    y: p.y,
-                    rotation: p.rotation,
-                    hp: p.hp,
-                    weapon: p.weapon,
-                    aimAngle: p.aimAngle,
-                    isAttacking: p.isAttacking,
-                    attackId: p.attackId,
+                    x: player.x,
+                    y: player.y,
+                    rotation: player.rotation,
+                    hp: player.hp,
+                    weapon: player.weapon,
+                    aimAngle: player.aimAngle,
+                    isAttacking: player.isAttacking,
+                    attackId: player.attackId,
+                    currentFloor: player.currentFloor,
                 })),
             });
         });
 
         console.log(this.dungeon);
 
-        this.setSimulationInterval((deltaTime) => {
-            const floor = this.dungeon.floors[this.currentFloor];
-            if (!floor) return;
+        this.setSimulationInterval(
+            (deltaTime) => {
+                runPlayerMovement(
+                    this.state.players,
+                    deltaTime,
+                    (player) =>
+                        this.getPlayerFloor(
+                            player
+                        )
+                );
 
-            runPlayerMovement(
-                this.state.players,
-                deltaTime,
-                floor.map
-            );
-
-            runEnemySimulation(
-                this.state.enemies,
-                this.state.players,
-                deltaTime,
-                floor.map,
-                this.clock.currentTime
-            );
-        });
-
-        this.loadFloorState(this.currentFloor);
+                runEnemySimulation(
+                    this.state.enemies,
+                    this.state.players,
+                    deltaTime,
+                    (floorNumber) =>
+                        this.getFloor(
+                            floorNumber
+                        ),
+                    this.clock.currentTime
+                );
+            }
+        );
     }
 
     onJoin(client: Client) {
@@ -164,12 +175,31 @@ export class DungeonRoom extends Room<{ state: GameState }> {
             auth.userId
         );
 
-        const spawn = this.dungeon.floors[1].playerSpawn;
+        const startingFloorNumber = 1;
+
+        const startingFloor =
+            this.dungeon.floors[
+            startingFloorNumber
+            ];
+
+        if (!startingFloor) {
+            throw new Error(
+                `Starting floor ${startingFloorNumber} does not exist.`
+            );
+        }
+
+        const spawnPosition = tileToWorld(
+            startingFloor.playerSpawn.x,
+            startingFloor.playerSpawn.y
+        );
 
         const player = spawnPlayer(
-            spawn.x * 64 + 32,
-            spawn.y * 64 + 32
+            spawnPosition.x,
+            spawnPosition.y
         );
+
+        player.currentFloor =
+            startingFloorNumber;
 
         const inventory = getInventoryForSession(auth.userId, player);
 
@@ -180,6 +210,10 @@ export class DungeonRoom extends Room<{ state: GameState }> {
         }
         
         this.state.players.set(client.sessionId, player);
+
+        this.ensureFloorEnemiesLoaded(
+            startingFloorNumber
+        );
 
         console.log(`${client.sessionId} joined dungeon`);
     }
@@ -199,7 +233,18 @@ export class DungeonRoom extends Room<{ state: GameState }> {
     }
 
     onLeave(client: Client) {
-        const userId = client.userData?.userId;
+        const player =
+            this.state.players.get(
+                client.sessionId
+            );
+
+        const previousFloor =
+            player?.currentFloor;
+
+        const userId =
+            this.userIds.get(
+                client.sessionId
+            );
 
         if (userId) {
             removeActivePlayer(
@@ -208,57 +253,187 @@ export class DungeonRoom extends Room<{ state: GameState }> {
             );
         }
 
-        this.state.players.delete(client.sessionId);
+        this.state.players.delete(
+            client.sessionId
+        );
 
         this.userIds.delete(
             client.sessionId
         );
+
+        if (
+            previousFloor !==
+            undefined
+        ) {
+            this.unloadFloorEnemiesIfEmpty(
+                previousFloor
+            );
+        }
 
         console.log(
             `${client.sessionId} left dungeon`
         );
     }
 
-    private addDemon(x: number, y: number) {
-        const enemy = spawnDemon(x, y);
-        const id = `enemy_${this.enemyIdCounter++}`;
-
-        this.state.enemies.set(id, enemy);
+    private getRuntimeEnemyId(
+        floorNumber: number,
+        enemyId: string
+    ) {
+        return `floor_${floorNumber}_${enemyId}`;
     }
-
-    public loadFloorState(floorIndex: number) {
-        const floor = this.dungeon.floors[floorIndex];
-        if (!floor) return;
-
-        this.currentFloor = floorIndex;
-
+    /*
+    private loadAllFloorEnemies() {
         this.state.enemies.clear();
-        //this.state.chests?.clear?.(); // only if you have chests in schema
+
+        for (const [floorNumberText, floor] of Object.entries(
+            this.dungeon.floors
+        )) {
+            const floorNumber = Number(floorNumberText);
+
+            for (const enemyDef of floor.enemies) {
+                const enemy = spawnDemon(
+                    enemyDef.x,
+                    enemyDef.y
+                );
+
+                enemy.type = enemyDef.type;
+                enemy.hp = enemyDef.hp;
+                enemy.maxHp = enemyDef.maxHp;
+                enemy.state = "idle";
+                enemy.currentFloor = floorNumber;
+
+                this.state.enemies.set(
+                    enemyDef.id,
+                    enemy
+                );
+            }
+        }
+    }
+        */
+    public ensureFloorEnemiesLoaded(
+        floorNumber: number
+    ) {
+        if (
+            this.loadedEnemyFloors.has(
+                floorNumber
+            )
+        ) {
+            return;
+        }
+
+        const floor =
+            this.dungeon.floors[floorNumber];
+
+        if (!floor) {
+            console.error(
+                `Cannot load enemies for missing floor ${floorNumber}.`
+            );
+
+            return;
+        }
 
         for (const enemyDef of floor.enemies) {
-            const enemy = spawnDemon(enemyDef.x, enemyDef.y);
+            const runtimeEnemyId =
+                this.getRuntimeEnemyId(
+                    floorNumber,
+                    enemyDef.id
+                );
+
+            const enemy = spawnDemon(
+                enemyDef.x,
+                enemyDef.y
+            );
 
             enemy.type = enemyDef.type;
             enemy.hp = enemyDef.hp;
             enemy.maxHp = enemyDef.maxHp;
             enemy.state = "idle";
+            enemy.currentFloor =
+                floorNumber;
 
-            this.state.enemies.set(enemyDef.id, enemy);
+            this.state.enemies.set(
+                runtimeEnemyId,
+                enemy
+            );
         }
 
-        // If you add ChestState later:
-        /*
-        for (const chestDef of floor.chests) {
-          const chest = new ChestState();
-          chest.id = chestDef.id;
-          chest.x = chestDef.x;
-          chest.y = chestDef.y;
-          chest.opened = chestDef.opened;
-      
-          this.state.chests.set(chestDef.id, chest);
-        }
-        */
+        this.loadedEnemyFloors.add(
+            floorNumber
+        );
+
+        console.log(
+            `Loaded enemies for floor ${floorNumber}.`
+        );
     }
+
+    private hasPlayersOnFloor(
+        floorNumber: number
+    ) {
+        let foundPlayer = false;
+
+        this.state.players.forEach(
+            (player) => {
+                if (
+                    player.currentFloor ===
+                    floorNumber
+                ) {
+                    foundPlayer = true;
+                }
+            }
+        );
+
+        return foundPlayer;
+    }
+
+    public unloadFloorEnemiesIfEmpty(
+        floorNumber: number
+    ) {
+        if (
+            this.hasPlayersOnFloor(
+                floorNumber
+            )
+        ) {
+            return;
+        }
+
+        const enemyIdsToRemove:
+            string[] = [];
+
+        this.state.enemies.forEach(
+            (enemy, enemyId) => {
+                if (
+                    enemy.currentFloor ===
+                    floorNumber
+                ) {
+                    enemyIdsToRemove.push(
+                        enemyId
+                    );
+                }
+            }
+        );
+
+        for (
+            const enemyId
+            of enemyIdsToRemove
+        ) {
+            this.state.enemies.delete(
+                enemyId
+            );
+
+            clearEnemyContributors(
+                enemyId
+            );
+        }
+
+        this.loadedEnemyFloors.delete(
+            floorNumber
+        );
+
+        console.log(
+            `Unloaded enemies for empty floor ${floorNumber}.`
+        );
+    }
+
     public awardEnemyExperience(
         enemyId: string,
         enemy: EnemyState
@@ -324,5 +499,13 @@ export class DungeonRoom extends Room<{ state: GameState }> {
             default:
                 return 10;
         }
+    }
+
+    getPlayerFloor(player: PlayerState): DungeonFloor | undefined {
+        return this.dungeon.floors[player.currentFloor];
+    }
+
+    getFloor(floorNumber: number): DungeonFloor | undefined {
+        return this.dungeon.floors[floorNumber];
     }
 }

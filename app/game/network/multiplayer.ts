@@ -19,9 +19,14 @@ class MultiplayerManager {
   currentRoomKind: RoomKind | null = null;
 
   dungeon: ServerDungeonData | null = null;
+  enemyActors = new Map<string, Demon>();
+  private enemyStates = new Map<string, any>();
+  private currentDungeonFloor = 1;
+  private dungeonScene: ex.Scene | null = null;
+  private dungeonResources: GameResources | null = null;
+  
   remotePlayers = new Map<string, RemotePlayer>();
   private serverPlayerDebug: ServerPlayerDebug | null = null;
-  enemyActors = new Map<string, Demon>();
 
   private dungeonListeners: ((dungeon: ServerDungeonData) => void)[] = [];
   private localWeapon: any = null;
@@ -83,12 +88,26 @@ class MultiplayerManager {
     this.callbacks = Callbacks.get(this.room);
 
     this.room.onLeave((code) => {
+      for (const enemyId of this.enemyActors.keys()) {
+        this.removeDungeonEnemyActor(enemyId);
+      }
+
+      this.enemyStates.clear();
+
+      this.dungeonScene = null;
+      this.dungeonResources = null;
+      this.currentDungeonFloor = 1;
+
       if (code === 4001) {
         window.location.href =
           "/?reason=logged_in_elsewhere";
       }
 
-      console.warn("Left dungeon room:", code);
+      console.warn(
+        "Left dungeon room:",
+        code
+      );
+
       this.room = null;
       this.callbacks = null;
       this.currentRoomKind = null;
@@ -106,6 +125,14 @@ class MultiplayerManager {
 
   setupDungeonRoomListeners(engine: ex.Engine, scene: ex.Scene, resources: GameResources) {
     if (!this.room || !this.callbacks) return;
+
+    this.dungeonScene = scene;
+    this.dungeonResources = resources;
+
+    console.log("Dungeon rendering context set:", {
+      hasScene: !!this.dungeonScene,
+      hasResources: !!this.dungeonResources,
+    });
 
     const addRemotePlayer = (player: any, sessionId: string) => {
       if (sessionId === this.room?.sessionId) return;
@@ -198,52 +225,39 @@ class MultiplayerManager {
       this.remotePlayers.delete(sessionId);
     });
 
-    this.callbacks.onAdd("enemies", (enemyState: any, enemyId: string) => {
-      const demon = new Demon(
-        {
-          id: enemyId,
-          type: enemyState.type,
-          x: enemyState.x,
-          y: enemyState.y,
-          vx: enemyState.vx,
-          vy: enemyState.vy,
-          hp: enemyState.hp,
-          maxHp: enemyState.maxHp,
-          isDead: enemyState.isDead,
-          isAggro: enemyState.isAggro,
-          state: enemyState.state,
-        },
-        resources,
-        //collisionGroups,
-      );
+    this.callbacks.onAdd(
+      "enemies",
+      (enemyState: any, enemyId: string) => {
 
-      scene.add(demon);
-      this.enemyActors.set(enemyId, demon);
+        this.enemyStates.set(
+          enemyId,
+          enemyState
+        );
 
-      this.callbacks!.onChange(enemyState, () => {
-        demon.updateFromServer({
-          id: enemyId,
-          type: enemyState.type,
-          x: enemyState.x,
-          y: enemyState.y,
-          vx: enemyState.vx,
-          vy: enemyState.vy,
-          hp: enemyState.hp,
-          maxHp: enemyState.maxHp,
-          isDead: enemyState.isDead,
-          isAggro: enemyState.isAggro,
-          state: enemyState.state,
-        });
-      });
-    });
+        this.syncDungeonEnemy(
+          enemyId,
+          enemyState
+        );
 
-    this.callbacks.onRemove("enemies", (_enemyState: any, enemyId: string) => {
-      const demon = this.enemyActors.get(enemyId);
-      if (!demon) return;
+        this.callbacks!.onChange(
+          enemyState,
+          () => {
+            this.syncDungeonEnemy(
+              enemyId,
+              enemyState
+            );
+          }
+        );
+      }
+    );
 
-      demon.destroyEnemy();
-      this.enemyActors.delete(enemyId);
-    });
+    this.callbacks.onRemove(
+      "enemies",
+      (_enemyState: any, enemyId: string) => {
+        this.enemyStates.delete(enemyId);
+        this.removeDungeonEnemyActor(enemyId);
+      }
+    );
 
   }
 
@@ -513,6 +527,131 @@ class MultiplayerManager {
     this.room.send("floor_change", {
       targetFloor,
     });
+  }
+
+  private syncDungeonEnemy(
+    enemyId: string,
+    enemyState: any
+  ) {
+    const shouldRender =
+      enemyState.currentFloor ===
+      this.currentDungeonFloor;
+
+    let demon = this.enemyActors.get(enemyId);
+
+    if (!shouldRender) {
+      if (demon) {
+        this.removeDungeonEnemyActor(enemyId);
+      }
+
+      return;
+    }
+
+    if (!demon) {
+      demon =
+        this.spawnDungeonEnemy(
+          enemyId,
+          enemyState
+        ) ?? undefined;
+    }
+
+    if (!demon) return;
+
+    demon.updateFromServer({
+      id: enemyId,
+      type: enemyState.type,
+      x: enemyState.x,
+      y: enemyState.y,
+      vx: enemyState.vx,
+      vy: enemyState.vy,
+      hp: enemyState.hp,
+      maxHp: enemyState.maxHp,
+      isDead: enemyState.isDead,
+      isAggro: enemyState.isAggro,
+      state: enemyState.state,
+    });
+  }
+
+  private refreshDungeonEnemies() {
+    // Remove actors that no longer belong
+    // to the local player's floor.
+    for (const [enemyId] of this.enemyActors) {
+      const enemyState =
+        this.enemyStates.get(enemyId);
+
+      const shouldRender =
+        enemyState?.currentFloor ===
+        this.currentDungeonFloor;
+
+      if (!shouldRender) {
+        this.removeDungeonEnemyActor(enemyId);
+      }
+    }
+
+    // Add or update every enemy belonging
+    // to the new floor.
+    for (const [enemyId, enemyState] of this.enemyStates) {
+      this.syncDungeonEnemy(
+        enemyId,
+        enemyState
+      );
+    }
+  }
+
+  setCurrentDungeonFloor(floorNumber: number) {
+    this.currentDungeonFloor = floorNumber;
+    this.refreshDungeonEnemies();
+  }
+
+  getCurrentEnemyActors(): Demon[] {
+    return Array.from(this.enemyActors.values());
+  }
+
+  private spawnDungeonEnemy(
+    enemyId: string,
+    enemyState: any
+  ): Demon | null {
+    if (!this.dungeonScene || !this.dungeonResources) {
+      return null;
+    }
+
+    if (this.enemyActors.has(enemyId)) {
+      return this.enemyActors.get(enemyId) ?? null;
+    }
+
+    if (enemyState.currentFloor !== this.currentDungeonFloor) {
+      return null;
+    }
+
+    const demon = new Demon(
+      {
+        id: enemyId,
+        type: enemyState.type,
+        x: enemyState.x,
+        y: enemyState.y,
+        vx: enemyState.vx,
+        vy: enemyState.vy,
+        hp: enemyState.hp,
+        maxHp: enemyState.maxHp,
+        isDead: enemyState.isDead,
+        isAggro: enemyState.isAggro,
+        state: enemyState.state,
+      },
+      this.dungeonResources
+    );
+
+    this.dungeonScene.add(demon);
+    this.enemyActors.set(enemyId, demon);
+
+    return demon;
+  }
+
+  private removeDungeonEnemyActor(enemyId: string) {
+    const demon = this.enemyActors.get(enemyId);
+    if (!demon) return;
+
+    demon.destroyEnemy();
+    this.enemyActors.delete(enemyId);
   }
 
   async leaveCurrentRoom(reason = "unknown") {
