@@ -1,0 +1,175 @@
+.settingsContainer {
+    width: 100%;
+    height: calc(100% - 70px);
+    animation: fadeIn 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.settingsNavbar {
+    display: flex;
+    justify-content: center;
+    align-items: end;
+    flex-direction: column;
+    
+    padding-right: 50px;
+    width: 600px;
+    height: 100%;
+    gap: 100px;
+    background: rgba(255, 255, 255, 0.03);
+}
+.navButtons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 250px;
+}
+.navButtons button {
+    width: 100%;
+    height: 70px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transition: 0.2s;
+    font-size: 12px;
+    outline-offset: 2px;
+    outline: 3px solid transparent;
+}
+.navButtons button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+.navButtons button.selected {
+    border-color: #fff;
+    outline-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.2);
+}
+.navFooter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 250px;
+    gap: 10px;
+}
+.logoutBtn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 70px;
+    border: 3px solid #ff3838;
+    background: #941c1c;
+    color: #fff;
+    text-decoration: none;
+    font-size: 12px;
+    cursor: unset;
+    transition: 0.2s;
+}
+.exitBtn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 70px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: #ff3838;
+    text-decoration: none;
+    font-size: 12px;
+    cursor: unset;
+    transition: 0.2s;
+}
+.exitBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+.logoutBtn:hover {
+    opacity: 0.7;
+}
+.selectedMainContainer {
+    width: 100%;
+    height: 100%;
+    background: #080808;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+}
+.confirmWrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    visibility: hidden;
+    opacity: 0;
+    transition: 0.2s;
+}
+.confirmWrapper.open {
+    visibility: visible;
+    opacity: 1;
+}
+.confirmContainer {
+    background: #080808;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding: 40px;
+    transform: scale(1.1);
+    transition: 0.2s;
+    gap: 50px;
+    color: #fff;
+}
+.confirmWrapper.open .confirmContainer {
+    transform: scale(1);
+}
+.confirmButtons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+.yesBtn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 150px;
+    height: 70px;
+    border: 3px solid #ff3838;
+    background: #941c1c;
+    color: #fff;
+    text-decoration: none;
+    font-size: 12px;
+    cursor: unset;
+    transition: 0.2s;
+}
+.yesBtn:hover {
+    opacity: 0.7;
+}
+.cancelBtn {
+    width: 150px;
+    height: 70px;
+    background: transparent;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transition: 0.2s;
+}
+.cancelBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+@keyframes fadeIn {
+    from {
+        transform: translateX(200px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}

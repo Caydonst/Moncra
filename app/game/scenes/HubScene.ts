@@ -202,15 +202,6 @@ export class HubScene extends ex.Scene {
                 return itemsList;
             }
 
-            this.chest1 = new Chest(ex.vec(500, 500), this.resources, getRandomItems());
-            this.add(this.chest1);
-
-            this.chest2 = new Chest(ex.vec(800, 1200), this.resources, getRandomItems());
-            this.add(this.chest2);
-
-            this.chest3 = new Chest(ex.vec(1400, 200), this.resources, getRandomItems());
-            this.add(this.chest3);
-
             this.storageChest = new StorageChest(ex.vec(this.worldBounds.width / 2, 200), this.resources, getRandomItems());
             this.add(this.storageChest);
 

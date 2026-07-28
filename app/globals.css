@@ -26,7 +26,11 @@ body {
 
 body, canvas {
     cursor: url('@/app/game/assets/misc/custom_cursor.png') 0 0, auto;
+    
 }
+/*body button {
+    cursor: url('@/app/game/assets/misc/custom_pointer.png') 0 0, pointer;
+}*/
 
 
 body {

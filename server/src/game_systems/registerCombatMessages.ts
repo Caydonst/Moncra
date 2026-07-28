@@ -1,9 +1,10 @@
 import type { Room, Client } from "@colyseus/core";
 import type { EnemyState, GameState } from "../schemas/GameState.js";
-import { handleGreatSwordAttack } from "./great_sword/GreatSword.js";
+import {
+    canGreatSwordHit,
+    handleGreatSwordAttack,
+} from "./great_sword/GreatSword.js";
 import { addEnemyContributor, getEnemyContributors } from "./combat/enemyContributors.js";
-
-const hitEnemies = new Set<string>();
 
 type CombatRoom = Room<{ state: GameState }> & {
     awardEnemyExperience(
@@ -26,12 +27,36 @@ export function registerCombatMessages(room: CombatRoom) {
 
         const weaponId = String(data.weaponId);
         const aimAngle = Number(data.aimAngle);
+        
+        const rawAttackType = String(data.attackType);
+
+        if (
+            rawAttackType !== "normal" &&
+            rawAttackType !== "heavy"
+        ) {
+            client.send("combat_error", {
+                error: "Invalid attack type.",
+            });
+
+            return;
+        }
+
+        const attackType:
+            | "normal"
+            | "heavy" =
+            rawAttackType;
 
         console.log("WEAPONID: ", weaponId);
         console.log("PLAYER WEAPONID: ", player.weapon.id);        
 
         if (!Number.isFinite(aimAngle)) return;
         if (weaponId !== player.weapon.id) return;
+
+        const clientAttackId = Number(data.attackId);
+
+        if (!Number.isInteger(clientAttackId)) {
+            return;
+        }
 
         const result = handleGreatSwordAttack(
             {
@@ -43,24 +68,50 @@ export function registerCombatMessages(room: CombatRoom) {
             {
                 weaponId,
                 aimAngle,
+                attackType,
+                clientAttackId,
             }
         );
 
-        if (!result) return;
+        if (!result) {
+            return;
+        }
 
-        const clientAttackId = Number(data.attackId);
-        if (!Number.isFinite(clientAttackId)) return;
+        const serverAttackId =
+            result.serverAttackId;
 
         player.isAttacking = true;
-        player.attackId = clientAttackId;
-        player.attackAimAngle = aimAngle;
-        player.attackType = result.attack.type;
-        player.attackDuration = result.attack.duration;
+
+        /*
+         * This is the authoritative server-generated ID.
+         */
+        player.attackId =
+            serverAttackId;
+
+        player.attackAimAngle =
+            aimAngle;
+
+        player.attackType =
+            result.inputAttackType;
+
+        player.comboAttackType =
+            result.attack.type;
+
+        player.attackDuration =
+            result.attack.duration;
+
         player.attackDamage =
-            (player.weapon.damage || 10) * result.attack.damageMultiplier;
+            (player.weapon.damage || 10) *
+            result.attack.damageMultiplier;
 
         room.clock.setTimeout(() => {
-            if (player.attackId === result.attackId) {
+            /*
+             * Do not stop a newer attack when this old timer finishes.
+             */
+            if (
+                player.attackId ===
+                serverAttackId
+            ) {
                 player.isAttacking = false;
             }
         }, result.attack.duration);
@@ -69,9 +120,24 @@ export function registerCombatMessages(room: CombatRoom) {
             sessionId: client.sessionId,
             weaponId,
             aimAngle,
-            attackId: clientAttackId,
-            comboIndex: result.comboIndex,
-            attack: result.attack,
+
+            clientAttackId:
+                result.clientAttackId,
+
+            serverAttackId:
+                result.serverAttackId,
+
+            attackType:
+                result.inputAttackType,
+
+            comboAttackType:
+                result.attack.type,
+
+            comboIndex:
+                result.comboIndex,
+
+            attack:
+                result.attack,
         });
     });
 
@@ -84,15 +150,23 @@ export function registerCombatMessages(room: CombatRoom) {
         if (!player) {
             console.log("reject: no player");
             return;
-        } 
+        }
 
-        const enemyId = data.enemyId;
+        const enemyId = String(data.enemyId);
 
         const enemy =
             room.state.enemies.get(enemyId);
 
         if (!enemy) {
-            console.log("reject: enemy not found", enemyId);
+            console.log(
+                "reject: enemy not found",
+                enemyId
+            );
+            return;
+        }
+
+        if (enemy.isDead) {
+            console.log("reject: enemy dead");
             return;
         }
 
@@ -108,30 +182,67 @@ export function registerCombatMessages(room: CombatRoom) {
         }
 
         if (!player.isAttacking) {
-            console.log("reject: player not attacking", {
-                serverAttackId: player.attackId,
-            });
+            console.log(
+                "reject: player not attacking",
+                {
+                    serverAttackId:
+                        player.attackId,
+                }
+            );
+
             return;
         }
 
-        if (enemy.isDead) {
-            console.log("reject: enemy dead");
+        const serverAttackId =
+            Number(data.serverAttackId);
+
+        if (!Number.isInteger(serverAttackId)) {
+            console.log(
+                "reject: invalid server attack ID",
+                data.serverAttackId
+            );
+
             return;
         }
 
-        if (enemy.currentFloor !== player.currentFloor) {
+        if (
+            serverAttackId !==
+            player.attackId
+        ) {
+            console.log(
+                "reject: server attack ID mismatch",
+                {
+                    received:
+                        serverAttackId,
+                    expected:
+                        player.attackId,
+                }
+            );
+
             return;
         }
 
-        if (Number(data.attackId) !== player.attackId) {
-            console.log("reject: attackId mismatch", {
-                clientAttackId: data.attackId,
-                serverAttackId: player.attackId,
-            });
+        if (
+            !canGreatSwordHit(
+                player.greatSword,
+                enemyId,
+                serverAttackId
+            )
+        ) {
+            console.log(
+                "reject: invalid or duplicate hit",
+                {
+                    enemyId,
+                    serverAttackId,
+                }
+            );
+
             return;
         }
 
-        console.log("HIT VALID, APPLYING DAMAGE");
+        console.log(
+            "HIT VALID, APPLYING DAMAGE"
+        );
 
         addEnemyContributor(
             enemyId,
@@ -140,34 +251,62 @@ export function registerCombatMessages(room: CombatRoom) {
 
         const beforeHp = enemy.hp;
 
-        console.log("PLAYER ATTACK DAMAGE: ", player.attackDamage)
-        console.log("ENEMY HP: ", enemy.hp)
-
-        enemy.hp = Math.max(0, enemy.hp - player.attackDamage);
+        enemy.hp = Math.max(
+            0,
+            enemy.hp - player.attackDamage
+        );
 
         if (enemy.hp > 0) {
             enemy.state = "hurt";
         }
 
-        const dx = enemy.x - player.x;
-        const dy = enemy.y - player.y;
-        const mag = Math.hypot(dx, dy) || 1;
+        const dx =
+            enemy.x - player.x;
 
-        const knockbackStrength = 520;
-        const knockbackDuration = 120;
+        const dy =
+            enemy.y - player.y;
 
-        enemy.knockbackX = (dx / mag) * knockbackStrength;
-        enemy.knockbackY = (dy / mag) * knockbackStrength;
-        enemy.knockbackUntil = room.clock.currentTime + knockbackDuration;
+        const magnitude =
+            Math.hypot(dx, dy) || 1;
 
-        enemy.vx = enemy.knockbackX;
-        enemy.vy = enemy.knockbackY;
+        const knockbackStrength =
+            player.attackType === "heavy"
+                ? 850
+                : 520;
+
+        const knockbackDuration =
+            player.attackType === "heavy"
+                ? 220
+                : 120;
+
+        enemy.knockbackX =
+            (dx / magnitude) *
+            knockbackStrength;
+
+        enemy.knockbackY =
+            (dy / magnitude) *
+            knockbackStrength;
+
+        enemy.knockbackUntil =
+            room.clock.currentTime +
+            knockbackDuration;
+
+        enemy.vx =
+            enemy.knockbackX;
+
+        enemy.vy =
+            enemy.knockbackY;
 
         console.log("ENEMY DAMAGED", {
             enemyId,
+            serverAttackId,
+            attackType:
+                player.attackType,
             beforeHp,
-            damage: player.attackDamage,
-            afterHp: enemy.hp,
+            damage:
+                player.attackDamage,
+            afterHp:
+                enemy.hp,
         });
 
         if (enemy.hp <= 0) {
@@ -180,7 +319,10 @@ export function registerCombatMessages(room: CombatRoom) {
                 enemy
             );
 
-            console.log("ENEMY CONTRIBUTORS: ", getEnemyContributors(enemyId))
+            console.log(
+                "ENEMY CONTRIBUTORS: ",
+                getEnemyContributors(enemyId)
+            );
         }
     });
 }

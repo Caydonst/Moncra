@@ -39,7 +39,7 @@ class MultiplayerManager {
     return this.currentRoomKind === "dungeon" && !!this.room;
   }
 
-  setLocalWeapon(weapon: any) {
+  setLocalWeapon(weapon: any | null) {
     this.localWeapon = weapon;
   }
 
@@ -433,6 +433,7 @@ class MultiplayerManager {
     attackId: number;
     weaponId: string;
     aimAngle: number;
+    attackType: "normal" | "heavy";
   }) {
     if (!this.room) return;
     if (!this.canUseCombatMessages()) return;
@@ -440,24 +441,58 @@ class MultiplayerManager {
     this.room.send("weapon_attack", data);
   }
 
+  private dispatchPlayerStats(player: PlayerState) {
+    window.dispatchEvent(
+      new CustomEvent("player_stats_updated", {
+        detail: {
+          hp: player.hp,
+          maxHp: player.maxHp,
+          damage: player.damage,
+          armor: player.armor,
+          crit: player.crit,
+          power: player.power,
+          level: player.level,
+          currentXp: player.currentXp,
+          xpToNextLvl: player.xpToNextLvl,
+        },
+      })
+    );
+  }
+
   private setupLocalPlayerCallbacks(player: PlayerState) {
     if (!this.callbacks) return;
 
-    this.callbacks.onChange(player, () => {
-      window.dispatchEvent(
-        new CustomEvent("player_stats_updated", {
-          detail: {
-            hp: player.hp,
-            maxHp: player.maxHp,
-            damage: player.damage,
-            armor: player.armor,
-            crit: player.crit,
-            power: player.power,
-          },
-        })
-      );
-    });
+    const dispatchPlayerStats = () => {
+      this.dispatchPlayerStats(player);
+    };
+
+    this.callbacks.listen(player, "hp", dispatchPlayerStats);
+    this.callbacks.listen(player, "maxHp", dispatchPlayerStats);
+    this.callbacks.listen(player, "damage", dispatchPlayerStats);
+    this.callbacks.listen(player, "armor", dispatchPlayerStats);
+    this.callbacks.listen(player, "crit", dispatchPlayerStats);
+    this.callbacks.listen(player, "power", dispatchPlayerStats);
+    this.callbacks.listen(player, "level", dispatchPlayerStats);
+    this.callbacks.listen(player, "currentXp", dispatchPlayerStats);
+    this.callbacks.listen(player, "xpToNextLvl", dispatchPlayerStats);
+
+    console.log(player.currentXp)
+
+    // Initial update
+    dispatchPlayerStats();
   }
+
+  public refreshLocalPlayerStats() {
+    const player =
+      this.room?.state.players.get(
+        this.room.sessionId
+      );
+
+    if (!player) return;
+
+    this.dispatchPlayerStats(player);
+  }
+  
 
   private setupInventoryListeners() {
     if (!this.room) return;
@@ -484,10 +519,11 @@ class MultiplayerManager {
   }
 
   sendSwordHit(data: {
-    attackId: number;
+    serverAttackId: number;
     enemyId: string;
     hitT: number;
     aimAngle: number | null;
+    attackType: "normal" | "heavy";
   }) {
     if (!this.room) return;
     if (!this.canUseCombatMessages()) return;

@@ -1,10 +1,10 @@
 const ex = await import("excalibur");
 import { GameResources } from '../resources';
 import { Player } from '../player/player';
-import {Shadow} from "../utils/shadow";
-import {Demon} from "../enemies/demon";
+import { Shadow } from "../utils/shadow";
+import { Demon } from "../enemies/demon";
 import { Outline, EnchantEffect, EnchantedGlowEffect } from "../utils/swordOutline";
-import {DemonBoss} from "../enemies/bosses/DemonBoss";
+import { DemonBoss } from "../enemies/bosses/DemonBoss";
 import { GameScene } from '../scenes/GameScene';
 import { multiplayer } from '../network/multiplayer';
 import { damageEnemy } from '../combat/CombatSystem';
@@ -25,11 +25,32 @@ export type Attack = {
 };
 
 type ServerAttack = {
-    attackId: number;
+    clientAttackId: number;
+    serverAttackId: number;
+
+    weaponId: string;
+    aimAngle: number;
+
+    attackType: "normal" | "heavy";
+    comboAttackType: "slash" | "thrust";
+
+    comboIndex: number;
+    attack: Attack;
+};
+
+type PredictedAttack = {
+    clientAttackId: number;
     weaponId: string;
     aimAngle: number;
     comboIndex: number;
     attack: Attack;
+};
+
+type PendingSwordHit = {
+    enemyId: string;
+    hitT: number;
+    aimAngle: number;
+    attackType: "normal" | "heavy";
 };
 
 export class GreatSword extends ex.Actor {
@@ -62,8 +83,19 @@ export class GreatSword extends ex.Actor {
     protected thrusting = false;
     protected thrustTracer!: ThrustTracer;
 
-    protected isBlocking = false;
-    public blockDamageMultiplier = 0.5;
+    // Heavy attack state (right click)
+    protected heavyAttacking = false;
+    private heavyAttackProgress = 0;
+    private heavyAttackAimAngle = 0;
+    private heavySlashSpawned = false;
+    private lastHeavyAttackTime = -Infinity;
+
+    private readonly HEAVY_ATTACK_DURATION = 650;
+    private readonly HEAVY_ATTACK_RELEASE_TIME = 360;
+    private readonly HEAVY_ATTACK_COOLDOWN = 1400;
+    private readonly HEAVY_ATTACK_DAMAGE_MULTIPLIER = 2.25;
+    private readonly HEAVY_SLASH_DISTANCE = 420;
+    private readonly HEAVY_SLASH_SPEED = 900;
 
     private swingStartOffset = 0;
     private swingEndOffset = 0;
@@ -73,6 +105,11 @@ export class GreatSword extends ex.Actor {
     private predictedComboIndex = 0;
     private lastPredictedAttackTime = 0;
     private comboThreshold = 600;
+
+    private currentServerAttackId: number | null = null;
+
+    private pendingHits = new Map<string, PendingSwordHit>();
+
     private readonly predictedCombo: Attack[] = [
         {
             type: "slash",
@@ -131,14 +168,13 @@ export class GreatSword extends ex.Actor {
         }
 
         if (evt.button === ex.PointerButton.Right) {
-            this.startBlock();
+            this.startHeavyAttack();
         }
     };
 
     private pointerUpHandler = (evt: ex.PointerEvent) => {
         if (this.isPointerOverUI()) {
             this.isHolding = false;
-            this.stopBlock();
             return;
         }
 
@@ -146,9 +182,6 @@ export class GreatSword extends ex.Actor {
             this.isHolding = false;
         }
 
-        if (evt.button === ex.PointerButton.Right) {
-            this.stopBlock();
-        }
     };
 
     constructor(
@@ -175,6 +208,8 @@ export class GreatSword extends ex.Actor {
     }
 
     onInitialize(engine: ex.Engine) {
+        multiplayer.setLocalWeapon(this);
+
         const sprite = this.image.toSprite();
         sprite.width = this.width;
         sprite.height = this.height;
@@ -224,28 +259,8 @@ export class GreatSword extends ex.Actor {
             return;
         }
 
-        if (this.isBlocking) {
-            const blockDistance = 34;
-
-            const blockDirection = ex.Vector.fromAngle(mouseAngle);
-            const blockOffset = blockDirection.scale(blockDistance);
-            const bobbedOffset = addBobbing(blockOffset);
-
-            this.pos = this.player.pos.clone().add(bobbedOffset);
-
-            // Angle the sword across the player's body
-            const guardTilt = Math.PI / 4; // 45 degrees
-
-            const isAimingLeft = blockDirection.x < 0;
-
-            this.rotation = mouseAngle + Math.PI / 2 + (isAimingLeft ? guardTilt : -guardTilt);
-
-            this.graphics.flipHorizontal = isAimingLeft;
-
-            if (this.shadow) {
-                this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2.5));
-            }
-
+        if (this.heavyAttacking) {
+            this.updateHeavyAttack(delta);
             return;
         }
 
@@ -310,7 +325,7 @@ export class GreatSword extends ex.Actor {
 
             return;
         }
-        
+
 
         // -------------------------------
         //   IDLE LOGIC
@@ -431,17 +446,94 @@ export class GreatSword extends ex.Actor {
     }
 
     private onSwordHitEnemy(enemyId: string) {
-        if (!this.swinging && !this.thrusting) return;
-        if (this.hitEnemiesThisAttack.has(enemyId)) return;
+        if (
+            !this.swinging &&
+            !this.thrusting
+        ) {
+            return;
+        }
 
-        this.hitEnemiesThisAttack.add(enemyId);
+        const aimAngle =
+            this.getMouseAngle();
+
+        if (aimAngle === null) {
+            return;
+        }
+
+        this.sendOrQueueSwordHit({
+            enemyId,
+
+            hitT: Math.min(
+                this.swingProgress /
+                this.swingDuration,
+                1
+            ),
+
+            aimAngle,
+            attackType: "normal",
+        });
+    }
+
+    private sendOrQueueSwordHit(
+        hit: PendingSwordHit
+    ) {
+        if (
+            this.hitEnemiesThisAttack.has(
+                hit.enemyId
+            )
+        ) {
+            return;
+        }
+
+        /*
+         * Reserve the enemy immediately so repeated
+         * collision callbacks do not create duplicate entries.
+         */
+        this.hitEnemiesThisAttack.add(
+            hit.enemyId
+        );
+
+        if (
+            this.currentServerAttackId ===
+            null
+        ) {
+            this.pendingHits.set(
+                hit.enemyId,
+                hit
+            );
+
+            return;
+        }
 
         multiplayer.sendSwordHit({
-            attackId: this.currentAttackId,
-            enemyId,
-            hitT: Math.min(this.swingProgress / this.swingDuration, 1),
-            aimAngle: this.getMouseAngle(),
+            serverAttackId:
+                this.currentServerAttackId,
+
+            ...hit,
         });
+    }
+
+    private flushPendingHits() {
+        if (
+            this.currentServerAttackId ===
+            null
+        ) {
+            return;
+        }
+
+        for (
+            const hit of
+            this.pendingHits.values()
+        ) {
+            multiplayer.sendSwordHit({
+                serverAttackId:
+                    this.currentServerAttackId,
+
+                ...hit,
+            });
+        }
+
+        this.pendingHits.clear();
     }
 
     /*
@@ -466,19 +558,41 @@ export class GreatSword extends ex.Actor {
     */
 
     public confirmServerAttack(data: ServerAttack) {
-        this.waitingForAttack = false;
+        /*
+         * Ignore acknowledgements for an older local attack.
+         */
+        if (data.clientAttackId !== this.currentAttackId) {
+            console.log("Ignoring stale attack confirmation", {
+                receivedClientAttackId: data.clientAttackId,
+                currentClientAttackId: this.currentAttackId,
+            });
 
-        if (Number.isFinite(data.comboIndex)) {
-            this.predictedComboIndex =
-                (data.comboIndex + 1) % this.predictedCombo.length;
+            return;
         }
 
-        this.lastPredictedAttackTime = performance.now();
+        this.currentServerAttackId =
+            data.serverAttackId;
+
+        this.waitingForAttack = false;
+
+        if (
+            data.attackType === "normal" &&
+            Number.isFinite(data.comboIndex)
+        ) {
+            this.predictedComboIndex =
+                (data.comboIndex + 1) %
+                this.predictedCombo.length;
+        }
+
+        this.lastPredictedAttackTime =
+            performance.now();
+
+        this.flushPendingHits();
     }
 
     private requestAttack() {
         if (this.waitingForAttack) return;
-        if (this.isBlocking) return;
+        if (this.heavyAttacking) return;
         if (this.swinging || this.thrusting) return;
 
         const aimAngle = this.getMouseAngle();
@@ -508,10 +622,12 @@ export class GreatSword extends ex.Actor {
         }
 
         this.currentAttackId++;
+        this.currentServerAttackId = null;
         this.hitEnemiesThisAttack.clear();
+        this.pendingHits.clear();
 
-        const predictedAttack: ServerAttack = {
-            attackId: this.currentAttackId,
+        const predictedAttack: PredictedAttack = {
+            clientAttackId: this.currentAttackId,
             weaponId: this.weaponItem.id,
             aimAngle,
             comboIndex,
@@ -528,10 +644,16 @@ export class GreatSword extends ex.Actor {
 
         this.waitingForAttack = true;
 
+        this.currentAttackId++;
+        this.currentServerAttackId = null;
+        this.hitEnemiesThisAttack.clear();
+        this.pendingHits.clear();
+
         multiplayer.sendWeaponAttack({
             attackId: this.currentAttackId,
             weaponId: this.weaponItem.id,
             aimAngle,
+            attackType: "normal",
         });
 
         window.setTimeout(() => {
@@ -574,7 +696,7 @@ export class GreatSword extends ex.Actor {
 
         this.idleOrbitAngleOffset = this.swingEndOffset;
         this.orbitAngle = this.swingStartAngle;
-        
+
         this.swingTracer.start(
             this.player,
             this.swingStartOffset,
@@ -680,24 +802,122 @@ export class GreatSword extends ex.Actor {
         }
     }
 
-    protected startBlock() {
+    protected startHeavyAttack() {
         this.isHolding = false;
 
-        if (this.swinging || this.thrusting) {
+        if (this.heavyAttacking) {
             return;
         }
 
-        this.isBlocking = true;
+        const now = performance.now();
+
+        if (
+            now - this.lastHeavyAttackTime <
+            this.HEAVY_ATTACK_COOLDOWN
+        ) {
+            return;
+        }
+
+        const aimAngle = this.getMouseAngle();
+        if (aimAngle === null) return;
+
+        /*
+         * Cancel any current normal attack.
+         */
+        this.swinging = false;
+        this.thrusting = false;
+        this.swingProgress = 0;
+
+        this.lastHeavyAttackTime = now;
+        this.heavyAttacking = true;
+        this.heavyAttackProgress = 0;
+        this.heavyAttackAimAngle = aimAngle;
+        this.heavySlashSpawned = false;
+
+        this.currentAttackId++;
+        this.currentServerAttackId = null;
+        this.hitEnemiesThisAttack.clear();
+        this.pendingHits.clear();
+
+        multiplayer.sendWeaponAttack({
+            attackId: this.currentAttackId,
+            weaponId: this.weaponItem.id,
+            aimAngle,
+            attackType: "heavy",
+        });
+
+        this.swingStartOffset = Math.PI * 0.9;
+        this.swingEndOffset = -Math.PI * 0.9;
+        this.graphics.flipHorizontal = false;
     }
 
-    protected stopBlock() {
-        this.isBlocking = false;
+    private updateHeavyAttack(delta: number) {
+        this.heavyAttackProgress += delta;
 
-        //this.player.isBlocking = false;
-        //this.player.damageMultiplier = 1;
+        const t = Math.min(
+            this.heavyAttackProgress / this.HEAVY_ATTACK_DURATION,
+            1
+        );
+
+        const eased = this.heavySwingEase(t);
+        const startAngle = this.heavyAttackAimAngle + this.swingStartOffset;
+        const endAngle = this.heavyAttackAimAngle + this.swingEndOffset;
+        this.orbitAngle = startAngle + (endAngle - startAngle) * eased;
+
+        const rotatedOffset = this.offset
+            .clone()
+            .rotate(this.orbitAngle)
+            .add(ex.vec(0, 5 + this.player.bobOffsetY));
+
+        this.pos = this.player.pos.clone().add(rotatedOffset);
+        this.rotation = this.orbitAngle + this.ROT_OFFSET;
+
+        if (this.shadow) {
+            this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2.5));
+        }
+
+        if (
+            !this.heavySlashSpawned &&
+            this.heavyAttackProgress >= this.HEAVY_ATTACK_RELEASE_TIME
+        ) {
+            this.heavySlashSpawned = true;
+            this.spawnHeavySlash();
+        }
+
+        if (t >= 1) {
+            this.heavyAttacking = false;
+            this.heavyAttackProgress = 0;
+            this.idleOrbitAngleOffset = this.swingEndOffset;
+        }
     }
 
-    protected onSuccessfulHit(_target: ex.Actor) {}
+    private spawnHeavySlash() {
+        const direction = ex.Vector.fromAngle(this.heavyAttackAimAngle);
+        const spawnPos = this.player.pos
+            .clone()
+            .add(direction.scale(85))
+            .add(ex.vec(0, this.player.bobOffsetY));
+
+        const slash = new HeavySlashProjectile({
+            pos: spawnPos,
+            angle: this.heavyAttackAimAngle,
+            speed: this.HEAVY_SLASH_SPEED,
+            maxDistance: this.HEAVY_SLASH_DISTANCE,
+            onEnemyHit: (enemyId) => {
+                this.sendOrQueueSwordHit({
+                    enemyId,
+                    hitT: 1,
+                    aimAngle:
+                        this.heavyAttackAimAngle,
+                    attackType: "heavy",
+                });
+            },
+        });
+
+        this.engine.currentScene.add(slash);
+    }
+
+    protected onSuccessfulHit(_target: ex.Actor) { }
 
 
     addListeners() {
@@ -707,18 +927,22 @@ export class GreatSword extends ex.Actor {
         pointer.on("down", this.pointerDownHandler);
         pointer.on("up", this.pointerUpHandler);
     }
-    
+
     cleanup() {
+        multiplayer.setLocalWeapon(null);
+
         const pointer = this.engine.input.pointers.primary;
 
         pointer.off("down", this.pointerDownHandler);
         pointer.off("up", this.pointerUpHandler);
 
         this.isHolding = false;
+        this.heavyAttacking = false;
         this.shadow.kill();
         this.swingTracer.kill();
+        this.thrustTracer.kill();
     }
-    
+
     public attachToScene(scene: ex.Scene) {
         if (!this.shadow || this.shadow.isKilled()) {
             this.shadow = new Shadow(this);
@@ -737,6 +961,452 @@ export class GreatSword extends ex.Actor {
     }
 }
 
+export class HeavySlashProjectile extends ex.Actor {
+    private readonly direction: ex.Vector;
+    private readonly startPos: ex.Vector;
+    private readonly hitEnemyIds = new Set<string>();
+
+    constructor(config: {
+        pos: ex.Vector;
+        angle: number;
+        speed: number;
+        maxDistance: number;
+        onEnemyHit: (enemyId: string) => void;
+    }) {
+        const slashWidth = 170;
+        const slashDepth = 58;
+
+        super({
+            name: "heavy-slash-projectile",
+            pos: config.pos.clone(),
+            width: slashDepth + 100,
+            height: slashWidth,
+            rotation: config.angle,
+            anchor: ex.vec(0.5, 0.5),
+            z: 3,
+            collisionType: ex.CollisionType.Passive,
+        });
+
+        this.direction = ex.Vector.fromAngle(config.angle);
+        this.startPos = config.pos.clone();
+        this.vel = this.direction.scale(config.speed);
+
+        const halfHeight = 100;
+        const curveDepth = 60;
+
+        const createCurvedSlashGraphic = (
+            thickness: number,
+            color: ex.Color
+        ): ex.Polygon => {
+            const segmentCount = 80;
+
+            const frontPoints: ex.Vector[] = [];
+            const backPoints: ex.Vector[] = [];
+
+            for (let i = 0; i <= segmentCount; i++) {
+                const t = i / segmentCount;
+
+                const y = ex.lerp(
+                    -halfHeight,
+                    halfHeight,
+                    t
+                );
+
+                const curveShape =
+                    Math.sin(t * Math.PI);
+
+                const centerX =
+                    -38 + curveShape * curveDepth;
+
+                const widthShape = Math.pow(
+                    Math.sin(t * Math.PI),
+                    0.65
+                );
+
+                const halfThickness =
+                    (thickness * widthShape) / 2;
+
+                frontPoints.push(
+                    ex.vec(
+                        centerX + halfThickness,
+                        y
+                    )
+                );
+
+                backPoints.push(
+                    ex.vec(
+                        centerX - halfThickness,
+                        y
+                    )
+                );
+            }
+
+            return new ex.Polygon({
+                points: [
+                    ...frontPoints,
+                    ...backPoints.reverse(),
+                ],
+                color,
+            });
+        };
+
+        const afterImageSettings = [
+            {
+                offset: -60,
+                thickness: 30,
+                opacity: 0.07,
+            },
+            {
+                offset: -50,
+                thickness: 29,
+                opacity: 0.12,
+            },
+            {
+                offset: -40,
+                thickness: 28,
+                opacity: 0.18,
+            },
+            {
+                offset: -30,
+                thickness: 27,
+                opacity: 0.25,
+            },
+            {
+                offset: -20,
+                thickness: 26,
+                opacity: 0.33,
+            },
+            {
+                offset: -10,
+                thickness: 25,
+                opacity: 0.42,
+            },
+        ];
+
+        const afterImageMembers =
+            afterImageSettings.map((afterImage) => ({
+                graphic: createCurvedSlashGraphic(
+                    afterImage.thickness,
+                    ex.Color.fromRGB(
+                        255,
+                        255,
+                        255,
+                        afterImage.opacity
+                    )
+                ),
+                offset: ex.vec(
+                    afterImage.offset,
+                    0
+                ),
+            }));
+
+        const mainBody =
+            createCurvedSlashGraphic(
+                24,
+                ex.Color.White
+            );
+
+        const innerCore =
+            createCurvedSlashGraphic(
+                12,
+                ex.Color.White
+            );
+
+        const slashGraphic =
+            new ex.GraphicsGroup({
+                members: [
+                    ...afterImageMembers,
+                    {
+                        graphic: mainBody,
+                        offset: ex.vec(0, 0),
+                    },
+                    {
+                        graphic: innerCore,
+                        offset: ex.vec(0, 0),
+                    },
+                ],
+            });
+
+        this.graphics.use(slashGraphic);
+
+        this.on("collisionstart", (evt) => {
+            const enemy = evt.other.owner;
+
+            if (!(enemy instanceof Demon)) {
+                return;
+            }
+
+            if (
+                this.hitEnemyIds.has(enemy.enemyId)
+            ) {
+                return;
+            }
+
+            this.hitEnemyIds.add(enemy.enemyId);
+
+            config.onEnemyHit(enemy.enemyId);
+        });
+
+        this.on("postupdate", () => {
+            const traveledDistance =
+                this.pos.distance(this.startPos);
+
+            if (
+                traveledDistance >=
+                config.maxDistance
+            ) {
+                this.kill();
+            }
+        });
+    }
+}
+
+/*
+
+export class HeavySlashProjectile extends ex.Actor {
+    private readonly direction: ex.Vector;
+    private readonly startPos: ex.Vector;
+    private readonly hitEnemyIds = new Set<string>();
+
+    constructor(config: {
+        pos: ex.Vector;
+        angle: number;
+        speed: number;
+        maxDistance: number;
+        onEnemyHit: (enemyId: string) => void;
+    }) {
+        const slashWidth = 170;
+        const slashDepth = 58;
+
+        super({
+            name: "heavy-slash-projectile",
+            pos: config.pos.clone(),
+
+            // Increase the width because the trail extends behind it.
+            width: slashDepth + 100,
+            height: slashWidth,
+
+            rotation: config.angle,
+            anchor: ex.vec(0.5, 0.5),
+            z: 3,
+            collisionType: ex.CollisionType.Passive,
+        });
+
+        this.direction =
+            ex.Vector.fromAngle(config.angle);
+
+        this.startPos = config.pos.clone();
+
+        this.vel =
+            this.direction.scale(config.speed);
+
+        const halfHeight = 100;
+        const curveDepth = 60;
+
+        const createCurvedSlashGraphic = (
+            thickness: number,
+            color: ex.Color
+        ): ex.Polygon => {
+            const segmentCount = 80;
+
+            const frontPoints: ex.Vector[] = [];
+            const backPoints: ex.Vector[] = [];
+
+            for (let i = 0; i <= segmentCount; i++) {
+                const t = i / segmentCount;
+
+                const y = ex.lerp(
+                    -halfHeight,
+                    halfHeight,
+                    t
+                );
+
+                const curveShape =
+                    Math.sin(t * Math.PI);
+
+                const centerX =
+                    -38 + curveShape * curveDepth;
+
+                const widthShape = Math.pow(
+                    Math.sin(t * Math.PI),
+                    0.65
+                );
+
+                const halfThickness =
+                    (thickness * widthShape) / 2;
+
+                frontPoints.push(
+                    ex.vec(
+                        centerX + halfThickness,
+                        y
+                    )
+                );
+
+                backPoints.push(
+                    ex.vec(
+                        centerX - halfThickness,
+                        y
+                    )
+                );
+            }
+
+            const points = [
+                ...frontPoints,
+                ...backPoints.reverse(),
+            ];
+
+            return createPolygonWithLocalOrigin(
+                points,
+                color
+            );
+        };
+
+        const createHeavySlashTracer = (
+            trailLength: number,
+            color: ex.Color
+        ): ex.Polygon => {
+            const points = [
+                // Top tip of the slash
+                ex.vec(-38, -100),
+
+                // Front-middle of the slash
+                ex.vec(22, 0),
+
+                // Bottom tip of the slash
+                ex.vec(-38, 100),
+
+                // Bottom-rear taper
+                ex.vec(-58, 70),
+
+                // Trailing point
+                ex.vec(-38 - trailLength, 0),
+
+                // Top-rear taper
+                ex.vec(-58, -70),
+            ];
+
+            return createPolygonWithLocalOrigin(
+                points,
+                color
+            );
+        };
+
+        const createPolygonWithLocalOrigin = (
+            points: ex.Vector[],
+            color: ex.Color
+        ): ex.Polygon => {
+            const minX = Math.min(...points.map((point) => point.x));
+            const minY = Math.min(...points.map((point) => point.y));
+
+            const polygon = new ex.Polygon({
+                points,
+                color,
+            });
+
+            polygon.origin = ex.vec(
+                -minX,
+                -minY
+            );
+
+            return polygon;
+        };
+
+        const tracer = createHeavySlashTracer(
+            110,
+            ex.Color.fromRGB(
+                255,
+                255,
+                255,
+                0.16
+            )
+        );
+
+        const afterImageSettings = [
+            { offset: -60, thickness: 30, opacity: 0.07 },
+            { offset: -50, thickness: 29, opacity: 0.12 },
+            { offset: -40, thickness: 28, opacity: 0.18 },
+            { offset: -30, thickness: 27, opacity: 0.25 },
+            { offset: -20, thickness: 26, opacity: 0.33 },
+            { offset: -10, thickness: 25, opacity: 0.42 },
+        ];
+
+        const afterImageMembers = afterImageSettings.map((afterImage) => ({
+            graphic: createCurvedSlashGraphic(
+                afterImage.thickness,
+                ex.Color.fromRGB(
+                    255,
+                    255,
+                    255,
+                    afterImage.opacity
+                )
+            ),
+            offset: ex.vec(afterImage.offset, 0),
+        }));
+
+        const mainBody = createCurvedSlashGraphic(
+            24,
+            ex.Color.White
+        );
+
+        const innerCore = createCurvedSlashGraphic(
+            12,
+            ex.Color.White
+        );
+
+        const slashGraphic = new ex.GraphicsGroup({
+            members: [
+                {
+                    graphic: tracer,
+                    offset: ex.vec(-110, 0),
+                    useBounds: false,
+                },
+                {
+                    graphic: mainBody,
+                    offset: ex.vec(0, 0),
+                    useBounds: true,
+                },
+                {
+                    graphic: innerCore,
+                    offset: ex.vec(0, 0),
+                    useBounds: true,
+                },
+            ],
+        });
+
+        this.graphics.use(slashGraphic);
+
+        this.on("collisionstart", (evt) => {
+            const enemy = evt.other.owner;
+
+            if (!(enemy instanceof Demon)) {
+                return;
+            }
+
+            if (
+                this.hitEnemyIds.has(enemy.enemyId)
+            ) {
+                return;
+            }
+
+            this.hitEnemyIds.add(enemy.enemyId);
+
+            config.onEnemyHit(enemy.enemyId);
+        });
+
+        this.on("postupdate", () => {
+            const traveledDistance =
+                this.pos.distance(this.startPos);
+
+            if (
+                traveledDistance >=
+                config.maxDistance
+            ) {
+                this.kill();
+            }
+        });
+    }
+}
+*/
 type SwingTrailSegment = {
     angle: number;
     age: number;

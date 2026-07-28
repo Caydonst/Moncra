@@ -23,6 +23,7 @@ import {
     setActivePlayer,
 } from "../auth/activePlayers.js";
 import { DungeonFloor, tileToWorld } from "../shared/dungeon/dungeonTypes.js";
+import { applyPlayerXp } from "../game_systems/player/player.js";
 
 type ClientAuth = {
     userId: string;
@@ -472,7 +473,7 @@ export class DungeonRoom extends Room<{ state: GameState }> {
                 xpReward
             );
 
-            
+            applyPlayerXp(player);
 
             client?.send("inventory_updated", {
                 enemyId,

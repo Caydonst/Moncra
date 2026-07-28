@@ -150,14 +150,11 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
 
                                 const percentage = upgradedStat.percentage ?? 0;
                                 const value = upgradedStat.value ?? 0;
-                                const minimumPoints =
-                                    selectedItem?.currentUpgradePoints?.[stat] ?? 0;
 
                                 return (
                                     <div key={stat} className={styles.statWrapper}>
                                         <PointUpgrader
                                             statPoints={statPoints[stat]}
-                                            minimumPoints={minimumPoints}
                                             upgradePoints={upgradePoints}
                                             upgrade={(newStatPoints) => {
                                                 upgrade(stat, newStatPoints);

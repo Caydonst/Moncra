@@ -9,7 +9,7 @@ import upgradeIcon from "@/app/game/assets/icons/upgrade_button_icon.png"
 
 type Props = {
     slotIndex: number;
-    item: Weapon | Armor | null | undefined;
+    item: Weapon | Armor;
     selectedSlot: any;
     openItemPanel: any;
     setSelectedSlot: any;
@@ -28,6 +28,15 @@ export function GearSlot({ slotIndex, item, selectedSlot, openItemPanel, setSele
         4: "Arms",
         5: "Chest",
         6: "Legs",
+    }
+
+    function openGearPieceOverview(item: Weapon | Armor) {
+        if (item !== null) {
+            setSelectedItem(item);
+            setItemInfoOpen(true);
+            //openItemPanel();
+            hideItemTooltip();
+        }
     }
 
     return (
@@ -53,9 +62,7 @@ export function GearSlot({ slotIndex, item, selectedSlot, openItemPanel, setSele
             onMouseLeave={hideItemTooltip}
             onContextMenu={(e) => {
                 e.preventDefault(); // Prevent browser context menu
-                setSelectedItem(item)
-                setItemInfoOpen(true);
-                hideItemTooltip();
+                openGearPieceOverview(item)
             }}
             >
 

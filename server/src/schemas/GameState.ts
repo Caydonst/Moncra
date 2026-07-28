@@ -7,6 +7,9 @@ class Weapon extends Schema {
 }
 
 export class GreatSwordState extends Schema {
+  @type("number") lastNormalAttackTime = 0;
+  @type("number") lastHeavyAttackTime = 0;
+
   @type("number") comboIndex: number = 0;
   @type("number") lastAttackTime: number = 0;
   @type("number") lastComboTime: number = 0;
@@ -38,9 +41,9 @@ export class PlayerState extends Schema {
   @type("number") armor: number = 0;
   @type("number") power: number = 0;
 
-  @type("number") level: number = 0;
+  @type("number") level: number = 1;
   @type("number") currentXp: number = 0;
-  @type("number") xpToNextLvl: number = 100;
+  @type("number") xpToNextLvl: number = 500;
 
 
   // combat
@@ -54,11 +57,14 @@ export class PlayerState extends Schema {
 
   @type("number") attackAimAngle: number = 0;
   @type("string") attackType: string = "";
+  @type("string") comboAttackType: string = "";
   @type("number") attackDuration: number = 0;
   @type("number") attackDamage: number = 0;
 
   // dungeon
   @type("number") currentFloor = 1;
+  @type("string") lanternState: "active" | "critical" | "extinguished" = "active";
+  @type("number") extractionRemainingMs = 0;
 
   // Sentinel
   @type("number") resolve: number = 100;

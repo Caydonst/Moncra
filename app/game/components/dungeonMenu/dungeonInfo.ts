@@ -39,34 +39,34 @@ export type Dungeon = {
         typeof ExaltedDungeonImg |
         typeof AscendantDungeonImg |
         typeof MythicDungeonImg;
-    name: string;
     difficulty: Difficulty;
+    floors: string;
 }
 
 const temperedDungeon: Dungeon = {
     icon: TemperedDungeonImg,
-    name: "Stable Rift",
     difficulty: "easy",
+    floors: "1-10"
 }
 const RunedDungeon: Dungeon = {
     icon: RunedDungeonImg,
-    name: "Arcane Ruins",
     difficulty: "normal",
+    floors: "11-20"
 }
 const ExaltedDungeon: Dungeon = {
     icon: ExaltedDungeonImg,
-    name: "Bloodkeep Depths",
     difficulty: "hard",
+    floors: "21-30"
 }
 const AscendantDungeon: Dungeon = {
     icon: AscendantDungeonImg,
-    name: "Voidspire",
     difficulty: "extreme",
+    floors: "31-40"
 }
 const MythicDungeon: Dungeon = {
     icon: MythicDungeonImg,
-    name: "Celestial Abyss",
     difficulty: "mythic",
+    floors: "41-50"
 }
 
 const dungeonList = [temperedDungeon, RunedDungeon, ExaltedDungeon, AscendantDungeon, MythicDungeon]

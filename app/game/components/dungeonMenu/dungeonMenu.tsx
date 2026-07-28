@@ -42,13 +42,15 @@ export default function DungeonMenu(scene: ex.Scene | null) {
                                 : "transparent",
 
                             background: selectedIndex === i
-                                ? `linear-gradient(to right, ${colors[dungeon.difficulty].rgba}, transparent)`
+                                ? colors[dungeon.difficulty].rgba
                                 : "transparent",
                         }}
                         onClick={() => {setSelected(dungeon); setSelectedIndex(i);}}
                         >
-                            <img src={dungeon.icon.src} />
-                            {dungeon.difficulty.toUpperCase()}
+                            <div className={styles.selectorImgContainer}>
+                                <img src={dungeon.icon.src} />
+                            </div>
+                            Floors {dungeon.floors.toUpperCase()}
                         </button>
                     ))}
                 </div>

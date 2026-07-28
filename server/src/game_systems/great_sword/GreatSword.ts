@@ -1,3 +1,9 @@
+import {
+    GreatSwordState
+} from "../../schemas/GameState.js";
+
+export type WeaponAttackType = "normal" | "heavy";
+
 export type AttackType = "slash" | "thrust";
 
 export type GreatSwordAttack = {
@@ -11,17 +17,11 @@ export type GreatSwordAttack = {
     thrustDistance?: number;
 };
 
-export type GreatSwordState = {
-    comboIndex: number;
-    lastAttackTime: number;
-    lastComboTime: number;
-    attackId: number;
-    hitTargets: Set<string>;
-};
-
 export type WeaponAttackInput = {
     weaponId: string;
     aimAngle: number;
+    attackType: WeaponAttackType;
+    clientAttackId: number;
 };
 
 export type ServerPlayerCombatState = {
@@ -70,14 +70,29 @@ const combo: GreatSwordAttack[] = [
 
 const COMBO_THRESHOLD = 600;
 
+const heavyAttack: GreatSwordAttack = {
+    type: "slash",
+    duration: 650,
+    cooldown: 1000,
+    damageMultiplier: 2.5,
+    startOffset: Math.PI / 1.25,
+    endOffset: -Math.PI / 1.25,
+    swingFlip: false,
+};
+
 export function createGreatSwordState(): GreatSwordState {
-    return {
-        comboIndex: 0,
-        lastAttackTime: 0,
-        lastComboTime: 0,
-        attackId: 0,
-        hitTargets: new Set(),
-    };
+    const state = new GreatSwordState();
+
+    state.comboIndex = 0;
+    state.lastNormalAttackTime = 0;
+    state.lastHeavyAttackTime = 0;
+    state.lastComboTime = 0;
+    state.lastAttackTime = 0;
+    state.attackId = 0;
+
+    state.hitTargets.clear();
+
+    return state;
 }
 
 export function handleGreatSwordAttack(
@@ -93,39 +108,140 @@ export function handleGreatSwordAttack(
 
     const state = player.greatSword;
 
-    if (now - state.lastComboTime > COMBO_THRESHOLD) {
+    if (input.attackType === "heavy") {
+        return handleHeavyGreatSwordAttack(
+            player,
+            input,
+            now
+        );
+    }
+
+    return handleNormalGreatSwordAttack(
+        player,
+        input,
+        now
+    );
+}
+
+function handleNormalGreatSwordAttack(
+    player: ServerPlayerCombatState,
+    input: WeaponAttackInput,
+    now: number
+) {
+    const state = player.greatSword;
+
+    if (
+        now - state.lastComboTime >
+        COMBO_THRESHOLD
+    ) {
         state.comboIndex = 0;
     }
 
-    const attack = combo[state.comboIndex];
+    const attack =
+        combo[state.comboIndex];
 
-    console.log("COOLDOWN CHECK", {
+    console.log("NORMAL ATTACK COOLDOWN CHECK", {
         comboIndex: state.comboIndex,
         attackType: attack.type,
-        elapsed: now - state.lastAttackTime,
+        elapsed: now - state.lastNormalAttackTime,
         required: attack.cooldown,
     });
 
-    if (now - state.lastAttackTime < attack.cooldown) {
+    if (
+        now - state.lastNormalAttackTime <
+        attack.cooldown
+    ) {
         return null;
     }
 
-    state.lastAttackTime = now;
+    state.lastNormalAttackTime = now;
     state.lastComboTime = now;
+
     state.attackId++;
 
-    const comboIndex = state.comboIndex;
-    state.comboIndex = (state.comboIndex + 1) % combo.length;
+    const serverAttackId =
+        state.attackId;
+
+    const comboIndex =
+        state.comboIndex;
+
+    state.comboIndex =
+        (state.comboIndex + 1) %
+        combo.length;
+
+    state.hitTargets.clear();
 
     return {
-        attackId: state.attackId,
-        weaponId: input.weaponId,
+        serverAttackId,
+        clientAttackId:
+            input.clientAttackId,
+
+        weaponId:
+            input.weaponId,
+
         x: player.x,
         y: player.y,
-        aimAngle: input.aimAngle,
+
+        aimAngle:
+            input.aimAngle,
+
+        inputAttackType:
+            input.attackType,
 
         comboIndex,
         attack,
+    };
+}
+
+function handleHeavyGreatSwordAttack(
+    player: ServerPlayerCombatState,
+    input: WeaponAttackInput,
+    now: number
+) {
+    const state = player.greatSword;
+
+    console.log("HEAVY ATTACK COOLDOWN CHECK", {
+        elapsed: now - state.lastHeavyAttackTime,
+        required: heavyAttack.cooldown,
+    });
+
+    if (
+        now - state.lastHeavyAttackTime <
+        heavyAttack.cooldown
+    ) {
+        return null;
+    }
+
+    state.lastHeavyAttackTime = now;
+    state.lastComboTime = now;
+
+    state.attackId++;
+
+    const serverAttackId =
+        state.attackId;
+
+    state.comboIndex = 0;
+    state.hitTargets.clear();
+
+    return {
+        serverAttackId,
+        clientAttackId:
+            input.clientAttackId,
+
+        weaponId:
+            input.weaponId,
+
+        x: player.x,
+        y: player.y,
+
+        aimAngle:
+            input.aimAngle,
+
+        inputAttackType:
+            input.attackType,
+
+        comboIndex: -1,
+        attack: heavyAttack,
     };
 }
 

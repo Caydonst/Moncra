@@ -145,9 +145,6 @@ export default function Home() {
         alt=""
       />
 
-      <div className={styles.bgLightLeft} />
-      <div className={styles.bgLightRight} />
-
       <LoginForm
         setLoginOpen={setLoginOpen}
         loginOpen={loginOpen}

@@ -57,6 +57,7 @@
     opacity: 0;
     transition: 0.2s;
     overflow: hidden;
+    position: relative;
 }
 .inventoryWrapper.open .inventoryContainer {
     transform: scale(1);
@@ -76,28 +77,118 @@
 }
 .inventoryHeader {
     width: 100%;
-    padding: 15px;
+    height: 70px;
+    padding-left: 20px;
     color: #fff;
-    display: flex;
-    justify-content: start;
-    align-items: center;
-    gap: 50px;
-    z-index: -1;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-.inventoryHeader h3 {
-    font-weight: 300;
-}
-.inventoryResource {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 5px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    z-index: -1;
 }
-.inventoryResource img {
-    width: 34px;
-    image-rendering: pixelated;
-    filter: drop-shadow(0 0 4px #fff);
+.inventoryHeaderInner {
+    height: 100%;
+    width: 100%;
+    max-width: 1500px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.headerNameContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    gap: 20px;
+}
+.headerNameContainer h3 {
+    font-weight: 300;
+    font-size: 22px;
+}
+.headerNameContainer p {
+    font-size: 12px;
+    color: #808080;
+}
+.tabsContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+.tabsContainer button {
+    height: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 0 30px;
+    color: #fff;
+}
+.tabsContainer button.selected {
+    border-color: #fff;
+}
+.tabsContainer button .icon {
+    color: #fff;
+    width: 24px;
+    height: 24px;
+}
+.gearPage {
+    width: 100%;
+    position: relative;
+    animation: fadeIn 0.2s;
+}
+@keyframes fadeIn {
+    from {
+        transform: translateX(-200px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+.levelXpWrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 158px;
+    background: rgba(255, 255, 255, 0.1);
+}
+.xpBar {
+    height: 100%;
+    background: #00E5FF;
+}
+.levelContainerOverlay {
+    position: absolute;
+    top: 8px;
+    left: 0;
+    right: 0;
+    height: 160px;
+    background: transparent;
+}
+.overlayLeft {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: calc(69% + 8px);
+    height: 100%;
+    background: #080808;
+}
+.overlayRight {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: calc(31% + 150px);
+    height: 100%;
+    background: #080808;
+}
+.levelContainer {
+    position: absolute;
+    top: 0;
+    left: 31%;
+    width: 142px;
+    height: 142px;
+    background: #080808;
 }
 .bottomShadowContainer {
     position: absolute;
@@ -191,11 +282,6 @@
 .inventoryInner::-webkit-scrollbar-thumb:hover {
     background: #4a4a4a;
 }
-.selected {
-    outline: 4px solid #fff;
-    outline-offset: 3px;
-    transition: 0.05s;
-}
 .gearContainer,
 .inventory,
 .itemInfoPanel {
@@ -280,7 +366,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    
+    width: 100%;
+    max-width: 400px;
     gap: 40px;
     margin-left: 5px;
     position: relative;
@@ -1205,7 +1292,11 @@
     gap: 10px;
     text-align: center;
 }
-
+.placeholder {
+    width: 140px;
+    height: 140px;
+}
+/*
 .levelCircle {
     width: 140px;
     height: 140px;
@@ -1219,6 +1310,7 @@
     justify-content: center;
     flex-shrink: 0;
 }
+    */
 
 .levelCircleInner {
     width: 130px;
@@ -1269,6 +1361,9 @@
     border: 2px solid #fff;
     border-radius: 50%;
     position: relative;
+}
+.upgradeButton:active {
+    transform: scale(0.8);
 }
 .valueContainer {
     display: flex;

@@ -13,7 +13,6 @@ type Props = {
 export default function DungeonCard({ scene, setDungeonMenuOpen, dungeon }: Props) {
     return (
         <div className={styles.dungeonMenuContainer}>
-            <div className={styles.bgLight} style={{ background: `${colors[dungeon.difficulty].hex}` }}></div>
             <div className={styles.dungeonMenuContent}>
                 <div className={styles.title}>
                     <div className={styles.dungeonIconContainer} style={{ borderColor: `${colors[dungeon.difficulty.toLowerCase()].hex}` }}>
@@ -21,7 +20,7 @@ export default function DungeonCard({ scene, setDungeonMenuOpen, dungeon }: Prop
                     </div>
                     <div className={styles.titleInner}>
                         <p style={{ color: `${colors[dungeon.difficulty].hex}` }}>{dungeon.difficulty.toUpperCase()}</p>
-                        <h3>{dungeon.name.toUpperCase()}</h3>
+                        <h3>FLOORS {dungeon.floors.toUpperCase()}</h3>
                     </div>
                 </div>
                 <p>Enter the dungeon?</p>
