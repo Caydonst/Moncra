@@ -127,6 +127,20 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
     }, []);
 
     useEffect(() => {
+        function handlePlayerStatsUpdated(e: Event) {
+            const event = e as CustomEvent;
+
+            setPlayerStats(event.detail);
+        }
+
+        window.addEventListener("player_stats_updated", handlePlayerStatsUpdated);
+
+        return () => {
+            window.removeEventListener("player_stats_updated", handlePlayerStatsUpdated);
+        };
+    }, []);
+
+    useEffect(() => {
             if (!inventoryOpen) return;
     
             async function refreshStats() {
