@@ -21,6 +21,11 @@ export type HydratedArmor = Extract<
     { type: "Armor" }
 >;
 
+export type HydratedLantern = Extract<
+    HydratedItem,
+    { type: "Lantern" }
+>;
+
 export type HydratedMaterial = Extract<
     HydratedItem,
     { type: "Material" }
@@ -30,6 +35,7 @@ export type HydratedInventory = {
     gold: number;
 
     weapon: HydratedWeapon | null;
+    lantern: HydratedLantern | null;
 
     helmet: HydratedArmor | null;
     arms: HydratedArmor | null;
@@ -49,6 +55,10 @@ export function hydrateInventory(
 
         weapon: inventory.weapon
             ? (hydrateItem(inventory.weapon) as HydratedWeapon)
+            : null,
+        
+        lantern: inventory.lantern
+            ? (hydrateItem(inventory.lantern) as HydratedLantern)
             : null,
 
         helmet: inventory.helmet

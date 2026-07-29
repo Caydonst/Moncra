@@ -169,58 +169,81 @@ export default function Gear({ inventoryOpen, setInventoryOpen, inventory, setIn
         function handleInventoryUpdated(e: Event) {
             const event = e as CustomEvent;
 
-            const clientInventory = createClientInventory(event.detail, gameState);
+            const clientInventory = createClientInventory(
+                event.detail,
+                gameState
+            );
 
             gameState.inventory = clientInventory;
             setInventory(clientInventory);
 
-            if (!selectedItem) return;
-
-            let equippedItem: Weapon | Armor | null = null;
-            let slotIndex = -1;
-
-            if (selectedItem.type === "Weapon") {
-                equippedItem = clientInventory.weapon;
-                slotIndex = 0;
-            } else {
-                switch (selectedItem.kind) {
-                    case "helmet":
-                        equippedItem = clientInventory.helmet;
-                        slotIndex = 1;
-                        break;
-                    case "arms":
-                        equippedItem = clientInventory.arms;
-                        slotIndex = 2;
-                        break;
-                    case "chest":
-                        equippedItem = clientInventory.chest;
-                        slotIndex = 3;
-                        break;
-                    case "legs":
-                        equippedItem = clientInventory.legs;
-                        slotIndex = 4;
-                        break;
+            setSelectedItem(previousSelected => {
+                if (!previousSelected) {
+                    return null;
                 }
-            }
 
-            if (equippedItem) {
-                setSelectedItem(equippedItem);
-
-                setSelectedSlot({
-                    filter: "equipment",
-                    displayIndex: slotIndex,
-                    realIndex: -1,
-                    itemId: equippedItem.uid,
-                });
-            }
+                return (
+                    findItemByUid(
+                        clientInventory,
+                        previousSelected.uid
+                    ) ?? previousSelected
+                );
+            });
         }
 
-        window.addEventListener("inventory_updated", handleInventoryUpdated);
+        window.addEventListener(
+            "inventory_updated",
+            handleInventoryUpdated
+        );
 
         return () => {
-            window.removeEventListener("inventory_updated", handleInventoryUpdated);
+            window.removeEventListener(
+                "inventory_updated",
+                handleInventoryUpdated
+            );
         };
-    }, [selectedSlot]);
+    }, [setInventory, setSelectedItem]);
+
+    function findItemByUid(
+        inventory: Inventory,
+        uid: string
+    ): Weapon | Armor | null {
+        const equippedItems: Array<
+            Weapon | Armor | null | undefined
+        > = [
+                inventory.weapon,
+                inventory.helmet,
+                inventory.arms,
+                inventory.chest,
+                inventory.legs,
+            ];
+
+        const equippedItem = equippedItems.find(
+            item => item?.uid === uid
+        );
+
+        if (equippedItem) {
+            return equippedItem;
+        }
+
+        const miscWeapon = inventory.miscWeapons.find(
+            item => item?.uid === uid
+        );
+
+        if (miscWeapon) {
+            return miscWeapon;
+        }
+
+        const miscArmor = inventory.miscArmor.find(
+            item => item?.uid === uid
+        );
+
+        if (miscArmor) {
+            return miscArmor;
+        }
+
+        return null;
+    }
 
     useEffect(() => {
         function handleItemUpgraded(e: Event) {
@@ -348,13 +371,14 @@ export default function Gear({ inventoryOpen, setInventoryOpen, inventory, setIn
         { type: "weapon", slotIndex: 0, item: inventory?.weapon, extras: weaponExtraItems },
         { type: "off-hand", slotIndex: 1, item: null, extras: [] },
         { type: "amulet", slotIndex: 2, item: null, extras: [] },
+        { type: "lantern", slotIndex: 3, item: inventory?.lantern, extras: [] },
     ];
 
     const armorSlots = [
-        { type: "helmet", slotIndex: 3, item: inventory?.helmet, extras: armorExtraItems.helmet },
-        { type: "arms", slotIndex: 4, item: inventory?.arms, extras: armorExtraItems.arms },
-        { type: "chest", slotIndex: 5, item: inventory?.chest, extras: armorExtraItems.chest },
-        { type: "legs", slotIndex: 6, item: inventory?.legs, extras: armorExtraItems.legs },
+        { type: "helmet", slotIndex: 4, item: inventory?.helmet, extras: armorExtraItems.helmet },
+        { type: "arms", slotIndex: 5, item: inventory?.arms, extras: armorExtraItems.arms },
+        { type: "chest", slotIndex: 6, item: inventory?.chest, extras: armorExtraItems.chest },
+        { type: "legs", slotIndex: 7, item: inventory?.legs, extras: armorExtraItems.legs },
     ];
 
     const xpPercent =

@@ -72,7 +72,6 @@
     color: white;
     overflow: hidden;
     gap: 30px;
-    padding: 0 0 50px 0;
     position: relative;
 }
 .inventoryHeader {
@@ -133,6 +132,7 @@
 }
 .gearPage {
     width: 100%;
+    height: calc(100% - 70px);
     position: relative;
     animation: fadeIn 0.2s;
 }
@@ -515,6 +515,54 @@
     outline-color: rgba(255, 255, 255, 0.7);
     border-color: #fff !important;
 }
+.gearSlot::before,
+.extraSlot::before {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    background: #fff;
+    z-index: 20;
+    pointer-events: none;
+    clip-path: inset(100% 0 0 0);
+}
+
+.gearSlot.equippingA::before,
+.extraSlot.equippingA::before {
+    animation: equipAnimA 0.4s linear forwards;
+}
+
+.gearSlot.equippingB::before,
+.extraSlot.equippingB::before {
+    animation: equipAnimB 0.4s linear forwards;
+}
+
+@keyframes equipAnimA {
+    0% {
+        clip-path: inset(100% 0 0 0);
+    }
+
+    50% {
+        clip-path: inset(0 0 0 0);
+    }
+
+    100% {
+        clip-path: inset(0 0 100% 0);
+    }
+}
+
+@keyframes equipAnimB {
+    0% {
+        clip-path: inset(100% 0 0 0);
+    }
+
+    50% {
+        clip-path: inset(0 0 0 0);
+    }
+
+    100% {
+        clip-path: inset(0 0 100% 0);
+    }
+}
 .gearSlotIconContainer {
     height: 100%;
     width: 100%;
@@ -623,6 +671,13 @@
     image-rendering: pixelated;
     filter: drop-shadow(0 0 15px rgba(0,0,0,1));
     transform: rotate(30deg);
+}
+.gearLanternImg {
+    width: 95%;
+    height: 95%;
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 15px rgba(0,0,0,1));
 }
 .gearOtherImg {
     width: 130%;
@@ -1409,6 +1464,24 @@
     border: none;
     border-radius: 50%;
     position: relative;
+}
+.closeInputContainer {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    gap: 10px;
+}
+.closeInputContainer .closeInput {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    border: 3px solid rgba( 255, 255, 255, 0.6);
+    font-size: 12px;
 }
 @keyframes upgradeAnimation {
     0% {

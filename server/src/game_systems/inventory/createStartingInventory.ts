@@ -1,5 +1,6 @@
 import type {
     ArmorItemInstance,
+    LanternItemInstance,
     MaterialItemInstance,
     ServerInventory,
     WeaponItemInstance,
@@ -42,11 +43,22 @@ function createMaterial(
     return item;
 }
 
+function createLantern(itemId: ItemId): LanternItemInstance {
+    const item = createItemInstance(itemId);
+
+    if (item.type !== "Lantern") {
+        throw new Error(`${itemId} is not a lantern`);
+    }
+
+    return item;
+}
+
 export function createStartingInventory(): ServerInventory {
     return {
         gold: 100000,
 
         weapon: null,
+        lantern: createLantern("lantern"),
         helmet: null,
         arms: null,
         chest: null,
@@ -59,8 +71,6 @@ export function createStartingInventory(): ServerInventory {
             createWeapon("great_sword0"),
             createWeapon("great_sword2"),
             createWeapon("great_sword3"),
-
-            ...Array<WeaponItemInstance | null>(10).fill(null),
         ],
 
         miscArmor: [
@@ -89,8 +99,6 @@ export function createStartingInventory(): ServerInventory {
             createArmor("iron_helmet"),
             createArmor("iron_helmet"),
             createArmor("iron_helmet"),
-
-            ...Array<ArmorItemInstance | null>(8).fill(null),
         ],
 
         miscMaterial: [

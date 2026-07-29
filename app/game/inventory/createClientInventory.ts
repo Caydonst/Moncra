@@ -12,6 +12,10 @@ export function createClientInventory(serverInventory: any, gameState: any) {
         ? hydrateClientItem(serverInventory.weapon, gameState)
         : null;
 
+    inv.lantern = serverInventory.lantern
+        ? hydrateClientItem(serverInventory.lantern, gameState)
+        : null;
+
     inv.helmet = serverInventory.helmet
         ? hydrateClientItem(serverInventory.helmet, gameState)
         : null;
@@ -53,6 +57,10 @@ function hydrateClientItem(item: any, gameState: any) {
     }
 
     if (item.type === "Armor") {
+        return item;
+    }
+
+    if (item.type === "Lantern") {
         return item;
     }
 

@@ -107,6 +107,8 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
                             }}>
                                 {selectedItem.type === "Weapon" ? (
                                     <img className={styles.gearWeaponImg} src={selectedItem.icon} />
+                                ) : selectedItem.type === "Lantern" ? (
+                                    <img className={styles.gearLanternImg} src={selectedItem.icon} />
                                 ) : (
                                     <img className={styles.gearOtherImg} src={selectedItem.icon} />
                                 )}
@@ -125,7 +127,7 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
                             </div>
                         </div>
                         <div className={styles.weaponTypeContainer}>
-                            <p className={styles.weaponTypeName}>{selectedItem.kind.charAt(0).toUpperCase() + selectedItem.kind.slice(1)}</p>
+                            <p className={styles.weaponTypeName}>{selectedItem.kind?.charAt(0).toUpperCase() + selectedItem.kind?.slice(1)}</p>
                         </div>
                         <div className={styles.itemStatsContainer}>
                             {selectedItem?.level !== undefined && (
@@ -267,6 +269,10 @@ export default function ItemInfoPanel({ selectedItem, itemInfoOpen, inventoryOpe
                     
                 </div>
             )}
+            <div className={styles.closeInputContainer}>
+                <div className={styles.closeInput}>ESC</div>
+                TO CLOSE
+            </div>
         </div>
     )
 }

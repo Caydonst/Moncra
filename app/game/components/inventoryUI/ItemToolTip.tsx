@@ -52,14 +52,16 @@ export default function ItemToolTip({ tooltipRef, hoveredItem, tooltipPos }: Pro
             <div className={styles.tooltipHeader}>
                 <p className={styles.name}>{hoveredItem?.name.toUpperCase()}</p>
                 <div className={styles.tooltipItemTypeContainer}>
-                    <p>{hoveredItem?.kind.toUpperCase()}</p>
+                    <p>{hoveredItem?.kind?.toUpperCase()}</p>
                     <p style={{ color: `${colors[hoveredItem?.rarity]?.hex ?? "#fff"}` }}>{hoveredItem?.rarity.toUpperCase()}</p>
                 </div>
             </div>
             <div className={styles.toolTipPowerContainer}>
                 <div className={styles.toolTipPowerInner}>
                     <img src={powerIconImg.src} />
-                    <p>{hoveredItem?.stats.power}</p>
+                    {hoveredItem?.stats?.power && (
+                        <p>{hoveredItem?.stats.power}</p>
+                    )}
                 </div>
                 <div className={styles.divider}></div>
                 {hoveredItem?.level !== undefined && (

@@ -128,6 +128,13 @@ export type ArmorItemInstance = {
     enchantmentIds: string[];
 };
 
+export type LanternItemInstance = {
+    uid: string;
+    itemId: ItemId;
+    type: "Lantern";
+    rarity: Rarity;
+    level: number;
+}
 export type MaterialItemInstance = {
     uid: string;
     itemId: ItemId;
@@ -139,12 +146,14 @@ export type MaterialItemInstance = {
 export type InventoryItemInstance =
     | WeaponItemInstance
     | ArmorItemInstance
-    | MaterialItemInstance;
+    | MaterialItemInstance
+    | LanternItemInstance
 
 export type ServerInventory = {
     gold: number;
 
     weapon: WeaponItemInstance | null;
+    lantern: LanternItemInstance | null;
 
     helmet: ArmorItemInstance | null;
     arms: ArmorItemInstance | null;

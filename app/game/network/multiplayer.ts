@@ -200,7 +200,7 @@ class MultiplayerManager {
 
         if (!this.serverPlayerDebug) {
           this.serverPlayerDebug = new ServerPlayerDebug();
-          scene.add(this.serverPlayerDebug);
+          //scene.add(this.serverPlayerDebug);
         }
 
         const localPlayer = scene.actors.find(a => a.name === "player") as any;

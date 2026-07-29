@@ -93,7 +93,6 @@ export class GreatSword extends ex.Actor {
     private readonly HEAVY_ATTACK_DURATION = 650;
     private readonly HEAVY_ATTACK_RELEASE_TIME = 360;
     private readonly HEAVY_ATTACK_COOLDOWN = 1400;
-    private readonly HEAVY_ATTACK_DAMAGE_MULTIPLIER = 2.25;
     private readonly HEAVY_SLASH_DISTANCE = 420;
     private readonly HEAVY_SLASH_SPEED = 900;
 
@@ -839,55 +838,116 @@ export class GreatSword extends ex.Actor {
         this.hitEnemiesThisAttack.clear();
         this.pendingHits.clear();
 
-        multiplayer.sendWeaponAttack({
-            attackId: this.currentAttackId,
-            weaponId: this.weaponItem.id,
-            aimAngle,
-            attackType: "heavy",
-        });
-
         this.swingStartOffset = Math.PI * 0.9;
         this.swingEndOffset = -Math.PI * 0.9;
         this.graphics.flipHorizontal = false;
+
+        this.swingTracer.start(
+            this.player,
+            this.swingStartOffset,
+            this.swingEndOffset,
+            this.HEAVY_ATTACK_DURATION,
+            this.offset.x,
+            () => this.player.pos.clone()
+                .add(ex.vec(0, this.player.bobOffsetY))
+                .add(ex.vec(0, 5)),
+            () => this.getMouseAngle(),
+        );
     }
 
     private updateHeavyAttack(delta: number) {
         this.heavyAttackProgress += delta;
 
         const t = Math.min(
-            this.heavyAttackProgress / this.HEAVY_ATTACK_DURATION,
+            this.heavyAttackProgress /
+            this.HEAVY_ATTACK_DURATION,
             1
         );
 
         const eased = this.heavySwingEase(t);
-        const startAngle = this.heavyAttackAimAngle + this.swingStartOffset;
-        const endAngle = this.heavyAttackAimAngle + this.swingEndOffset;
-        this.orbitAngle = startAngle + (endAngle - startAngle) * eased;
+
+        /*
+         * Continuously follow the mouse during the heavy swing,
+         * just like the normal attack.
+         */
+        const currentMouseAngle = this.getMouseAngle();
+
+        if (currentMouseAngle === null) {
+            return;
+        }
+
+        this.heavyAttackAimAngle = currentMouseAngle;
+
+        const dynamicStartAngle =
+            currentMouseAngle + this.swingStartOffset;
+
+        const dynamicEndAngle =
+            currentMouseAngle + this.swingEndOffset;
+
+        this.orbitAngle =
+            dynamicStartAngle +
+            (dynamicEndAngle - dynamicStartAngle) *
+            eased;
+
+        if (!Number.isFinite(this.orbitAngle)) {
+            this.heavyAttacking = false;
+            this.heavyAttackProgress = 0;
+            return;
+        }
 
         const rotatedOffset = this.offset
             .clone()
             .rotate(this.orbitAngle)
-            .add(ex.vec(0, 5 + this.player.bobOffsetY));
+            .add(ex.vec(0, 5));
 
-        this.pos = this.player.pos.clone().add(rotatedOffset);
-        this.rotation = this.orbitAngle + this.ROT_OFFSET;
+        const bobbedOffset = rotatedOffset.add(
+            ex.vec(0, this.player.bobOffsetY)
+        );
+
+        this.pos = this.player.pos
+            .clone()
+            .add(bobbedOffset);
+
+        this.rotation =
+            this.orbitAngle + this.ROT_OFFSET;
 
         if (this.shadow) {
-            this.shadow.pos = this.pos.add(ex.vec(0, this.height / 2.5));
+            this.shadow.pos = this.pos.add(
+                ex.vec(0, this.height / 2.5)
+            );
         }
 
         if (
             !this.heavySlashSpawned &&
-            this.heavyAttackProgress >= this.HEAVY_ATTACK_RELEASE_TIME
+            this.heavyAttackProgress >=
+            this.HEAVY_ATTACK_RELEASE_TIME
         ) {
             this.heavySlashSpawned = true;
+
+            multiplayer.sendWeaponAttack({
+                attackId: this.currentAttackId,
+                weaponId: this.weaponItem.id,
+                aimAngle: this.heavyAttackAimAngle,
+                attackType: "heavy",
+            });
+
+            /*
+             * heavyAttackAimAngle now contains the current
+             * mouse angle at the moment of release.
+             */
             this.spawnHeavySlash();
         }
 
         if (t >= 1) {
             this.heavyAttacking = false;
             this.heavyAttackProgress = 0;
-            this.idleOrbitAngleOffset = this.swingEndOffset;
+            this.idleOrbitAngleOffset =
+                this.swingEndOffset;
+
+            /*
+             * End at the current mouse-relative end offset.
+             */
+            this.orbitAngle = dynamicEndAngle;
         }
     }
 

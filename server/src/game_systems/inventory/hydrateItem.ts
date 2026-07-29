@@ -6,6 +6,7 @@ import { itemDefinitions } from "../items/itemDefinitions.js";
 import type {
     ArmorItemInstance,
     InventoryItemInstance,
+    LanternItemInstance,
     MaterialItemInstance,
     WeaponItemInstance,
 } from "./inventoryTypes.js";
@@ -86,6 +87,23 @@ function hydrateArmor(instance: ArmorItemInstance) {
     };
 }
 
+function hydrateLantern(instance: LanternItemInstance) {
+    const def = itemDefinitions[instance.itemId];
+
+    if (!def || def.type !== "Lantern") {
+        throw new Error(
+            `Expected lantern definition for item: ${instance.itemId}`
+        );
+    }
+
+    return {
+        ...def,
+
+        uid: instance.uid,
+        level: instance.level,
+    };
+}
+
 function hydrateMaterial(instance: MaterialItemInstance) {
     const def = itemDefinitions[instance.itemId];
 
@@ -144,6 +162,9 @@ export function hydrateItem(instance: InventoryItemInstance) {
 
         case "Armor":
             return hydrateArmor(instance);
+
+        case "Lantern":
+            return hydrateLantern(instance);
 
         case "Material":
             return hydrateMaterial(instance);

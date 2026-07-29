@@ -14,7 +14,8 @@ export type ArmorKind = "helmet" | "arms" | "chest" | "legs";
 export type ItemDefinition =
     | WeaponDefinition
     | ArmorDefinition
-    | MaterialDefinition;
+    | MaterialDefinition
+    | LanternDefinition
 
 type weaponUpgradedStats = {
     damage: number;
@@ -116,6 +117,17 @@ export type ArmorDefinition = {
     maxLevel: number;
     enchantmentIds: string[];
 };
+
+export type LanternDefinition = {
+    id: string;
+    name: string;
+    type: "Lantern";
+    kind: "Lantern";
+    icon: string;
+    rarity: Rarity;
+    level: number;
+    maxLevel: number;
+}
 
 export type MaterialDefinition = {
     id: string;

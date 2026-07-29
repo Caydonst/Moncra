@@ -10,6 +10,8 @@ export class Inventory {
     chest: Armor | null = null;
     legs: Armor | null = null;
 
+    lantern: Lantern | null = null;
+
     miscWeapons: (Weapon | null)[] = Array(12).fill(null);
     miscArmor: (Armor | null)[] = Array(12).fill(null);
     miscMaterial: (Material | null)[] = Array(12).fill(null);

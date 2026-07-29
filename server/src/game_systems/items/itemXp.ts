@@ -13,7 +13,8 @@ export function addXpToItem(
     item: InventoryItemInstance,
     xp: number
 ) {
-    if (item.type === "Material") return;
+    if (item.type === "Material" || item.type === "Lantern") return;
+    
     item.currentXp += xp;
 
     while (item.level < getItemMaxLevel(item)) {

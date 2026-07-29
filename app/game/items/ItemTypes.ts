@@ -86,6 +86,18 @@ export type Armor = {
     enchantments?: Enchantment[];
 }
 
+export type Lantern = {
+    uid: string,
+    name: string,
+    type: "Lantern",
+    rarity: Rarity,
+    icon: string;
+    gameIcon: any,
+    stats?: any;
+    level: number;
+    maxLevel: number;
+}
+
 
 export type Material = {
     uid: string,

@@ -5,6 +5,7 @@ import { rollItemStats } from "../items/itemRolls.js";
 import type {
     ArmorItemInstance,
     InventoryItemInstance,
+    LanternItemInstance,
     MaterialItemInstance,
     WeaponItemInstance,
 } from "../inventory/inventoryTypes.js";
@@ -136,6 +137,19 @@ export function createItemInstance(
             },
 
             enchantmentIds: [],
+        };
+
+        return instance;
+    }
+
+    if (def.type === "Lantern") {
+
+        const instance: LanternItemInstance = {
+            uid: randomUUID(),
+            itemId: def.id,
+            type: "Lantern",
+            rarity: def.rarity,
+            level: 0,
         };
 
         return instance;

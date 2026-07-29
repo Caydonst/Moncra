@@ -132,9 +132,11 @@ export default function GameCanvas() {
             const event = e as CustomEvent;
 
             const clientInventory = createClientInventory(event.detail, gameState);
-
+            console.log(event.detail);
             gameState.inventory = clientInventory;
             setInventory(clientInventory);
+
+            console.log(clientInventory);
         }
 
         window.addEventListener("inventory_updated", handleInventoryUpdated);

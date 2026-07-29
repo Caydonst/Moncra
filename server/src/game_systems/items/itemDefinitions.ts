@@ -142,6 +142,17 @@ export const itemDefinitions = {
         enchantmentIds: [],
     },
 
+    lantern: {
+        id: "lantern",
+        name: "Lantern",
+        type: "Lantern",
+        kind: "Lantern",
+        icon: "/lantern/lantern_tier3.png",
+        rarity: "legendary",
+        level: 0,
+        maxLevel: 10,
+    },
+
     infernal_fragment: {
         id: "infernal_fragment",
         name: "Infernal Fragment",

@@ -415,7 +415,7 @@ export function upgradeItem(
         };
     }
 
-    if (item.type === "Material") {
+    if (item.type === "Material" || item.type === "Lantern") {
         return {
             ok: false as const,
             error: "Materials cannot be upgraded.",
