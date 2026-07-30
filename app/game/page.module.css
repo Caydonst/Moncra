@@ -58,17 +58,9 @@
   height: 40px;
   border: 4px solid #000;
 }
-.textContainer {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #fff;
-  font-size: 12px;
-}
 .characterHp {
   width: 100%;
-  background: #ff2b2b;
+  background: #00D31C;
   height: 100%;
   display: flex;
   justify-content: center;
@@ -80,7 +72,7 @@
   top: 50%;
   transform: translate(-50%, -50%);
   color: #fff;
-  font-size: 10px;
+  font-size: 12px;
 }
 .enemyCount {
   font-size: 20px;

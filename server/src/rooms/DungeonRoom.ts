@@ -24,6 +24,7 @@ import {
 } from "../auth/activePlayers.js";
 import { DungeonFloor, tileToWorld } from "../shared/dungeon/dungeonTypes.js";
 import { applyPlayerXp } from "../game_systems/player/player.js";
+import { EnemyCombatSystem } from "../game_systems/combat/enemyCombat.js";
 
 type ClientAuth = {
     userId: string;
@@ -41,6 +42,8 @@ export class DungeonRoom extends Room<{ state: GameState }> {
     public dungeon = generateDungeon(this.numFloors, 60, 60);
     private enemyIdCounter = 0;
     private loadedEnemyFloors = new Set<number>();
+
+    private enemyCombat = new EnemyCombatSystem();
 
     async onAuth(
         client: Client,
@@ -107,29 +110,32 @@ export class DungeonRoom extends Room<{ state: GameState }> {
 
         console.log(this.dungeon);
 
-        this.setSimulationInterval(
-            (deltaTime) => {
-                runPlayerMovement(
-                    this.state.players,
-                    deltaTime,
-                    (player) =>
-                        this.getPlayerFloor(
-                            player
-                        )
-                );
+        this.setSimulationInterval((deltaTime) => {
+            runPlayerMovement(
+                this.state.players,
+                deltaTime,
+                player => this.getPlayerFloor(player)
+            );
 
-                runEnemySimulation(
-                    this.state.enemies,
-                    this.state.players,
-                    deltaTime,
-                    (floorNumber) =>
-                        this.getFloor(
-                            floorNumber
-                        ),
-                    this.clock.currentTime
-                );
-            }
-        );
+            runEnemySimulation(
+                this.state.enemies,
+                this.state.players,
+                deltaTime,
+                floorNumber => this.getFloor(floorNumber),
+                this.clock.currentTime
+            );
+
+            this.enemyCombat.update(
+                this.state,
+                this.clients,
+                this.clock.currentTime
+            );
+        });
+    }
+
+    private removeEnemy(enemyId: string): void {
+        this.enemyCombat.removeEnemy(enemyId);
+        this.state.enemies.delete(enemyId);
     }
 
     onJoin(client: Client) {
@@ -209,6 +215,8 @@ export class DungeonRoom extends Room<{ state: GameState }> {
             player.weapon.damage = inventory.weapon.upgradedStats.damage.value;
             //player.weapon.icon = inventory.weapon.icon;
         }
+
+        player.inCombat = true;
         
         this.state.players.set(client.sessionId, player);
 
@@ -234,6 +242,8 @@ export class DungeonRoom extends Room<{ state: GameState }> {
     }
 
     onLeave(client: Client) {
+        this.enemyCombat.removePlayer(client.sessionId);
+
         const player =
             this.state.players.get(
                 client.sessionId
@@ -346,8 +356,9 @@ export class DungeonRoom extends Room<{ state: GameState }> {
             );
 
             enemy.type = enemyDef.type;
-            enemy.hp = enemyDef.hp;
-            enemy.maxHp = enemyDef.maxHp;
+            enemy.hp = enemyDef.hp * (0.5 * floorNumber + 1);
+            enemy.maxHp = enemyDef.maxHp * (0.5 * floorNumber + 1);
+            enemy.damage = enemyDef.damage * (0.5 * floorNumber + 1);
             enemy.state = "idle";
             enemy.currentFloor =
                 floorNumber;
@@ -413,22 +424,12 @@ export class DungeonRoom extends Room<{ state: GameState }> {
             }
         );
 
-        for (
-            const enemyId
-            of enemyIdsToRemove
-        ) {
-            this.state.enemies.delete(
-                enemyId
-            );
-
-            clearEnemyContributors(
-                enemyId
-            );
+        for (const enemyId of enemyIdsToRemove) {
+            this.removeEnemy(enemyId);
+            clearEnemyContributors(enemyId);
         }
 
-        this.loadedEnemyFloors.delete(
-            floorNumber
-        );
+        this.loadedEnemyFloors.delete(floorNumber);
 
         console.log(
             `Unloaded enemies for empty floor ${floorNumber}.`

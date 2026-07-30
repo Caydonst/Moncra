@@ -24,63 +24,6 @@ export function getInventoryForSession(userId: string, player: PlayerState): Ser
 export function deleteInventoryForSession(sessionId: string) {
     inventories.delete(sessionId);
 }
-/*
-function createStartingInventory(): ServerInventory {
-    return {
-        gold: 100000,
-        weapon: null,
-        helmet: null,
-        arms: null,
-        chest: null,
-        legs: null,
-
-        miscWeapons: [
-            { uid: randomUUID(), itemId: "great_sword0", kind: "Great Sword", level: 0 },
-            { uid: randomUUID(), itemId: "great_sword1", kind: "Great Sword", level: 0 },
-
-            { uid: randomUUID(), itemId: "great_sword1", kind: "Great Sword", level: 0 },
-            { uid: randomUUID(), itemId: "great_sword0", kind: "Great Sword", level: 0 },
-            { uid: randomUUID(), itemId: "great_sword2", kind: "Great Sword", level: 0 },
-            { uid: randomUUID(), itemId: "great_sword3", kind: "Great Sword", level: 0 },
-            ...Array(10).fill(null),
-        ],
-
-        miscArmor: [
-            { uid: randomUUID(), itemId: "iron_helmet", kind: "helmet", level: 0 },
-            { uid: randomUUID(), itemId: "iron_arms", kind: "arms", level: 0 },
-            { uid: randomUUID(), itemId: "iron_chest", kind: "chest", level: 0 },
-            { uid: randomUUID(), itemId: "iron_legs", kind: "legs", level: 0 },
-
-            { uid: randomUUID(), itemId: "iron_legs", kind: "legs", level: 0 },
-            { uid: randomUUID(), itemId: "iron_legs", kind: "legs", level: 0 },
-            { uid: randomUUID(), itemId: "iron_legs", kind: "legs", level: 0 },
-            { uid: randomUUID(), itemId: "iron_chest", kind: "chest", level: 0 },
-            { uid: randomUUID(), itemId: "iron_chest", kind: "chest", level: 0 },
-            { uid: randomUUID(), itemId: "iron_chest", kind: "chest", level: 0 },
-            { uid: randomUUID(), itemId: "iron_chest", kind: "chest", level: 0 },
-            { uid: randomUUID(), itemId: "iron_arms", kind: "arms", level: 0 },
-            { uid: randomUUID(), itemId: "iron_arms", kind: "arms", level: 0 },
-            { uid: randomUUID(), itemId: "iron_arms", kind: "arms", level: 0 },
-            { uid: randomUUID(), itemId: "iron_helmet", kind: "helmet", level: 0 },
-            { uid: randomUUID(), itemId: "iron_helmet", kind: "helmet", level: 0 },
-            { uid: randomUUID(), itemId: "iron_helmet", kind: "helmet", level: 0 },
-            { uid: randomUUID(), itemId: "iron_helmet", kind: "helmet", level: 0 },
-            { uid: randomUUID(), itemId: "iron_helmet", kind: "helmet", level: 0 },
-            { uid: randomUUID(), itemId: "iron_helmet", kind: "helmet", level: 0 },
-            { uid: randomUUID(), itemId: "iron_helmet", kind: "helmet", level: 0 },
-
-            ...Array(8).fill(null),
-        ],
-
-        miscMaterial: [
-            { uid: randomUUID(), itemId: "infernal_fragment", quantity: 5 },
-            ...Array(11).fill(null),
-        ],
-    };
-}
-    */
-
-// server/inventory/equipItemInInventory.ts
 
 export function equipItemInInventory(inventory: ServerInventory, uid: string) {
     return equipWeapon(inventory, uid) || equipArmor(inventory, uid);
@@ -208,6 +151,10 @@ export function applyInventoryStatsToPlayer(
     player.armor = stats.armor;
     player.crit = stats.crit;
     player.power = stats.power;
+
+    if (!player.inCombat) {
+        player.hp = player.maxHp;
+    }
 
     if (player.hp > player.maxHp) {
         player.hp = player.maxHp;

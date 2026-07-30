@@ -1,4 +1,4 @@
-import { Room } from "@colyseus/core";
+import { Room, CloseCode } from "@colyseus/core";
 import type { Client } from "@colyseus/core";
 import { GameState } from "../schemas/GameState.js";
 import { registerPlayerMessages } from "../game_systems/registerPlayerMessages.js";
@@ -63,6 +63,8 @@ export class HubRoom extends Room<{ state: GameState }> {
         deltaTime
       );
     });
+
+    this.autoDispose = false;
   }
 
   onJoin(
@@ -132,18 +134,39 @@ export class HubRoom extends Room<{ state: GameState }> {
     );
   }
 
-  getUserId(client: Client): string {
-    const userId = this.userIds.get(
-      client.sessionId
-    );
+  async onDrop(client: Client, code?: number) {
+    console.warn("Player connection dropped:", {
+      sessionId: client.sessionId,
+      code,
+    });
 
-    if (!userId) {
-      throw new Error(
-        "Authenticated user ID was not found."
-      );
+    const player = this.state.players.get(client.sessionId);
+
+    if (player) {
+      player.connected = false;
     }
 
-    return userId;
+    try {
+      // Keep the player's seat reserved for 30 seconds.
+      await this.allowReconnection(client, 30);
+
+      console.log("Player reconnection accepted:", client.sessionId);
+    } catch (error) {
+      console.warn("Player failed to reconnect:", {
+        sessionId: client.sessionId,
+        error,
+      });
+    }
+  }
+
+  onReconnect(client: Client) {
+    console.log("Player reconnected:", client.sessionId);
+
+    const player = this.state.players.get(client.sessionId);
+
+    if (player) {
+      player.connected = true;
+    }
   }
 
   onLeave(client: Client) {
@@ -165,5 +188,19 @@ export class HubRoom extends Room<{ state: GameState }> {
     console.log(
       `${client.sessionId} left hub`
     );
+  }
+
+  getUserId(client: Client): string {
+    const userId = this.userIds.get(
+      client.sessionId
+    );
+
+    if (!userId) {
+      throw new Error(
+        "Authenticated user ID was not found."
+      );
+    }
+
+    return userId;
   }
 }

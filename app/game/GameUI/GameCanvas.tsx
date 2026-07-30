@@ -44,6 +44,17 @@ export default function GameCanvas() {
     const [storageData, setStorageData] = useState(null);
     const [blacksmithOpen, setBlacksmithOpen] = useState(false);
     const [socialOpen, setSocialOpen] = useState(false);
+    const [playerStats, setPlayerStats] = useState({
+            power: 0,
+            damage: 0,
+            crit: 0,
+            armor: 0,
+            hp: 100,
+            maxHp: 100,
+            level: 0,
+            currentXp: 0,
+            xpToNextLvl: 0,
+        });
 
     useEffect(() => {
         function preventZoomKeys(e: KeyboardEvent) {
@@ -292,6 +303,21 @@ export default function GameCanvas() {
         };
     }, [game]);
 
+    useEffect(() => {
+        function handlePlayerStatsUpdated(e: Event) {
+            const event = e as CustomEvent;
+
+            setPlayerStats(event.detail);
+            console.log("CANVAS PLAYER STATS: ", event.detail);
+        }
+
+        window.addEventListener("player_stats_updated", handlePlayerStatsUpdated);
+
+        return () => {
+            window.removeEventListener("player_stats_updated", handlePlayerStatsUpdated);
+        };
+    }, []);
+
 
 
     return (
@@ -303,12 +329,9 @@ export default function GameCanvas() {
                         <p id="enemy-count" className={styles.enemyCount}></p>
                     </div>
                     <div className={styles.characterHpWrapper}>
-                        <div className={styles.textContainer}>
-                            <p>HP</p>
-                            <p>{scene?.player?.getStats().hp} / {scene?.player?.getStats().maxHp}</p>
-                        </div>
                         <div className={styles.characterHpContainer}>
-                            <div className={styles.characterHp} style={{ width: `${characterHp}%` }}></div>
+                            <p>{playerStats.hp}</p>
+                            <div className={styles.characterHp} style={{ width: `${(playerStats.hp / playerStats.maxHp) * 100}%` }}></div>
                         </div>
                     </div>
                     <InventoryUI inventoryOpen={inventoryOpen} inventory={inventory} setInventory={setInventory} setInventoryOpen={setInventoryOpen} itemPanelOpen={itemPanelOpen} setItemPanelOpen={setItemPanelOpen} selectedItem={selectedItem} setSelectedItem={setSelectedItem} engine={game} />

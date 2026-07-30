@@ -9,6 +9,12 @@ const DEMON_SPEED = 220;
 const DEMON_WIDTH = 30;
 const DEMON_HEIGHT = 40;
 
+export const DEMON_COLLISION_WIDTH = 35;
+export const DEMON_COLLISION_HEIGHT = 52.5;
+
+export const DEMON_CONTACT_DAMAGE = 10;
+export const DEMON_CONTACT_COOLDOWN_MS = 1000;
+
 
 export function updateEnemy(
     enemy: EnemyState,

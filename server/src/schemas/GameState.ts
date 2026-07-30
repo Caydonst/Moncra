@@ -61,10 +61,19 @@ export class PlayerState extends Schema {
   @type("number") attackDuration: number = 0;
   @type("number") attackDamage: number = 0;
 
+  @type("number") collisionWidth: number = 30;
+
+  @type("number") collisionHeight: number = 40;
+  @type("boolean") inCombat: boolean = false;
+  @type("boolean") isDead: boolean = false;
+
   // dungeon
   @type("number") currentFloor = 1;
   @type("string") lanternState: "active" | "critical" | "extinguished" = "active";
   @type("number") extractionRemainingMs = 0;
+
+  // Connection
+  @type("boolean") connected: boolean = true;
 
   // Sentinel
   @type("number") resolve: number = 100;
@@ -87,7 +96,7 @@ export class EnemyState extends Schema {
 
   @type("number") hp = 500;
   @type("number") maxHp = 500;
-  @type("number") damage = 15;
+  @type("number") damage = 50;
   @type("number") speed = 220;
   @type("number") radius = 18;
 
@@ -105,6 +114,10 @@ export class EnemyState extends Schema {
   @type("number") knockbackUntil = 0;
 
   @type("number") currentFloor = 1;
+
+  @type("number") collisionWidth: number = 35;
+
+  @type("number") collisionHeight: number = 52.5;
 }
 
 export class GameState extends Schema {

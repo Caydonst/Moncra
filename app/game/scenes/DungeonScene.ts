@@ -85,10 +85,8 @@ export class DungeonScene extends ex.Scene {
     this.add(this.player);
     this.player.attachToScene(this);
 
-    if (this.gameState.inventory.weapon?.instance) {
-      this.add(this.gameState.inventory.weapon.instance);
-      this.gameState.inventory.weapon.instance.attachToScene(this);
-    }
+    this.syncEquippedWeapon();
+
     console.log("GAME STATE: ", this.gameState.inventory);
 
     this.projectileManager = new ProjectileManager(
@@ -204,6 +202,40 @@ export class DungeonScene extends ex.Scene {
     this.currentFloorIndex = 1;
 
     this.loadFloor();
+  }
+
+  private syncEquippedWeapon(): void {
+    const weaponInstance =
+      this.gameState.inventory.weapon?.instance;
+
+    if (!weaponInstance) {
+      return;
+    }
+
+    const previousScene =
+      weaponInstance.scene;
+
+    if (
+      previousScene &&
+      previousScene !== this
+    ) {
+      previousScene.remove(
+        weaponInstance
+      );
+    }
+
+    weaponInstance.attachToScene(this);
+
+    if (weaponInstance.scene !== this) {
+      this.add(weaponInstance);
+    }
+
+    console.log("LOG STUFF: ", {
+      weaponInstance,
+      weaponScene: weaponInstance?.scene,
+      dungeonScene: this,
+      sameScene: weaponInstance?.scene === this,
+    });
   }
 }
 

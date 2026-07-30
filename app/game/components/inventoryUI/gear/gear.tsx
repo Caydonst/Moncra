@@ -175,6 +175,7 @@ export default function Gear({ inventoryOpen, setInventoryOpen, inventory, setIn
             );
 
             gameState.inventory = clientInventory;
+            console.log("GAMESTATE INVENTORY: ", gameState.inventory);
             setInventory(clientInventory);
 
             setSelectedItem(previousSelected => {

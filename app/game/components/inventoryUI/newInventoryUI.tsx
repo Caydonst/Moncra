@@ -225,8 +225,6 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
 
     const xpPercent = Math.min(100, Math.max(0, (210 / 300) * 100));
 
-    
-
     return (
         <div id="inventory-wrapper" className={inventoryOpen ? `${styles.inventoryWrapper} ${styles.open}` : styles.inventoryWrapper} onClick={(e) => e.stopPropagation()}>
             <div id="inventory" className={styles.inventoryContainer}>
