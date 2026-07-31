@@ -20,12 +20,15 @@ type ServerEnemyState = {
     isDead: boolean;
     isAggro: boolean;
 
+    isLarge: boolean;
+
     state?: "idle" | "walk" | "hurt" | "dead";
 };
 
 export class Demon extends ex.Actor {
     public enemyId: string;
 
+    private idleAnim!: ex.Animation;
     private walkAnim!: ex.Animation;
     private deadAnim!: ex.Animation;
     private miscAnim!: ex.Animation;
@@ -41,17 +44,20 @@ export class Demon extends ex.Actor {
     private targetPos = ex.vec(0, 0);
     private lastServerState: ServerEnemyState | null = null;
 
+    //private spriteScale = 2.5;
+
     constructor(
-        enemyState: ServerEnemyState,
+        private enemyState: ServerEnemyState,
         private resources: GameResources,
+        private spriteScale: number,
         //private collisionGroups: any,
     ) {
         super({
             name: "enemy",
             pos: ex.vec(enemyState.x, enemyState.y),
             anchor: ex.vec(0.5, 0.5),
-            width: 14 * 2.5,
-            height: 21 * 2.5,
+            width: 16 * spriteScale,
+            height: 23 * spriteScale,
             color: ex.Color.Red,
             z: 2,
             collisionType: ex.CollisionType.Passive,
@@ -66,19 +72,50 @@ export class Demon extends ex.Actor {
     }
 
     onInitialize(engine: ex.Engine) {
-        const walkFrames = Object.keys(this.resources.DemonImages.walk).map(key => {
-            const sprite = this.resources.DemonImages.walk[key].toSprite();
-            sprite.scale = ex.vec(2.5, 2.5);
+        /*
+        const walkFrames = this.resources.characterWalkSpritesheet.sprites.map(sprite => {
+                    const s = sprite.clone();        // clone so you can modify safely
+                    s.scale = ex.vec(this.spriteScale, this.spriteScale);
+                    //s.width = 15 * 2;
+                    //s.height = 23 * 2;
+        
+                    return {
+                        graphic: s,
+                        duration: 120
+                    };
+                });
+        */
+
+        //if (this.enemyState.isLarge) {
+        //    this.spriteScale = 3.5;
+        //}
+       
+        const idleFrames = this.resources.demonIdleSpritesheet.sprites.map(sprite => {
+            const s = sprite.clone();        // clone so you can modify safely
+            s.scale = ex.vec(this.spriteScale, this.spriteScale);
+            //s.width = 15 * 2;
+            //s.height = 23 * 2;
 
             return {
-                graphic: sprite,
-                duration: 150,
+                graphic: s,
+                duration: 200
+            };
+        });
+        const walkFrames = this.resources.demonWalkSpritesheet.sprites.map(sprite => {
+            const s = sprite.clone();        // clone so you can modify safely
+            s.scale = ex.vec(this.spriteScale, this.spriteScale);
+            //s.width = 15 * 2;
+            //s.height = 23 * 2;
+
+            return {
+                graphic: s,
+                duration: 160
             };
         });
         
         const deadFrames = Object.keys(this.resources.DemonImages.dead).map(key => {
             const sprite = this.resources.DemonImages.dead[key].toSprite();
-            sprite.scale = ex.vec(2.5, 2.5);
+            sprite.scale = ex.vec(this.spriteScale, this.spriteScale);
 
             return {
                 graphic: sprite,
@@ -89,7 +126,7 @@ export class Demon extends ex.Actor {
 
         const miscFrames = Object.keys(this.resources.MiscImages).map(key => {
             const sprite = this.resources.MiscImages[key].toSprite();
-            sprite.scale = ex.vec(2, 2);
+            sprite.scale = ex.vec(this.spriteScale, this.spriteScale);
             sprite.origin = ex.vec(0.5, 1);
 
             return {
@@ -97,6 +134,10 @@ export class Demon extends ex.Actor {
                 duration: 80,
                 loop: false,
             };
+        });
+
+        this.idleAnim = new ex.Animation({
+            frames: idleFrames,
         });
 
         this.walkAnim = new ex.Animation({
@@ -113,6 +154,7 @@ export class Demon extends ex.Actor {
             strategy: ex.AnimationStrategy.End,
         });
 
+        this.graphics.add("idle", this.idleAnim);
         this.graphics.add("walk", this.walkAnim);
         this.graphics.add("dead", this.deadAnim);
         this.graphics.add("misc", this.miscAnim);
@@ -122,7 +164,7 @@ export class Demon extends ex.Actor {
         this.hurtSprite.width *= 2.5;
         this.hurtSprite.height *= 2.5;
 
-        this.hpBar = new HPBar(this, this.width, 5, this.displayedHp, "enemy");
+        this.hpBar = new HPBar(this, this.width, 5, this.displayedHp, "enemy", this.enemyState.isLarge ? "large" : "normal");
         engine.currentScene.add(this.hpBar);
 
         this.shadow = new Shadow(this);
@@ -184,7 +226,7 @@ export class Demon extends ex.Actor {
     }
 
     private updateFacing(state: ServerEnemyState) {
-        const flip = state.vx > 0;
+        const flip = state.vx < 0;
 
         this.walkAnim.flipHorizontal = flip;
         this.deadAnim.flipHorizontal = flip;
@@ -221,7 +263,12 @@ export class Demon extends ex.Actor {
             return;
         }
 
-        this.graphics.use("walk");
+        if (this.lastServerState?.isAggro) {
+            this.graphics.use("walk");
+        } else {
+            this.graphics.use("idle");
+        }
+        
     }
 
     public destroyEnemy() {

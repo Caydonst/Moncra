@@ -57,12 +57,12 @@ export function createStartingInventory(): ServerInventory {
     return {
         gold: 100000,
 
-        weapon: null,
+        weapon: createWeapon("great_sword0"),
         lantern: createLantern("lantern"),
-        helmet: null,
-        arms: null,
-        chest: null,
-        legs: null,
+        helmet: createArmor("iron_helmet"),
+        arms: createArmor("iron_arms"),
+        chest: createArmor("iron_chest"),
+        legs: createArmor("iron_legs"),
 
         miscWeapons: [
             createWeapon("great_sword0"),
@@ -79,6 +79,9 @@ export function createStartingInventory(): ServerInventory {
             createArmor("iron_chest"),
             createArmor("iron_legs"),
 
+            createArmor("iron_legs"),
+            createArmor("iron_legs"),
+            createArmor("iron_legs"),
             createArmor("iron_legs"),
             createArmor("iron_legs"),
             createArmor("iron_legs"),

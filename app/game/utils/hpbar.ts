@@ -8,8 +8,9 @@ export class HPBar extends ex.Actor {
     private maxHp: number;
     private displayedHp: number;
     private actorType: string;
+    private enemyType: string;
 
-    constructor(parent: ex.Actor, width: number, height: number, maxHp: number, actorType: string) {
+    constructor(parent: ex.Actor, width: number, height: number, maxHp: number, actorType: string, enemyType: string) {
         super({
             pos: parent.pos.clone(),
             anchor: ex.vec(0.5, 0.5),
@@ -24,6 +25,7 @@ export class HPBar extends ex.Actor {
         this.hp = maxHp;
         this.displayedHp = maxHp;
         this.actorType = actorType;
+        this.enemyType = enemyType;
 
         // Disable body so it never collides
         this.body.collisionType = ex.CollisionType.PreventCollision;
@@ -86,8 +88,12 @@ export class HPBar extends ex.Actor {
             );
 
             // → Current HP (red)
-            ctx.drawRectangle(ex.vec(x, y), hpWidth, barHeight, ex.Color.fromHex("#FF3D3D"));
-        }
+            if (this.enemyType === "large") {
+                ctx.drawRectangle(ex.vec(x, y), hpWidth, barHeight, ex.Color.fromHex("#FF5151"));
+            } else {
+                ctx.drawRectangle(ex.vec(x, y), hpWidth, barHeight, ex.Color.fromHex("#FF0000"));
+            }
+        } 
 
     }
 

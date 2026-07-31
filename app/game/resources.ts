@@ -25,6 +25,9 @@ import demonDead1 from "./assets/enemies/demon/death/dead1.png";
 import demonDead2 from "./assets/enemies/demon/death/dead2.png";
 import demonDead3 from "./assets/enemies/demon/death/dead3.png";
 import demonHurt from "./assets/enemies/demon/hurt/hurt0.png";
+
+import demonIdleSpritesheetImage from "./assets/enemies/demon/idle/idle_spritesheet.png";
+import demonWalkSpritesheetImage from "./assets/enemies/demon/walk/walk_spritesheet.png";
 // --- BOSS ---
 import demonBossIdleSheetImage from "./assets/enemies/boss/DemonBoss/idle/idle_spritesheet.png"
 import demonBossWalkSheetImage from "./assets/enemies/boss/DemonBoss/walk/walk_spritesheet.png"
@@ -148,6 +151,9 @@ export async function createResources() {
         storageChestOpen: new ex.ImageSource(storageChestOpenImage.src),
         blacksmithSheetImage: new ex.ImageSource(blacksmithSpritesheetImage.src),
         blacksmithSelectedSheetImage: new ex.ImageSource(blacksmithSelectedSpritesheetImage.src),
+        // ENEMIES
+        demonIdleSpritesheetImage: new ex.ImageSource(demonIdleSpritesheetImage.src),
+        demonWalkSpritesheetImage: new ex.ImageSource(demonWalkSpritesheetImage.src),
         demonBossIdleSheetImage: new ex.ImageSource(demonBossIdleSheetImage.src),
         demonBossHurt: new ex.ImageSource(demonBossHurt.src),
         demonBossWalkSheetImage: new ex.ImageSource(demonBossWalkSheetImage.src),
@@ -251,6 +257,26 @@ export async function createResources() {
             columns: 4,
             spriteWidth: 23,
             spriteHeight: 34,
+        }
+    });
+
+    const demonIdleSpritesheet = ex.SpriteSheet.fromImageSource({
+        image: Images.demonIdleSpritesheetImage,
+        grid: {
+            rows: 1,
+            columns: 4,
+            spriteWidth: 16,
+            spriteHeight: 21,
+        }
+    });
+
+    const demonWalkSpritesheet = ex.SpriteSheet.fromImageSource({
+        image: Images.demonWalkSpritesheetImage,
+        grid: {
+            rows: 1,
+            columns: 4,
+            spriteWidth: 16,
+            spriteHeight: 23,
         }
     });
 
@@ -404,6 +430,8 @@ export async function createResources() {
         demonBossHurt,
         PlayerImages,
         DemonImages,
+        demonIdleSpritesheet,
+        demonWalkSpritesheet,
         MiscImages,
         loader,
         tileSheet,

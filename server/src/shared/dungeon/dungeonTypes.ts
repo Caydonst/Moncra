@@ -51,6 +51,7 @@ export type EnemyData = {
     hp: number;
     maxHp: number;
     damage: number;
+    isLarge: boolean;
 };
 
 export type ChestData = {

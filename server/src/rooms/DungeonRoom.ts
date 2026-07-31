@@ -360,8 +360,8 @@ export class DungeonRoom extends Room<{ state: GameState }> {
             enemy.maxHp = enemyDef.maxHp * (0.5 * floorNumber + 1);
             enemy.damage = enemyDef.damage * (0.5 * floorNumber + 1);
             enemy.state = "idle";
-            enemy.currentFloor =
-                floorNumber;
+            enemy.currentFloor = floorNumber;
+            enemy.isLarge = enemyDef.isLarge;
 
             this.state.enemies.set(
                 runtimeEnemyId,

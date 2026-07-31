@@ -54,7 +54,7 @@ const combo: GreatSwordAttack[] = [
         type: "slash",
         duration: 400,
         cooldown: 350,
-        damageMultiplier: 1.2,
+        damageMultiplier: 1,
         startOffset: -Math.PI / 1.5,
         endOffset: Math.PI / 1.5,
         swingFlip: true,

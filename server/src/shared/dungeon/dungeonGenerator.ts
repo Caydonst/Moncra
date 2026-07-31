@@ -78,14 +78,20 @@ function createEnemies(
     for (let i = 0; i < 30; i++) {
         const pos = getRandomEnemySpawn(floor);
 
+        const isLarge = Math.random() < 0.5;
+
+        const startingHp = isLarge ? 650 : 500;
+        const startingDamage = isLarge ? 50 : 20;
+
         enemies.push({
             id: `floor_${floorIndex}_enemy_${i}`,
             type: "demon",
             x: pos.x,
             y: pos.y,
-            hp: 500,
-            maxHp: 500,
-            damage: 10,
+            hp: startingHp,
+            maxHp: startingHp,
+            damage: startingDamage,
+            isLarge: isLarge,
         });
     }
 

@@ -671,9 +671,11 @@ class MultiplayerManager {
         maxHp: enemyState.maxHp,
         isDead: enemyState.isDead,
         isAggro: enemyState.isAggro,
+        isLarge: enemyState.isLarge,
         state: enemyState.state,
       },
-      this.dungeonResources
+      this.dungeonResources,
+      enemyState.isLarge ? 3.5 : 2.5,
     );
 
     this.dungeonScene.add(demon);
