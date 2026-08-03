@@ -40,68 +40,91 @@ export class HPBar extends ex.Actor {
     }
 
     private drawBar(ctx: ex.ExcaliburGraphicsContext) {
-        const barWidth = this.widthPx;
-        const barHeight = this.heightPx;
+        const barWidth = Math.round(this.widthPx / 2) * 2;
+        const barHeight = Math.round(this.heightPx / 2) * 2;
 
-        if (this.actorType === "player") {
-            const x = -barWidth / 2;
-            const y = 24;
-            // → Border (white)
-            ctx.drawRectangle(ex.vec(x - 1, y - 1), barWidth + 2, barHeight + 2, ex.Color.White);
+        const x = -barWidth / 2;
+        const y = this.actorType === "player" ? 24 : 25;
 
-            // → Background (black)
-            ctx.drawRectangle(ex.vec(x, y), barWidth, barHeight, ex.Color.Black);
+        const borderSize = 0;
 
-            // → HP widths
-            const hpWidth = (this.hp / this.maxHp) * barWidth;
-            const displayedWidth = (this.displayedHp / this.maxHp) * barWidth;
+        // Outer border
+        ctx.drawRectangle(
+            ex.vec(x - borderSize, y - borderSize),
+            barWidth + borderSize * 2,
+            barHeight + borderSize * 2,
+            ex.Color.White
+        );
 
-            // → Smooth trailing damage (light red)
+        // Inner background
+        ctx.drawRectangle(
+            ex.vec(x, y),
+            barWidth,
+            barHeight,
+            ex.Color.Black
+        );
+
+        const hpWidth = Math.round(
+            (this.hp / this.maxHp) * barWidth
+        );
+
+        const displayedWidth = Math.round(
+            (this.displayedHp / this.maxHp) * barWidth
+        );
+
+        const trailingWidth = Math.max(
+            0,
+            displayedWidth - hpWidth
+        );
+
+        const trailingColor =
+            this.actorType === "player"
+                ? ex.Color.fromHex("#9EFFA9")
+                : ex.Color.fromHex("#FFBFBF");
+
+        if (trailingWidth > 0) {
             ctx.drawRectangle(
                 ex.vec(x + hpWidth, y),
-                displayedWidth - hpWidth,
+                trailingWidth,
                 barHeight,
-                ex.Color.fromHex("#9EFFA9")
+                trailingColor
             );
+        }
 
-            // → Current HP (red)
-            ctx.drawRectangle(ex.vec(x, y), hpWidth, barHeight, ex.Color.fromHex("#008224"));
-        } else if (this.actorType === "enemy") {
-            const x = -barWidth / 2;
-            const y = 25;
-            // → Border (white)
-            ctx.drawRectangle(ex.vec(x - 1, y - 1), barWidth + 2, barHeight + 2, ex.Color.White);
+        let hpColor = ex.Color.fromHex("#008224");
 
-            // → Background (black)
-            ctx.drawRectangle(ex.vec(x, y), barWidth, barHeight, ex.Color.Black);
+        if (this.actorType === "enemy") {
+            hpColor =
+                this.enemyType === "large"
+                    ? ex.Color.fromHex("#FF7F7F")
+                    : ex.Color.fromHex("#FF0000");
+        }
 
-            // → HP widths
-            const hpWidth = (this.hp / this.maxHp) * barWidth;
-            const displayedWidth = (this.displayedHp / this.maxHp) * barWidth;
-
-            // → Smooth trailing damage (light red)
+        if (hpWidth > 0) {
             ctx.drawRectangle(
-                ex.vec(x + hpWidth, y),
-                displayedWidth - hpWidth,
+                ex.vec(x, y),
+                hpWidth,
                 barHeight,
-                ex.Color.fromHex("#FFBFBF")
+                hpColor
             );
-
-            // → Current HP (red)
-            if (this.enemyType === "large") {
-                ctx.drawRectangle(ex.vec(x, y), hpWidth, barHeight, ex.Color.fromHex("#FF5151"));
-            } else {
-                ctx.drawRectangle(ex.vec(x, y), hpWidth, barHeight, ex.Color.fromHex("#FF0000"));
-            }
-        } 
-
+        }
     }
 
     onPostUpdate(_engine: ex.Engine, delta: number) {
-        const offsetY = this.owner.height + 15;  // 15 px above the head
-        this.pos = this.owner.pos.sub(ex.vec(0, offsetY));
+        const offsetY = this.owner.height + 5;
 
-        const lerp = 0.02;
-        this.displayedHp += (this.hp - this.displayedHp) * lerp;
+        this.pos = ex.vec(
+            Math.round(this.owner.pos.x),
+            Math.round(this.owner.pos.y - offsetY)
+        );
+
+        const smoothing = 1 - Math.pow(0.001, delta / 1000);
+
+        this.displayedHp +=
+            (this.hp - this.displayedHp) * smoothing;
+
+        if (Math.abs(this.displayedHp - this.hp) < 0.01) {
+            this.displayedHp = this.hp;
+        }
     }
 }

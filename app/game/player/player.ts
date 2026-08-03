@@ -53,15 +53,15 @@ export class Player extends ex.Actor {
 
     private hpUiUpdateQueued = false;
 
-    private spriteScale = 2;
+    private spriteScale = 2.2;
 
     constructor(pos: ex.Vector, worldWidth: number, worldHeight: number, private resources: GameResources, private collisionGroups: any, private gameState: GameState) {
         super({
             name: "player",
             pos: pos,
             anchor: ex.vec(0.5, 0.5),
-            width: 15 * 2,    // set desired width
-            height: 21 * 2,   // set desired height
+            width: 12 * 2.2,    // set desired width
+            height: 17 * 2.2,   // set desired height
             color: ex.Color.Yellow,  // optional, for debugging
             collisionType: ex.CollisionType.Active,
             z: 3,
@@ -81,7 +81,7 @@ export class Player extends ex.Actor {
 
             return {
                 graphic: s,
-                duration: 120
+                duration: 100
             };
         });
         const idleFrames = this.resources.characterIdleSpritesheet.sprites.map(sprite => {
@@ -110,44 +110,12 @@ export class Player extends ex.Actor {
         this.dashTracer = new DashTracer(this);
         engine.currentScene.add(this.dashTracer);
 
-        this.shadow = new Shadow(this);
-        engine.currentScene.add(this.shadow);
-
         const random = new ex.Random(); // or pass a seed if you want reproducible randomness
-
-        this.particleTimer = new ex.Timer({
-            interval: 0,             // base interval (ms)
-            random,                    // Excalibur Random instance
-            randomRange: [50, 200],    // add a random float between 50 and 200 ms
-            repeats: true,
-            action: () => {
-                if (this.move.magnitude > 0) {
-                    /*(engine.currentScene as GameScene).particleManager.emit(
-                        this.pos.add(ex.vec(0, 18)),
-                        1,
-                        ex.Color.fromHex("#5c5c5c"),
-                        0,
-                        0,
-                        300,
-                        3,
-                        3,
-                        1,
-                    );*/
-                    (engine.currentScene as GameScene).dustParticleManager.spawnDust(
-                        this.pos.add(ex.vec(0, 18)),
-                        1
-                    );
-                }
-            },
-        });
-
-        engine.currentScene.add(this.particleTimer);
-        this.particleTimer.start();
     }
 
     onPreUpdate(engine: ex.Engine) {
         let frame;
-        const bobWalk = [0, 0, 0, 4];
+        const bobWalk = [-2, -4, -2, 0];
         const bobIdle = [0, 2, 4, 2];
 
         // Example bob curve (tweak as needed):
@@ -336,19 +304,40 @@ export class Player extends ex.Actor {
     public getStats() {
         return this.stats;
     }
-    public attachToScene(scene: ex.Scene) {
+    public attachToScene(scene: ex.Scene): void {
+        /*
+         * Scene removal must happen before the transition through
+         * detachFromScene(). Do not remove from another scene here.
+         */
+
+        if (this.scene !== scene) {
+            scene.add(this);
+        }
+
         if (!this.shadow || this.shadow.isKilled()) {
             this.shadow = new Shadow(this);
         }
-        scene.add(this.shadow);
+
+        if (this.shadow.scene !== scene) {
+            scene.add(this.shadow);
+        }
 
         if (!this.dashTracer || this.dashTracer.isKilled()) {
             this.dashTracer = new DashTracer(this);
         }
-        scene.add(this.dashTracer);
+
+        if (this.dashTracer.scene !== scene) {
+            scene.add(this.dashTracer);
+        }
 
         if (this.particleTimer) {
             this.particleTimer.cancel();
+
+            if (this.particleTimer.scene) {
+                this.particleTimer.scene.remove(
+                    this.particleTimer
+                );
+            }
         }
 
         const random = new ex.Random();
@@ -359,9 +348,19 @@ export class Player extends ex.Actor {
             randomRange: [50, 200],
             repeats: true,
             action: () => {
-                if (this.move.magnitude <= 0) return;
+                if (this.move.magnitude <= 0) {
+                    return;
+                }
 
-                const currentScene = this.scene as any;
+                const currentScene =
+                    this.scene as ex.Scene & {
+                        dustParticleManager?: {
+                            spawnDust(
+                                pos: ex.Vector,
+                                count: number
+                            ): void;
+                        };
+                    };
 
                 currentScene.dustParticleManager?.spawnDust(
                     this.pos.add(ex.vec(0, 18)),
@@ -372,6 +371,28 @@ export class Player extends ex.Actor {
 
         scene.add(this.particleTimer);
         this.particleTimer.start();
+    }
+
+    public detachFromScene(scene: ex.Scene): void {
+        if (this.particleTimer) {
+            this.particleTimer.cancel();
+
+            if (this.particleTimer.scene === scene) {
+                scene.remove(this.particleTimer);
+            }
+        }
+
+        if (this.shadow?.scene === scene) {
+            scene.remove(this.shadow);
+        }
+
+        if (this.dashTracer?.scene === scene) {
+            scene.remove(this.dashTracer);
+        }
+
+        if (this.scene === scene) {
+            scene.remove(this);
+        }
     }
 }
 

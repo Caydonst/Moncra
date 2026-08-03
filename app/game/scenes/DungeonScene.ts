@@ -14,6 +14,7 @@ import { GameState } from "../gameState/gameState";
 import { ProjectileManager } from "../utils/projectileManager";
 import { DustParticleManager } from "../utils/ParticleHelper";
 import { Demon } from "../enemies/demon";
+import { returnToHub } from "../utils/sceneTransition";
 
 type ChestDefinition = {
   id: string;
@@ -69,6 +70,8 @@ export class DungeonScene extends ex.Scene {
   private projectileManager!: ProjectileManager;
   dustParticleManager!: DustParticleManager;
 
+  private isTransitioning = false;
+
   constructor(
     private resources: GameResources,
     private gameState: GameState,
@@ -81,30 +84,71 @@ export class DungeonScene extends ex.Scene {
     this.engine = engine;
     this.camera.zoom = 1.2;
 
-    this.player = this.gameState.player;
-    this.add(this.player);
-    this.player.attachToScene(this);
+    const fpsText = new ex.Text({
+      text: "FPS: 0",
+      font: new ex.Font({
+        size: 20,
+        family: "Arial",
+        color: ex.Color.White,
+      }),
+    });
 
-    this.syncEquippedWeapon();
+    const fpsHud = new ex.ScreenElement({
+      pos: ex.vec(20, 90),
+      anchor: ex.vec(0, 0),
+      z: 9999,
+    });
 
-    console.log("GAME STATE: ", this.gameState.inventory);
+    fpsHud.graphics.use(fpsText);
 
-    this.projectileManager = new ProjectileManager(
-      this.resources,
-      this.collisionGroups
-    );
+    // Use the scene directly, not engine.currentScene.
+    this.add(fpsHud);
+
+    fpsHud.on("postupdate", () => {
+      fpsText.text =
+        `FPS: ${Math.round(engine.stats.currFrame.fps)}`;
+    });
+
+    this.projectileManager =
+      new ProjectileManager(
+        this.resources,
+        this.collisionGroups
+      );
+
     this.add(this.projectileManager);
 
-    this.dustParticleManager = new DustParticleManager();
+    this.dustParticleManager =
+      new DustParticleManager();
+
     this.add(this.dustParticleManager);
 
-    multiplayer.onDungeonReady((dungeonData: ServerDungeonData) => {
-      this.buildDungeonFromServerDungeon(dungeonData);
-    });
+    multiplayer.onDungeonReady(
+      (dungeonData: ServerDungeonData) => {
+        this.buildDungeonFromServerDungeon(
+          dungeonData
+        );
+      }
+    );
   }
 
-  async onActivate() {
-    const pendingDungeon = getPendingDungeon();
+  async onActivate(): Promise<void> {
+    this.isTransitioning = false;
+
+    const player = this.gameState.player;
+
+    if (!player) {
+      throw new Error(
+        "Cannot enter DungeonScene without a player."
+      );
+    }
+
+    this.player = player;
+    this.player.attachToScene(this);
+
+    this.attachEquippedWeaponToScene(this);
+
+    const pendingDungeon =
+      getPendingDungeon();
 
     await multiplayer.joinDungeon({
       engine: this.engine,
@@ -113,6 +157,15 @@ export class DungeonScene extends ex.Scene {
       difficulty: pendingDungeon?.difficulty,
       localPlayer: this.player,
     });
+  }
+
+  onDeactivate(): void {
+    this.isTransitioning = false;
+
+    if (this.currentFloor?.portal) {
+      this.currentFloor.portal
+        .setInteractionEnabled(false);
+    }
   }
 
   onPostUpdate(engine: ex.Engine, delta: number) {
@@ -143,11 +196,22 @@ export class DungeonScene extends ex.Scene {
 
     camera.pos = camera.pos.lerp(target, t);
 
-    if (this.currentFloor.portal.interacted) {
+    if (
+      this.currentFloor.portal.interacted &&
+      !this.isTransitioning
+    ) {
+      const portal = this.currentFloor.portal;
       const targetFloor = this.currentFloor.portalTarget;
 
+      portal.interacted = false;
+      portal.setInteractionEnabled(false);
+
       if (targetFloor === "hub") {
-        engine.goToScene("hub");
+        this.isTransitioning = true;
+
+        this.detachPersistentActors();
+
+        returnToHub();
         return;
       }
 
@@ -155,6 +219,18 @@ export class DungeonScene extends ex.Scene {
 
       this.currentFloorIndex = targetFloor;
       this.loadFloor();
+    }
+  }
+
+  private detachPersistentActors(): void {
+    this.player.vel = ex.vec(0, 0);
+    this.player.detachFromScene(this);
+
+    const weapon =
+      this.gameState.inventory.weapon?.instance;
+
+    if (weapon) {
+      weapon.detachFromScene(this);
     }
   }
 
@@ -205,36 +281,43 @@ export class DungeonScene extends ex.Scene {
   }
 
   private syncEquippedWeapon(): void {
-    const weaponInstance =
+    const weapon =
       this.gameState.inventory.weapon?.instance;
 
-    if (!weaponInstance) {
+    if (!weapon) {
       return;
     }
 
-    const previousScene =
-      weaponInstance.scene;
-
-    if (
-      previousScene &&
-      previousScene !== this
-    ) {
-      previousScene.remove(
-        weaponInstance
+    if (weapon.isKilled()) {
+      console.error(
+        "Equipped weapon was killed and cannot be transferred.",
+        weapon
       );
+
+      return;
     }
 
-    weaponInstance.attachToScene(this);
+    weapon.attachToScene(this);
+  }
 
-    if (weaponInstance.scene !== this) {
-      this.add(weaponInstance);
+  private attachEquippedWeaponToScene(
+    scene: ex.Scene
+  ): void {
+    const weapon =
+      this.gameState.inventory.weapon?.instance;
+
+    if (!weapon) {
+      console.warn("No equipped weapon instance found.");
+      return;
     }
 
-    console.log("LOG STUFF: ", {
-      weaponInstance,
-      weaponScene: weaponInstance?.scene,
-      dungeonScene: this,
-      sameScene: weaponInstance?.scene === this,
+    weapon.attachToScene(scene);
+
+    console.log("Weapon attached:", {
+      weaponScene: weapon.scene,
+      targetScene: scene,
+      attached: weapon.scene === scene,
+      killed: weapon.isKilled(),
     });
   }
 }
@@ -257,13 +340,24 @@ class Floor {
 
   draw(scene: ex.Scene) {
     scene.add(this.tileMap);
-    this.chests.forEach(chest => scene.add(chest));
+
+    this.chests.forEach((chest) => {
+      scene.add(chest);
+    });
+
     scene.add(this.portal);
+    this.portal.setInteractionEnabled(true);
   }
 
   kill() {
+    this.portal?.setInteractionEnabled(false);
+
     this.tileMap?.kill();
-    this.chests.forEach(chest => chest.kill());
+
+    this.chests.forEach((chest) => {
+      chest.kill();
+    });
+
     this.portal?.kill();
   }
 }

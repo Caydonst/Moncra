@@ -158,9 +158,21 @@ export class HubScene extends ex.Scene {
 
             this.add(this.projectileManager);
 
-            this.player = new Player(ex.vec(400, 400), 1920, 1080, this.resources, this.collisionGroups, this.gameState);
-            this.gameState.player = this.player;
-            this.add(this.player);
+            if (!this.gameState.player) {
+                this.player = new Player(
+                    ex.vec(400, 400),
+                    1920,
+                    1080,
+                    this.resources,
+                    this.collisionGroups,
+                    this.gameState
+                );
+
+                this.gameState.player = this.player;
+                this.player.attachToScene(this);
+            } else {
+                this.player = this.gameState.player;
+            }
 
             this.dustParticleManager = new DustParticleManager();
             this.add(this.dustParticleManager);
@@ -226,45 +238,167 @@ export class HubScene extends ex.Scene {
 
     }
 
-    async onActivate() {
-        await multiplayer.joinHub(this.engine, this.resources);
+    async onActivate(): Promise<void> {
+        this.restorePlayerToHub();
+
+        this.attachEquippedWeaponToScene(
+            this
+        );
+
+        this.storageChest
+            ?.setInteractionEnabled(true);
+
+        this.portal
+            ?.setInteractionEnabled(true);
+
+        await multiplayer.joinHub({
+            engine: this.engine,
+            resources: this.resources,
+            localPlayer: this.player,
+            scene: this,
+        });
     }
 
+    onDeactivate(): void {
+        this.storageChest
+            ?.setInteractionEnabled(false);
 
-    onPostUpdate(engine: ex.Engine, delta: number) {
-        const camera = engine.currentScene.camera;
+        this.portal
+            ?.setInteractionEnabled(false);
 
-        // Center directly on player
+        this.player?.detachFromScene(this);
+
+        const weapon =
+            this.gameState.inventory.weapon?.instance;
+
+        if (weapon) {
+            weapon.detachFromScene(this);
+        }
+    }
+
+    private syncEquippedWeapon(): void {
+        const weaponInstance =
+            this.gameState.inventory
+                .weapon?.instance;
+
+        if (!weaponInstance) {
+            return;
+        }
+
+        weaponInstance.attachToScene(this);
+    }
+
+    private attachEquippedWeaponToScene(
+        scene: ex.Scene
+    ): void {
+        const weapon =
+            this.gameState.inventory.weapon?.instance;
+
+        if (!weapon) {
+            console.warn("No equipped weapon instance found.");
+            return;
+        }
+
+        weapon.attachToScene(scene);
+
+        console.log("Weapon attached:", {
+            weaponScene: weapon.scene,
+            targetScene: scene,
+            attached: weapon.scene === scene,
+            killed: weapon.isKilled(),
+        });
+    }
+
+    private restorePlayerToHub(): void {
+        const player = this.gameState.player;
+
+        if (!player) {
+            console.error(
+                "No player exists in GameState."
+            );
+            return;
+        }
+
+        this.player = player;
+
+        player.pos = ex.vec(400, 400);
+        player.vel = ex.vec(0, 0);
+
+        player.attachToScene(this);
+
+        this.camera.pos = player.pos.clone();
+
+        console.log("Player restored to hub:", {
+            playerScene: player.scene,
+            hubScene: this,
+            attachedToHub: player.scene === this,
+            killed: player.isKilled(),
+            pos: player.pos.toString(),
+        });
+    }
+
+    private clampCameraAxis(
+        target: number,
+        worldSize: number,
+        halfViewportSize: number
+    ): number {
+        // The map is smaller than the visible area.
+        // Keep the camera centered on the map.
+        if (worldSize <= halfViewportSize * 2) {
+            return worldSize / 2;
+        }
+
+        return ex.clamp(
+            target,
+            halfViewportSize,
+            worldSize - halfViewportSize
+        );
+    }
+
+    onPostUpdate(_engine: ex.Engine, delta: number): void {
+        if (!this.worldBounds || !this.player) {
+            return;
+        }
+
+        const camera = this.camera;
         const targetPos = this.player.pos;
 
-        // Map/world size
-        const mapWidth = this.worldBounds.width;
-        const mapHeight = this.worldBounds.height;
+        const halfScreenW =
+            this.engine.drawWidth / camera.zoom / 2;
 
-        // Account for zoom
-        const halfScreenW = (engine.drawWidth / camera.zoom) / 2;
-        const halfScreenH = (engine.drawHeight / camera.zoom) / 2;
+        const halfScreenH =
+            this.engine.drawHeight / camera.zoom / 2;
 
-        // Clamp camera inside map bounds
-        const clampedX = Math.max(
-            halfScreenW,
-            Math.min(mapWidth - halfScreenW, targetPos.x)
+        const clampedX = this.clampCameraAxis(
+            targetPos.x,
+            this.worldBounds.width,
+            halfScreenW
         );
 
-        const clampedY = Math.max(
-            halfScreenH,
-            Math.min(mapHeight - halfScreenH, targetPos.y)
+        const clampedY = this.clampCameraAxis(
+            targetPos.y,
+            this.worldBounds.height,
+            halfScreenH
         );
 
-        const target = ex.vec(clampedX, clampedY);
+        const target = ex.vec(
+            clampedX,
+            clampedY
+        );
 
-        // Exponential smoothing that's framerate independent
-        const followSpeed = 5; // Try 8–15
+        const followSpeed = 5;
+        const t =
+            1 -
+            Math.exp(
+                -followSpeed * (delta / 1000)
+            );
 
-        const t = 1 - Math.exp(-followSpeed * (delta / 1000));
-
-        camera.pos = camera.pos.lerp(target, t);
+        camera.pos = camera.pos.lerp(
+            target,
+            t
+        );
     }
+
     public getInventory() {
         return this.gameState.inventory;
     }

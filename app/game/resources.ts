@@ -5,8 +5,8 @@ import { TiledResource } from "@excaliburjs/plugin-tiled";
 // --- MAP ---
 const tiledMap = new TiledResource("/maps/hub.tmx");
 // --- CHARACTER ---
-import characterWalkSheetImage from "./assets/character/walk/walk_spritesheet3.png"
-import characterIdleSheetImage from "./assets/character/idle/idle_spritesheet2.png"
+import characterWalkSheetImage from "./assets/character/walk/walk_spritesheet_new.png"
+import characterIdleSheetImage from "./assets/character/idle/idle_spritesheet.png"
 import characterWalk0 from "./assets/character/walk/walk0.png";
 import characterWalk1 from "./assets/character/walk/walk1.png";
 import characterWalk2 from "./assets/character/walk/walk2.png";
@@ -227,8 +227,8 @@ export async function createResources() {
         grid: {
             rows: 1,
             columns: 4,
-            spriteWidth: 15,
-            spriteHeight: 21,
+            spriteWidth: 16,
+            spriteHeight: 19,
         }
     });
 
@@ -237,8 +237,8 @@ export async function createResources() {
         grid: {
             rows: 1,
             columns: 4,
-            spriteWidth: 15,
-            spriteHeight: 21,
+            spriteWidth: 12,
+            spriteHeight: 17,
         }
     });
     const demonBossIdleSpritesheet = ex.SpriteSheet.fromImageSource({

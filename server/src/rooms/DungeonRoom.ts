@@ -38,7 +38,7 @@ export class DungeonRoom extends Room<{ state: GameState }> {
 
     private userIds = new Map<string, string>();
 
-    private numFloors = 5;
+    private numFloors = 1;
     public dungeon = generateDungeon(this.numFloors, 60, 60);
     private enemyIdCounter = 0;
     private loadedEnemyFloors = new Set<number>();

@@ -17,16 +17,10 @@ export async function enterDungeon(dungeon: Dungeon) {
     changeScene("dungeon");
 }
 
-export async function returnToHub() {
-    if (typeof window === "undefined") return;
-    if (!gameState.engine || !gameState.resources) return;
-
-    const { multiplayer } = await import("../network/multiplayer");
-
-    await multiplayer.joinHub({
-        engine: gameState.engine,
-        resources: gameState.resources,
-    });
+export function returnToHub() {
+    if (typeof window === "undefined") {
+        return;
+    }
 
     changeScene("hub");
 }

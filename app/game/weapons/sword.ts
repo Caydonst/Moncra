@@ -58,6 +58,8 @@ export class GreatSword extends ex.Actor {
     public engine: ex.Engine;
     public offset: ex.Vector; // radius from player center
 
+    private listenersAttached = false;
+
     // Swing state
     protected swinging = false;
     protected swingProgress = 0;
@@ -196,41 +198,41 @@ export class GreatSword extends ex.Actor {
         super({
             pos: player.pos.clone(),
             anchor: ex.vec(0.5, 0.5), // exvec(0.5, 0.7)
-            width: image.width * 2.6,
-            height: image.height * 2.6,
+            width: image.width * 2.7,
+            height: image.height * 2.7,
             z: 4,
         });
 
         this.player = player;
         this.engine = engine;
-        this.offset = ex.vec(45, 0);
+        this.offset = ex.vec(46, 0);
     }
 
-    onInitialize(engine: ex.Engine) {
+    onInitialize(engine: ex.Engine): void {
+        this.engine = engine;
+
         multiplayer.setLocalWeapon(this);
 
         const sprite = this.image.toSprite();
+
         sprite.width = this.width;
         sprite.height = this.height;
 
-        this.shadow = new Shadow(this);
-        engine.currentScene.add(this.shadow);
-
         this.graphics.use(sprite);
 
-        this.swingTracer = new SwingTracer();
-        engine.currentScene.add(this.swingTracer);
+        if (!this.shadow || this.shadow.isKilled()) {
+            this.shadow = new Shadow(this);
+        }
 
-        this.thrustTracer = new ThrustTracer();
-        engine.currentScene.add(this.thrustTracer);
+        if (!this.swingTracer || this.swingTracer.isKilled()) {
+            this.swingTracer = new SwingTracer();
+        }
 
-        /*if (this.glow) {
-            const outline = new Outline(engine);
-            this.graphics.material = outline.outlineMaterial;
-        }*/
+        if (!this.thrustTracer || this.thrustTracer.isKilled()) {
+            this.thrustTracer = new ThrustTracer();
+        }
 
-        const effect = new EnchantedGlowEffect(engine);
-        this.graphics.material = effect.material;
+        this.addListeners();
     }
 
     private lastSwingEndPos: ex.Vector | null = null;
@@ -979,13 +981,30 @@ export class GreatSword extends ex.Actor {
 
     protected onSuccessfulHit(_target: ex.Actor) { }
 
+    public addListeners(): void {
+        if (this.listenersAttached) {
+            return;
+        }
 
-    addListeners() {
-        //this.engine.input.pointers.primary.on("down", () => this.startSwing());
         const pointer = this.engine.input.pointers.primary;
 
         pointer.on("down", this.pointerDownHandler);
         pointer.on("up", this.pointerUpHandler);
+
+        this.listenersAttached = true;
+    }
+
+    private removeListeners(): void {
+        if (!this.listenersAttached) {
+            return;
+        }
+
+        const pointer = this.engine.input.pointers.primary;
+
+        pointer.off("down", this.pointerDownHandler);
+        pointer.off("up", this.pointerUpHandler);
+
+        this.listenersAttached = false;
     }
 
     cleanup() {
@@ -1003,21 +1022,147 @@ export class GreatSword extends ex.Actor {
         this.thrustTracer.kill();
     }
 
-    public attachToScene(scene: ex.Scene) {
-        if (!this.shadow || this.shadow.isKilled()) {
+    public attachToScene(scene: ex.Scene): void {
+        // -------------------------
+        // Weapon actor
+        // -------------------------
+        if (
+            this.scene &&
+            this.scene !== scene
+        ) {
+            this.scene.remove(this);
+        }
+
+        if (this.scene !== scene) {
+            scene.add(this);
+        }
+
+        // -------------------------
+        // Weapon shadow
+        // -------------------------
+        if (
+            !this.shadow ||
+            this.shadow.isKilled()
+        ) {
             this.shadow = new Shadow(this);
         }
-        scene.add(this.shadow);
 
-        if (!this.swingTracer || this.swingTracer.isKilled()) {
-            this.swingTracer = new SwingTracer();
+        if (
+            this.shadow.scene &&
+            this.shadow.scene !== scene
+        ) {
+            this.shadow.scene.remove(
+                this.shadow
+            );
         }
-        scene.add(this.swingTracer);
 
-        if (!this.thrustTracer || this.thrustTracer.isKilled()) {
-            this.thrustTracer = new ThrustTracer();
+        if (this.shadow.scene !== scene) {
+            scene.add(this.shadow);
         }
-        scene.add(this.thrustTracer);
+
+        // -------------------------
+        // Swing tracer
+        // -------------------------
+        if (
+            !this.swingTracer ||
+            this.swingTracer.isKilled()
+        ) {
+            this.swingTracer =
+                new SwingTracer();
+        }
+
+        if (
+            this.swingTracer.scene &&
+            this.swingTracer.scene !== scene
+        ) {
+            this.swingTracer.scene.remove(
+                this.swingTracer
+            );
+        }
+
+        if (
+            this.swingTracer.scene !== scene
+        ) {
+            scene.add(this.swingTracer);
+        }
+
+        // -------------------------
+        // Thrust tracer
+        // -------------------------
+        if (
+            !this.thrustTracer ||
+            this.thrustTracer.isKilled()
+        ) {
+            this.thrustTracer =
+                new ThrustTracer();
+        }
+
+        if (
+            this.thrustTracer.scene &&
+            this.thrustTracer.scene !== scene
+        ) {
+            this.thrustTracer.scene.remove(
+                this.thrustTracer
+            );
+        }
+
+        if (
+            this.thrustTracer.scene !== scene
+        ) {
+            scene.add(this.thrustTracer);
+        }
+
+        multiplayer.setLocalWeapon(this);
+
+        this.addListeners();
+
+        console.log("Weapon scene attachment:", {
+            weaponAttached:
+                this.scene === scene,
+            shadowAttached:
+                this.shadow.scene === scene,
+            swingTracerAttached:
+                this.swingTracer.scene === scene,
+            thrustTracerAttached:
+                this.thrustTracer.scene === scene,
+            weaponScene: this.scene,
+            shadowScene: this.shadow.scene,
+            targetScene: scene,
+        });
+    }
+
+    public detachFromScene(
+        scene: ex.Scene
+    ): void {
+        this.removeListeners();
+
+        this.isHolding = false;
+        this.swinging = false;
+        this.thrusting = false;
+        this.heavyAttacking = false;
+
+        // This was missing.
+        if (this.shadow?.scene === scene) {
+            scene.remove(this.shadow);
+        }
+
+        if (
+            this.swingTracer?.scene === scene
+        ) {
+            scene.remove(this.swingTracer);
+        }
+
+        if (
+            this.thrustTracer?.scene === scene
+        ) {
+            scene.remove(this.thrustTracer);
+        }
+
+        if (this.scene === scene) {
+            scene.remove(this);
+        }
+
+        multiplayer.setLocalWeapon(null);
     }
 }
 
