@@ -38,7 +38,7 @@ export class Player extends ex.Actor {
     private idleAnim!: ex.Animation;
     public move: ex.Vector;
     public bobOffsetY = 0;
-    private shadow!: Shadow;
+    private shadow?: Shadow;
     public isDead: boolean = false;
     private particleTimer!: ex.Timer;
 
@@ -48,7 +48,7 @@ export class Player extends ex.Actor {
     private dashDistance = 200;
     private dashDistanceRemaining = 0;
     private dashSpeed = 1000;
-    private dashTracer!: DashTracer;
+    private dashTracer?: DashTracer;
     private dashDir = ex.vec(0, 0);
 
     private hpUiUpdateQueued = false;
@@ -106,9 +106,6 @@ export class Player extends ex.Actor {
         this.graphics.add("idle", this.idleAnim);
         this.graphics.add("walk", this.walkAnim);
         this.graphics.use("idle");
-
-        this.dashTracer = new DashTracer(this);
-        engine.currentScene.add(this.dashTracer);
 
         const random = new ex.Random(); // or pass a seed if you want reproducible randomness
     }
@@ -182,7 +179,7 @@ export class Player extends ex.Actor {
         }
 
         if (this.shadow) {
-            this.shadow.pos = this.pos.add(ex.vec(0, (this.height / 2) - 3));
+            this.shadow.pos = this.pos.add(ex.vec(0, (this.height / 2)));
         }
 
         this.dashTracer?.updateTracer(engine, delta, this.isDashing);
@@ -305,30 +302,18 @@ export class Player extends ex.Actor {
         return this.stats;
     }
     public attachToScene(scene: ex.Scene): void {
-        /*
-         * Scene removal must happen before the transition through
-         * detachFromScene(). Do not remove from another scene here.
-         */
-
         if (this.scene !== scene) {
             scene.add(this);
         }
 
-        if (!this.shadow || this.shadow.isKilled()) {
-            this.shadow = new Shadow(this);
-        }
+        this.destroySceneHelpers();
 
-        if (this.shadow.scene !== scene) {
-            scene.add(this.shadow);
-        }
+        this.shadow = new Shadow(this);
+        this.dashTracer =
+            new DashTracer(this);
 
-        if (!this.dashTracer || this.dashTracer.isKilled()) {
-            this.dashTracer = new DashTracer(this);
-        }
-
-        if (this.dashTracer.scene !== scene) {
-            scene.add(this.dashTracer);
-        }
+        scene.add(this.shadow);
+        scene.add(this.dashTracer);
 
         if (this.particleTimer) {
             this.particleTimer.cancel();
@@ -382,16 +367,33 @@ export class Player extends ex.Actor {
             }
         }
 
-        if (this.shadow?.scene === scene) {
-            scene.remove(this.shadow);
-        }
-
-        if (this.dashTracer?.scene === scene) {
-            scene.remove(this.dashTracer);
-        }
+        this.destroySceneHelpers();
 
         if (this.scene === scene) {
             scene.remove(this);
+        }
+    }
+    private destroySceneHelpers(): void {
+        if (this.shadow) {
+            const oldScene = this.shadow.scene;
+
+            if (!this.shadow.isKilled()) {
+                this.shadow.kill();
+            }
+
+            oldScene?.remove(this.shadow);
+            this.shadow = undefined;
+        }
+
+        if (this.dashTracer) {
+            const oldScene = this.dashTracer.scene;
+
+            if (!this.dashTracer.isKilled()) {
+                this.dashTracer.kill();
+            }
+
+            oldScene?.remove(this.dashTracer);
+            this.dashTracer = undefined;
         }
     }
 }

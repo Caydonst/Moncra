@@ -1,14 +1,32 @@
 import * as ex from "excalibur";
 import { GameResources } from "../resources";
 import { Shadow } from "../utils/shadow";
-import { SwingTracer, ThrustTracer, type Attack } from "../weapons/sword";
+import {
+  SwingTracer,
+  ThrustTracer,
+  HeavySlashProjectile,
+  type Attack,
+} from "../weapons/sword";
 import { EnchantedGlowEffect } from "../utils/swordOutline";
 
 type RemotePlayerLike = ex.Actor & {
   bobOffsetY?: number;
 };
 
+export type RemoteAttackData = {
+  attackType?: "normal" | "heavy";
+  comboIndex?: number;
+  attack?: Attack;
+  aimAngle?: number;
+
+  attackId?: number;
+  clientAttackId?: number;
+  serverAttackId?: number;
+};
+
 export class RemoteSword extends ex.Actor {
+  private engine!: ex.Engine;
+
   private shadow!: Shadow;
   private swingTracer!: SwingTracer;
   private thrustTracer!: ThrustTracer;
@@ -81,6 +99,18 @@ export class RemoteSword extends ex.Actor {
     },
   ];
 
+  private heavyAttacking = false;
+  private heavyAttackProgress = 0;
+  private heavyAttackAimAngle = 0;
+  private heavySlashSpawned = false;
+
+  private readonly HEAVY_ATTACK_DURATION = 650;
+  private readonly HEAVY_ATTACK_RELEASE_TIME = 360;
+  private readonly HEAVY_SLASH_DISTANCE = 420;
+  private readonly HEAVY_SLASH_SPEED = 900;
+
+  private pendingAttack: RemoteAttackData | null = null;
+
   private cleanedUp = false;
 
   constructor(
@@ -100,66 +130,153 @@ export class RemoteSword extends ex.Actor {
   }
 
   onInitialize(engine: ex.Engine) {
+    this.engine = engine;
+
     const sprite = this.image.toSprite();
     sprite.width = this.width;
     sprite.height = this.height;
 
     this.graphics.use(sprite);
 
-    const effect = new EnchantedGlowEffect(engine);
-    this.graphics.material = effect.material;
+    //const effect = new EnchantedGlowEffect(engine);
+
+    //this.graphics.material = effect.material;
 
     this.shadow = new Shadow(this);
     engine.currentScene.add(this.shadow);
 
-    this.swingTracer = new SwingTracer();
-    engine.currentScene.add(this.swingTracer);
+    this.swingTracer =
+      new SwingTracer();
 
-    this.thrustTracer = new ThrustTracer();
-    engine.currentScene.add(this.thrustTracer);
+    engine.currentScene.add(
+      this.swingTracer
+    );
+
+    this.thrustTracer =
+      new ThrustTracer();
+
+    engine.currentScene.add(
+      this.thrustTracer
+    );
   }
 
-  setAimAngle(aimAngle: number) {
+  private hasReceivedAim = false;
+
+  setAimAngle(aimAngle: number): void {
+    if (!Number.isFinite(aimAngle)) {
+      return;
+    }
+
     this.aimAngle = aimAngle;
+
+    if (!this.hasReceivedAim) {
+      this.smoothedAimAngle =
+        aimAngle;
+
+      this.hasReceivedAim = true;
+    }
   }
 
-  playAttack(data?: {
-    comboIndex?: number;
-    attack?: Attack;
-    aimAngle?: number;
-  }) {
-    if (this.swinging || this.thrusting) return;
+  public playAttack(
+    data: RemoteAttackData
+  ): void {
+    this.aimAngle =
+      data.aimAngle ?? this.aimAngle;
 
-    const now = performance.now();
+    /*
+     * Heavy attacks take priority and can replace
+     * the current normal attack.
+     */
+    if (data.attackType === "heavy") {
+      this.pendingAttack = null;
 
-    if (data?.aimAngle !== undefined) {
-      this.aimAngle = data.aimAngle;
+      this.swinging = false;
+      this.thrusting = false;
+      this.swingProgress = 0;
+
+      this.startHeavyAttack(
+        data.aimAngle ?? this.aimAngle
+      );
+
+      return;
     }
 
-    if (now - this.lastAttackTime > this.comboThreshold) {
-      this.comboIndex = 0;
+    /*
+     * Do not discard a combo message.
+     * Save it until the current animation finishes.
+     */
+    if (
+      this.swinging ||
+      this.thrusting ||
+      this.heavyAttacking
+    ) {
+      this.pendingAttack = data;
+      return;
     }
+
+    this.startRemoteNormalAttack(data);
+  }
+
+  private startRemoteNormalAttack(
+    data: RemoteAttackData
+  ): void {
+    const receivedComboIndex =
+      data.comboIndex;
+
+    const comboIndex =
+      typeof receivedComboIndex === "number" &&
+        receivedComboIndex >= 0 &&
+        receivedComboIndex < this.combo.length
+        ? receivedComboIndex
+        : this.comboIndex;
 
     const attack =
-      data?.attack ??
-      this.combo[
-      Number.isFinite(data?.comboIndex)
-        ? data!.comboIndex!
-        : this.comboIndex
-      ];
+      data.attack ??
+      this.combo[comboIndex];
 
-    if (!attack) return;
+    if (!attack) {
+      console.warn(
+        "Remote attack missing attack data:",
+        data
+      );
 
-    this.currentAttack = attack;
-    this.lastAttackTime = now;
-
-    if (attack.type === "slash") {
-      this.startSlash(attack, this.aimAngle);
-    } else {
-      this.startThrust(attack, this.aimAngle);
+      return;
     }
 
-    this.comboIndex = (this.comboIndex + 1) % this.combo.length;
+    this.currentAttack = attack;
+    this.lastAttackTime =
+      performance.now();
+
+    if (attack.type === "slash") {
+      this.startSlash(
+        attack,
+        data.aimAngle ?? this.aimAngle
+      );
+    } else {
+      this.startThrust(
+        attack,
+        data.aimAngle ?? this.aimAngle
+      );
+    }
+
+    this.comboIndex =
+      (comboIndex + 1) %
+      this.combo.length;
+  }
+
+  private playPendingAttack(): void {
+    if (!this.pendingAttack) {
+      return;
+    }
+
+    const nextAttack =
+      this.pendingAttack;
+
+    this.pendingAttack = null;
+
+    this.startRemoteNormalAttack(
+      nextAttack
+    );
   }
 
   private startSlash(attack: Attack, aimAngle: number) {
@@ -229,17 +346,87 @@ export class RemoteSword extends ex.Actor {
     this.thrustTracer.startTrace(tipStart, tipEnd, aimAngle);
   }
 
-  onPostUpdate(engine: ex.Engine, delta: number) {
-    this.swingTracer?.updateTracer(engine, delta);
-    this.thrustTracer?.updateTracer(engine, delta);
+  private startHeavyAttack(
+    aimAngle: number
+  ): void {
+    this.swinging = false;
+    this.thrusting = false;
+    this.swingProgress = 0;
 
-    const t = Math.min(1, delta / 50);
+    this.heavyAttacking = true;
+    this.heavyAttackProgress = 0;
+    this.heavyAttackAimAngle =
+      aimAngle;
+    this.heavySlashSpawned = false;
 
-    this.smoothedAimAngle = this.lerpAngle(
-      this.smoothedAimAngle,
-      this.aimAngle,
-      t
+    this.swingStartOffset =
+      Math.PI * 0.9;
+
+    this.swingEndOffset =
+      -Math.PI * 0.9;
+
+    this.graphics.flipHorizontal =
+      false;
+
+    this.orbitAngle =
+      aimAngle +
+      this.swingStartOffset;
+
+    this.swingTracer.start(
+      this.player,
+      this.swingStartOffset,
+      this.swingEndOffset,
+      this.HEAVY_ATTACK_DURATION,
+      this.offset.x,
+      () =>
+        this.player.pos
+          .clone()
+          .add(
+            ex.vec(
+              0,
+              this.player.bobOffsetY ?? 0
+            )
+          )
+          .add(ex.vec(0, 5)),
+      () => this.aimAngle
     );
+  }
+
+  onPostUpdate(
+    engine: ex.Engine,
+    delta: number
+  ): void {
+    this.swingTracer?.updateTracer(
+      engine,
+      delta
+    );
+
+    this.thrustTracer?.updateTracer(
+      engine,
+      delta
+    );
+
+    // Keep the remote sword's idle aim synced.
+    const aimLerpSpeed = 15;
+
+    const aimT =
+      1 -
+      Math.exp(
+        -aimLerpSpeed *
+        (delta / 1000)
+      );
+
+    this.smoothedAimAngle =
+      this.lerpAngle(
+        this.smoothedAimAngle,
+        this.aimAngle,
+        aimT
+      );
+
+    if (this.heavyAttacking) {
+      this.updateHeavyAttack(delta);
+      return;
+    }
 
     if (this.thrusting) {
       this.updateThrust(delta);
@@ -283,7 +470,19 @@ export class RemoteSword extends ex.Actor {
 
     if (t >= 1) {
       this.swinging = false;
-      this.orbitAngle = dynamicEndAngle;
+      this.swingProgress = 0;
+
+      this.idleOrbitAngleOffset =
+        this.swingEndOffset;
+
+      this.smoothedAimAngle =
+        this.aimAngle;
+
+      this.orbitAngle =
+        this.aimAngle +
+        this.idleOrbitAngleOffset;
+
+      this.playPendingAttack();
     }
   }
 
@@ -362,7 +561,156 @@ export class RemoteSword extends ex.Actor {
     if (this.swingProgress >= total) {
       this.thrusting = false;
       this.swingProgress = 0;
+
+      this.playPendingAttack();
     }
+  }
+
+  private updateHeavyAttack(
+    delta: number
+  ): void {
+    this.heavyAttackProgress += delta;
+
+    const t = Math.min(
+      this.heavyAttackProgress /
+      this.HEAVY_ATTACK_DURATION,
+      1
+    );
+
+    const eased =
+      this.heavySwingEase(t);
+
+    /*
+     * Follow the latest networked aim angle throughout
+     * the heavy swing, like the local sword follows
+     * the mouse angle.
+     */
+    if (Number.isFinite(this.aimAngle)) {
+      this.heavyAttackAimAngle =
+        this.aimAngle;
+    }
+
+    const dynamicStartAngle =
+      this.heavyAttackAimAngle +
+      this.swingStartOffset;
+
+    const dynamicEndAngle =
+      this.heavyAttackAimAngle +
+      this.swingEndOffset;
+
+    this.orbitAngle =
+      dynamicStartAngle +
+      (
+        dynamicEndAngle -
+        dynamicStartAngle
+      ) *
+      eased;
+
+    const rotatedOffset =
+      this.offset
+        .clone()
+        .rotate(this.orbitAngle)
+        .add(ex.vec(0, 5));
+
+    this.pos =
+      this.player.pos
+        .clone()
+        .add(rotatedOffset)
+        .add(
+          ex.vec(
+            0,
+            this.player.bobOffsetY ?? 0
+          )
+        );
+
+    this.rotation =
+      this.orbitAngle +
+      this.ROT_OFFSET;
+
+    this.updateShadow();
+
+    /*
+     * Spawn at the current networked aim angle when
+     * the release point is reached.
+     */
+    if (
+      !this.heavySlashSpawned &&
+      this.heavyAttackProgress >=
+      this.HEAVY_ATTACK_RELEASE_TIME
+    ) {
+      this.heavySlashSpawned = true;
+
+      this.spawnHeavySlash();
+    }
+
+    if (t >= 1) {
+      this.heavyAttacking = false;
+      this.heavyAttackProgress = 0;
+
+      this.idleOrbitAngleOffset =
+        this.swingEndOffset;
+
+      this.smoothedAimAngle =
+        this.heavyAttackAimAngle;
+
+      this.orbitAngle =
+        dynamicEndAngle;
+
+      this.playPendingAttack();
+    }
+  }
+
+  private spawnHeavySlash(): void {
+    const direction =
+      ex.Vector.fromAngle(
+        this.heavyAttackAimAngle
+      );
+
+    const spawnPos =
+      this.player.pos
+        .clone()
+        .add(direction.scale(85))
+        .add(
+          ex.vec(
+            0,
+            this.player.bobOffsetY ?? 0
+          )
+        );
+
+    const slash =
+      new HeavySlashProjectile({
+        pos: spawnPos,
+
+        angle:
+          this.heavyAttackAimAngle,
+
+        speed:
+          this.HEAVY_SLASH_SPEED,
+
+        maxDistance:
+          this.HEAVY_SLASH_DISTANCE,
+
+        // Remote projectile is visual-only.
+        onEnemyHit: () => { },
+      });
+
+    this.engine.currentScene.add(
+      slash
+    );
+
+    console.log(
+      "Remote heavy projectile added:",
+      {
+        scene:
+          this.engine.currentScene,
+
+        position:
+          slash.pos.toString(),
+
+        angle:
+          this.heavyAttackAimAngle,
+      }
+    );
   }
 
   private heavySwingEase(t: number) {

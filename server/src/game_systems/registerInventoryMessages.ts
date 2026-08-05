@@ -7,11 +7,12 @@ import { hydrateItem } from "./inventory/hydrateItem.js";
 import {
     applyInventoryStatsToPlayer,
     equipItemInInventory,
-    getInventoryForSession,
+    getInventoryForUser,
     unequipItemInInventory,
 } from "./inventory/testInventoryStore.js";
 
 import { upgradeItem } from "./items/itemUpgrading.js";
+import { dismantleItem } from "./items/itemDismantling.js";
 
 type InventoryRoom = Room<{ state: GameState }> & {
     getUserId(client: Client): string;
@@ -47,7 +48,7 @@ export function registerInventoryMessages(
             if (!player) return;
 
             const userId = room.getUserId(client);
-            const inventory = getInventoryForSession(
+            const inventory = getInventoryForUser(
                 userId,
                 player
             );
@@ -96,7 +97,7 @@ export function registerInventoryMessages(
             if (!player) return;
 
             const userId = room.getUserId(client);
-            const inventory = getInventoryForSession(
+            const inventory = getInventoryForUser(
                 userId,
                 player
             );
@@ -125,7 +126,7 @@ export function registerInventoryMessages(
             if (!player) return;
 
             const userId = room.getUserId(client);
-            const inventory = getInventoryForSession(
+            const inventory = getInventoryForUser(
                 userId,
                 player
             );
@@ -176,7 +177,7 @@ export function registerInventoryMessages(
             if (!player) return;
 
             const userId = room.getUserId(client);
-            const inventory = getInventoryForSession(
+            const inventory = getInventoryForUser(
                 userId,
                 player
             );
@@ -208,6 +209,88 @@ export function registerInventoryMessages(
             client.send("inventory_updated", {
                 inventory: hydrateInventory(inventory),
             });
+        }
+    );
+
+    room.onMessage(
+        "dismantle_item",
+        (
+            client: Client,
+            message: {
+                uid: string;
+            }
+        ) => {
+            const player =
+                room.state.players.get(
+                    client.sessionId
+                );
+
+            if (!player) return;
+
+            const userId =
+                room.getUserId(client);
+
+            const inventory =
+                getInventoryForUser(
+                    userId,
+                    player
+                );
+
+            console.log(
+                "DISMANTLE REQUEST:",
+                {
+                    sessionId:
+                        client.sessionId,
+
+                    userId,
+
+                    requestedUid:
+                        message.uid,
+
+                    weaponUids:
+                        inventory.miscWeapons.map(
+                            item => item?.uid
+                        ),
+
+                    armorUids:
+                        inventory.miscArmor.map(
+                            item => item?.uid
+                        ),
+                }
+            );
+
+            const result =
+                dismantleItem(
+                    inventory,
+                    message.uid
+                );
+
+            if (!result.ok) {
+                client.send(
+                    "inventory_error",
+                    {
+                        error:
+                            result.error,
+                    }
+                );
+
+                return;
+            }
+
+            applyInventoryStatsToPlayer(
+                player,
+                inventory
+            );
+
+            client.send(
+                "inventory_updated",
+                {
+                    inventory:
+                        hydrateInventory(
+                            inventory
+                        ),
+                }
+            );
         }
     );
 }

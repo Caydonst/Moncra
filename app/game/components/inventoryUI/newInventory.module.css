@@ -622,7 +622,6 @@
     outline: 3px solid transparent;
     outline-offset: 1px;
     background: #080808;
-    
 }
 .extraSlot > * {
     opacity: 0;
@@ -644,6 +643,130 @@
 .extraSlot:hover {
     outline-color: rgba(255, 255, 255, 0.7);
     border-color: #fff !important;
+}
+
+.dismantlePrompt {
+    position: absolute;
+    left: 50%;
+    bottom: 5px;
+    z-index: 20;
+
+    transform: translateX(-50%);
+
+    padding: 2px 5px;
+
+    color: white;
+    background: rgba(0, 0, 0, 0.8);
+
+    font-size: 9px;
+    font-weight: 700;
+    white-space: nowrap;
+
+    pointer-events: none;
+}
+
+.dismantleOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(0, 0, 0, 0.35);
+
+    pointer-events: none;
+}
+
+.dismantleProgress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    height: 0;
+
+    background: rgba(255, 0, 0, 0.45);
+
+    transition: height 30ms linear;
+}
+
+.dismantlePercent {
+    position: relative;
+    z-index: 1;
+
+    color: white;
+    font-size: 12px;
+    font-weight: 800;
+
+    text-shadow:
+        0 1px 2px black,
+        0 0 4px black;
+}
+
+.dismantling {
+    cursor: progress;
+}
+.dismantleWhiteOverlay {
+    position: absolute;
+
+    /*
+     * Extend across the slot's 3px border.
+     */
+    inset: -3px;
+
+    z-index: 100;
+
+    background: #fff;
+    opacity: 0;
+
+    pointer-events: none;
+
+    animation:
+        dismantleWhiteFlash 400ms ease-in forwards;
+}
+
+.dismantleFinishing {
+    animation:
+        dismantleFinishing 400ms ease-in forwards;
+
+    pointer-events: none;
+}
+
+@keyframes dismantleWhiteFlash {
+    0% {
+        opacity: 0;
+    }
+
+    35% {
+        opacity: 0.7;
+    }
+
+    70% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes dismantleFinishing {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    45% {
+        opacity: 1;
+        transform: scale(0.9);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(0.55);
+    }
 }
 .noneText {
     text-shadow: 0 4px #000;
@@ -1062,6 +1185,30 @@
     justify-content: start;
     align-items: center;
     gap: 10px;
+}
+.tooltipDismantleContainer {
+    width: 100%;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    font-size: 12px;
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.tooltipDismantleContainer p {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+.tooltipDismantleContainer span {
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: 3px solid rgba(255, 255, 255, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 /* ------------------------------- ITEM PANEL ---------------------------------- */
 .itemInfoPanel {

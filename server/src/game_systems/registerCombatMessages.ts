@@ -6,14 +6,265 @@ import {
 } from "./great_sword/GreatSword.js";
 import { addEnemyContributor, getEnemyContributors } from "./combat/enemyContributors.js";
 
-type CombatRoom = Room<{ state: GameState }> & {
-    awardEnemyExperience(
-        enemyId: string,
-        enemy: EnemyState
-    ): void;
-};
+type PlayerCombatRoom =
+    Room<{ state: GameState }>;
 
-export function registerCombatMessages(room: CombatRoom) {
+export function registerPlayerCombatMessages(
+    room: PlayerCombatRoom
+) {
+    room.onMessage(
+        "equip_weapon",
+        (client, data) => {
+            const player =
+                room.state.players.get(
+                    client.sessionId
+                );
+
+            if (!player) return;
+
+            player.weapon.id =
+                String(data.weaponId);
+        }
+    );
+
+    room.onMessage(
+        "weapon_attack",
+        (
+            client: Client,
+            data: {
+                attackId: number;
+                weaponId: string;
+                aimAngle: number;
+                attackType:
+                | "normal"
+                | "heavy";
+            }
+        ) => {
+            const player =
+                room.state.players.get(
+                    client.sessionId
+                );
+
+            if (!player) {
+                return;
+            }
+
+            const weaponId =
+                String(data.weaponId);
+
+            const aimAngle =
+                Number(data.aimAngle);
+
+            const rawAttackType =
+                String(data.attackType);
+
+            if (
+                rawAttackType !== "normal" &&
+                rawAttackType !== "heavy"
+            ) {
+                client.send(
+                    "combat_error",
+                    {
+                        error:
+                            "Invalid attack type.",
+                    }
+                );
+
+                return;
+            }
+
+            const attackType:
+                | "normal"
+                | "heavy" =
+                rawAttackType;
+
+            if (
+                !Number.isFinite(
+                    aimAngle
+                )
+            ) {
+                return;
+            }
+
+            if (
+                weaponId !==
+                player.weapon.id
+            ) {
+                console.warn(
+                    "Party attack weapon mismatch:",
+                    {
+                        received:
+                            weaponId,
+                        equipped:
+                            player.weapon.id,
+                    }
+                );
+
+                return;
+            }
+
+            const clientAttackId =
+                Number(data.attackId);
+
+            if (
+                !Number.isInteger(
+                    clientAttackId
+                )
+            ) {
+                return;
+            }
+
+            /*
+             * Use the same authoritative combo logic
+             * as DungeonRoom.
+             *
+             * handleGreatSwordAttack() is responsible
+             * for advancing or resetting the combo based
+             * on the time between attacks.
+             */
+            const result =
+                handleGreatSwordAttack(
+                    {
+                        x:
+                            player.x,
+
+                        y:
+                            player.y,
+
+                        weaponId:
+                            player.weapon.id,
+
+                        greatSword:
+                            player.greatSword,
+                    },
+                    {
+                        weaponId,
+                        aimAngle,
+                        attackType,
+                        clientAttackId,
+                    }
+                );
+
+            if (!result) {
+                return;
+            }
+
+            const serverAttackId =
+                result.serverAttackId;
+
+            player.isAttacking =
+                true;
+
+            player.attackId =
+                serverAttackId;
+
+            player.attackAimAngle =
+                aimAngle;
+
+            player.attackType =
+                result.inputAttackType;
+
+            player.comboAttackType =
+                result.attack.type;
+
+            player.attackDuration =
+                result.attack.duration;
+
+            player.attackDamage =
+                (
+                    player.weapon.damage ||
+                    10
+                ) *
+                result.attack
+                    .damageMultiplier;
+
+            room.clock.setTimeout(
+                () => {
+                    /*
+                     * Do not stop a newer attack when an
+                     * earlier attack's timer finishes.
+                     */
+                    if (
+                        player.attackId ===
+                        serverAttackId
+                    ) {
+                        player.isAttacking =
+                            false;
+                    }
+                },
+                result.attack.duration
+            );
+
+            room.broadcast(
+                "weapon_attack",
+                {
+                    sessionId:
+                        client.sessionId,
+
+                    weaponId,
+
+                    aimAngle,
+
+                    clientAttackId:
+                        result.clientAttackId,
+
+                    serverAttackId:
+                        result.serverAttackId,
+
+                    attackType:
+                        result.inputAttackType,
+
+                    comboAttackType:
+                        result.attack.type,
+
+                    comboIndex:
+                        result.comboIndex,
+
+                    attack:
+                        result.attack,
+                }
+            );
+        }
+    );
+
+    room.onMessage(
+        "weapon_attack_start",
+        (client, data) => {
+            room.broadcast(
+                "weapon_attack_start",
+                {
+                    sessionId:
+                        client.sessionId,
+                    ...data,
+                }
+            );
+        }
+    );
+
+    room.onMessage(
+        "weapon_attack_release",
+        (client, data) => {
+            room.broadcast(
+                "weapon_attack_release",
+                {
+                    sessionId:
+                        client.sessionId,
+                    ...data,
+                }
+            );
+        }
+    );
+}
+
+type DungeonCombatRoom =
+    Room<{ state: GameState }> & {
+        awardEnemyExperience(
+            enemyId: string,
+            enemy: EnemyState
+        ): void;
+    };
+
+export function registerDungeonCombatMessages(room: DungeonCombatRoom) {
     room.onMessage("equip_weapon", (client, data) => {
         const player = room.state.players.get(client.sessionId);
         if (!player) return;

@@ -102,14 +102,18 @@ export class HubScene extends ex.Scene {
             this.resources.tiledMap.addToScene(this);
 
             for (const layer of this.resources.tiledMap.layers) {
-                if (layer.name === "floorBottom") {
-                    layer.tilemap.z = 5;
-                }
-                if (layer.name === "wallsTop") {
-                    layer.tilemap.z = 1;
-                }
-                if (layer.name === "wallsBottom") {
-                    layer.tilemap.z = 5;
+                switch (layer.name) {
+                    case "floorBottom":
+                        layer.tilemap.z = 0;
+                        break;
+
+                    case "wallsBottom":
+                        layer.tilemap.z = 1;
+                        break;
+
+                    case "wallsTop":
+                        layer.tilemap.z = 20;
+                        break;
                 }
             }
 
@@ -239,11 +243,17 @@ export class HubScene extends ex.Scene {
     }
 
     async onActivate(): Promise<void> {
-        this.restorePlayerToHub();
+        console.log("HUB onActivate fired");
 
-        this.attachEquippedWeaponToScene(
-            this
-        );
+        const player = this.gameState.player;
+
+        if (!player) {
+            throw new Error(
+                "Cannot enter HubScene without a player."
+            );
+        }
+
+        this.player = player;
 
         this.storageChest
             ?.setInteractionEnabled(true);
@@ -251,12 +261,36 @@ export class HubScene extends ex.Scene {
         this.portal
             ?.setInteractionEnabled(true);
 
-        await multiplayer.joinHub({
-            engine: this.engine,
-            resources: this.resources,
-            localPlayer: this.player,
-            scene: this,
-        });
+        try {
+            await multiplayer.joinHub({
+                engine: this.engine,
+                resources: this.resources,
+                localPlayer: this.player,
+                scene: this,
+            });
+        } catch (error) {
+            console.error("joinHub failed:", error);
+        }
+
+        this.restorePlayerToHub();
+
+        const weapon =
+            this.gameState.inventory.weapon?.instance;
+
+        console.log("Hub weapon during activate:", weapon);
+
+        if (!weapon) {
+            console.warn(
+                "No weapon instance found during HubScene.onActivate"
+            );
+            return;
+        }
+
+        await this.gameState.inventory
+            .attachEquippedWeaponToScene(
+                this.engine,
+                this
+            );
     }
 
     onDeactivate(): void {
@@ -268,45 +302,10 @@ export class HubScene extends ex.Scene {
 
         this.player?.detachFromScene(this);
 
-        const weapon =
-            this.gameState.inventory.weapon?.instance;
-
-        if (weapon) {
-            weapon.detachFromScene(this);
-        }
-    }
-
-    private syncEquippedWeapon(): void {
-        const weaponInstance =
-            this.gameState.inventory
-                .weapon?.instance;
-
-        if (!weaponInstance) {
-            return;
-        }
-
-        weaponInstance.attachToScene(this);
-    }
-
-    private attachEquippedWeaponToScene(
-        scene: ex.Scene
-    ): void {
-        const weapon =
-            this.gameState.inventory.weapon?.instance;
-
-        if (!weapon) {
-            console.warn("No equipped weapon instance found.");
-            return;
-        }
-
-        weapon.attachToScene(scene);
-
-        console.log("Weapon attached:", {
-            weaponScene: weapon.scene,
-            targetScene: scene,
-            attached: weapon.scene === scene,
-            killed: weapon.isKilled(),
-        });
+        this.gameState.inventory
+            .detachEquippedWeaponFromScene(
+                this
+            );
     }
 
     private restorePlayerToHub(): void {

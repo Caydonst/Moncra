@@ -12,9 +12,10 @@ type Props = {
     hoveredItem: Weapon | Armor | null;
     tooltipPos: {x: number, y: number};
     tooltipRef: any;
+    hoveredItemEquipped: boolean;
 }
 
-export default function ItemToolTip({ tooltipRef, hoveredItem, tooltipPos }: Props) {
+export default function ItemToolTip({ tooltipRef, hoveredItem, tooltipPos, hoveredItemEquipped }: Props) {
 
     function getRollColor(percentage: number) {
         if (percentage >= 100) return "#32FFFF";
@@ -98,6 +99,11 @@ export default function ItemToolTip({ tooltipRef, hoveredItem, tooltipPos }: Pro
                     
                 ))}
             </div>
+            {!hoveredItemEquipped && (
+                <div className={styles.tooltipDismantleContainer}>
+                    <p>Hold <span>F</span> to dismantle</p>
+                </div>
+            )}
         </div>
     )
 }

@@ -145,8 +145,6 @@ export class DungeonScene extends ex.Scene {
     this.player = player;
     this.player.attachToScene(this);
 
-    this.attachEquippedWeaponToScene(this);
-
     const pendingDungeon =
       getPendingDungeon();
 
@@ -154,18 +152,37 @@ export class DungeonScene extends ex.Scene {
       engine: this.engine,
       resources: this.resources,
       scene: this,
-      difficulty: pendingDungeon?.difficulty,
+      difficulty:
+        pendingDungeon?.difficulty,
       localPlayer: this.player,
     });
+
+    // Add the existing equipped weapon and its existing helpers.
+    await this.gameState.inventory
+      .attachEquippedWeaponToScene(
+        this.engine,
+        this
+      );
   }
 
   onDeactivate(): void {
     this.isTransitioning = false;
 
-    if (this.currentFloor?.portal) {
-      this.currentFloor.portal
-        .setInteractionEnabled(false);
-    }
+    this.currentFloor?.portal
+      ?.setInteractionEnabled(false);
+
+    this.player?.detachFromScene(this);
+
+    this.gameState.inventory
+      .detachEquippedWeaponFromScene(
+        this
+      );
+
+    /*
+     * Remove the old room's rendered map.
+     */
+    this.currentFloor?.kill();
+    this.currentFloor = null;
   }
 
   onPostUpdate(engine: ex.Engine, delta: number) {
@@ -209,8 +226,6 @@ export class DungeonScene extends ex.Scene {
       if (targetFloor === "hub") {
         this.isTransitioning = true;
 
-        this.detachPersistentActors();
-
         returnToHub();
         return;
       }
@@ -219,18 +234,6 @@ export class DungeonScene extends ex.Scene {
 
       this.currentFloorIndex = targetFloor;
       this.loadFloor();
-    }
-  }
-
-  private detachPersistentActors(): void {
-    this.player.vel = ex.vec(0, 0);
-    this.player.detachFromScene(this);
-
-    const weapon =
-      this.gameState.inventory.weapon?.instance;
-
-    if (weapon) {
-      weapon.detachFromScene(this);
     }
   }
 
@@ -278,47 +281,6 @@ export class DungeonScene extends ex.Scene {
     this.currentFloorIndex = 1;
 
     this.loadFloor();
-  }
-
-  private syncEquippedWeapon(): void {
-    const weapon =
-      this.gameState.inventory.weapon?.instance;
-
-    if (!weapon) {
-      return;
-    }
-
-    if (weapon.isKilled()) {
-      console.error(
-        "Equipped weapon was killed and cannot be transferred.",
-        weapon
-      );
-
-      return;
-    }
-
-    weapon.attachToScene(this);
-  }
-
-  private attachEquippedWeaponToScene(
-    scene: ex.Scene
-  ): void {
-    const weapon =
-      this.gameState.inventory.weapon?.instance;
-
-    if (!weapon) {
-      console.warn("No equipped weapon instance found.");
-      return;
-    }
-
-    weapon.attachToScene(scene);
-
-    console.log("Weapon attached:", {
-      weaponScene: weapon.scene,
-      targetScene: scene,
-      attached: weapon.scene === scene,
-      killed: weapon.isKilled(),
-    });
   }
 }
 

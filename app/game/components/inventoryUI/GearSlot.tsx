@@ -13,6 +13,7 @@ type Props = {
     selectedSlot: any;
     openItemPanel: any;
     setSelectedSlot: any;
+    setHoveredItemEquipped: React.Dispatch<React.SetStateAction<boolean>>
     setSelectedItem: React.Dispatch<
         React.SetStateAction<any>
     >;
@@ -38,6 +39,7 @@ export function GearSlot({
     item,
     selectedSlot,
     setSelectedSlot,
+    setHoveredItemEquipped,
     setSelectedItem,
     setItemInfoOpen,
     showItemTooltip,
@@ -203,6 +205,8 @@ export function GearSlot({
                     displayedItem,
                     e
                 );
+
+                setHoveredItemEquipped(true);
             }}
             onMouseMove={moveItemTooltip}
             onMouseLeave={hideItemTooltip}

@@ -74,6 +74,7 @@ export class PlayerState extends Schema {
 
   // Connection
   @type("boolean") connected: boolean = true;
+  @type("string") uid = "";
 
   // Sentinel
   @type("number") resolve: number = 100;

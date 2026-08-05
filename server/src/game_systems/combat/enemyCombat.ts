@@ -11,8 +11,8 @@ import {
     type Hitbox,
 } from "./collisions.js";
 
-const PLAYER_WIDTH = 30;
-const PLAYER_HEIGHT = 42;
+const PLAYER_WIDTH = 26.4;
+const PLAYER_HEIGHT = 37.4;
 
 const DEMON_WIDTH = 35;
 const DEMON_HEIGHT = 52.5;

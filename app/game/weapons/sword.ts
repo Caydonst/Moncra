@@ -69,7 +69,7 @@ export class GreatSword extends ex.Actor {
     protected swingStartAngle = 0;
     protected swingEndAngle = 0;
 
-    protected swingTracer: SwingTracer;
+    protected swingTracer?: SwingTracer;
 
     // Orbit around player
     private orbitAngle = 0;
@@ -77,13 +77,13 @@ export class GreatSword extends ex.Actor {
 
     private readonly ROT_OFFSET = Math.PI / 2; // tweak based on sprite art
 
-    private shadow: Shadow;
+    private shadow?: Shadow;
 
     private thrustDirection = ex.vec(0, 0);
     private thrustDistance!: number; // shorter thrust
     private thrustPauseTime = 150; // ms pause at peak
     protected thrusting = false;
-    protected thrustTracer!: ThrustTracer;
+    protected thrustTracer?: ThrustTracer;
 
     // Heavy attack state (right click)
     protected heavyAttacking = false;
@@ -208,10 +208,8 @@ export class GreatSword extends ex.Actor {
         this.offset = ex.vec(46, 0);
     }
 
-    onInitialize(engine: ex.Engine): void {
+    public onInitialize(engine: ex.Engine): void {
         this.engine = engine;
-
-        multiplayer.setLocalWeapon(this);
 
         const sprite = this.image.toSprite();
 
@@ -220,19 +218,8 @@ export class GreatSword extends ex.Actor {
 
         this.graphics.use(sprite);
 
-        if (!this.shadow || this.shadow.isKilled()) {
-            this.shadow = new Shadow(this);
-        }
-
-        if (!this.swingTracer || this.swingTracer.isKilled()) {
-            this.swingTracer = new SwingTracer();
-        }
-
-        if (!this.thrustTracer || this.thrustTracer.isKilled()) {
-            this.thrustTracer = new ThrustTracer();
-        }
-
-        this.addListeners();
+        //const effect = new EnchantedGlowEffect(engine);
+        //this.graphics.material = effect.material;
     }
 
     private lastSwingEndPos: ex.Vector | null = null;
@@ -311,17 +298,6 @@ export class GreatSword extends ex.Actor {
 
                 this.swinging = false;
                 this.orbitAngle = dynamicEndAngle;
-
-                console.log("SWING END", {
-                    pos: {
-                        x: this.pos.x,
-                        y: this.pos.y,
-                    },
-                    orbitAngle: this.orbitAngle,
-                    mouseAngle: currentMouseAngle,
-                    idleOrbitAngleOffset: this.idleOrbitAngleOffset,
-                    swingEndOffset: this.swingEndOffset,
-                });
             }
 
             return;
@@ -359,27 +335,6 @@ export class GreatSword extends ex.Actor {
 
         if (this.debugNextIdleFrame && this.lastSwingEndPos) {
             const diff = this.pos.sub(this.lastSwingEndPos);
-
-            console.log("FIRST IDLE FRAME AFTER SWING", {
-                pos: {
-                    x: this.pos.x,
-                    y: this.pos.y,
-                },
-                lastSwingEndPos: {
-                    x: this.lastSwingEndPos.x,
-                    y: this.lastSwingEndPos.y,
-                },
-                diff: {
-                    x: diff.x,
-                    y: diff.y,
-                    distance: diff.magnitude,
-                },
-                idleOrbitAngle: this.orbitAngle,
-                lastSwingEndAngle: this.lastSwingEndAngle,
-                angleDiff: this.orbitAngle - this.lastSwingEndAngle,
-                mouseAngle,
-                idleOrbitAngleOffset: this.idleOrbitAngleOffset,
-            });
 
             this.debugNextIdleFrame = false;
         }
@@ -435,13 +390,10 @@ export class GreatSword extends ex.Actor {
     }
 
     onCollisionStart(_self: ex.Collider, other: ex.Collider) {
-        console.log("Sword collided with:", other.owner?.name);
 
         const enemy = other.owner;
 
         if (!(enemy instanceof Demon)) return;
-
-        console.log("Sword hit enemy:", enemy.enemyId);
 
         this.onSwordHitEnemy(enemy.enemyId);
     }
@@ -563,10 +515,6 @@ export class GreatSword extends ex.Actor {
          * Ignore acknowledgements for an older local attack.
          */
         if (data.clientAttackId !== this.currentAttackId) {
-            console.log("Ignoring stale attack confirmation", {
-                receivedClientAttackId: data.clientAttackId,
-                currentClientAttackId: this.currentAttackId,
-            });
 
             return;
         }
@@ -635,8 +583,6 @@ export class GreatSword extends ex.Actor {
             attack,
         };
 
-        console.log("PREDICTED ATTACK: ", predictedAttack)
-
         this.playPredictedAttack(predictedAttack);
 
         this.lastPredictedAttackTime = now;
@@ -644,11 +590,6 @@ export class GreatSword extends ex.Actor {
             (comboIndex + 1) % this.predictedCombo.length;
 
         this.waitingForAttack = true;
-
-        this.currentAttackId++;
-        this.currentServerAttackId = null;
-        this.hitEnemiesThisAttack.clear();
-        this.pendingHits.clear();
 
         multiplayer.sendWeaponAttack({
             attackId: this.currentAttackId,
@@ -698,7 +639,7 @@ export class GreatSword extends ex.Actor {
         this.idleOrbitAngleOffset = this.swingEndOffset;
         this.orbitAngle = this.swingStartAngle;
 
-        this.swingTracer.start(
+        this.swingTracer?.start(
             this.player,
             this.swingStartOffset,
             this.swingEndOffset,
@@ -737,7 +678,7 @@ export class GreatSword extends ex.Actor {
             this.thrustDirection.scale(this.thrustDistance + 35)
         );
 
-        this.thrustTracer.startTrace(tipStart, tipEnd, aimAngle);
+        this.thrustTracer?.startTrace(tipStart, tipEnd, aimAngle);
     }
 
     private updateThrust(delta: number) {
@@ -787,7 +728,7 @@ export class GreatSword extends ex.Actor {
             this.thrustDirection.scale(this.thrustDistance + 35)
         );
 
-        this.thrustTracer.updateTrace(
+        this.thrustTracer?.updateTrace(
             swordTipStart,
             swordTipEnd,
             thrustAngle
@@ -803,7 +744,7 @@ export class GreatSword extends ex.Actor {
         }
     }
 
-    protected startHeavyAttack() {
+    protected startHeavyAttack(): void {
         this.isHolding = false;
 
         if (this.heavyAttacking) {
@@ -819,12 +760,13 @@ export class GreatSword extends ex.Actor {
             return;
         }
 
-        const aimAngle = this.getMouseAngle();
-        if (aimAngle === null) return;
+        const aimAngle =
+            this.getMouseAngle();
 
-        /*
-         * Cancel any current normal attack.
-         */
+        if (aimAngle === null) {
+            return;
+        }
+
         this.swinging = false;
         this.thrusting = false;
         this.swingProgress = 0;
@@ -840,24 +782,57 @@ export class GreatSword extends ex.Actor {
         this.hitEnemiesThisAttack.clear();
         this.pendingHits.clear();
 
-        this.swingStartOffset = Math.PI * 0.9;
-        this.swingEndOffset = -Math.PI * 0.9;
-        this.graphics.flipHorizontal = false;
+        this.swingStartOffset =
+            Math.PI * 0.9;
 
-        this.swingTracer.start(
+        this.swingEndOffset =
+            -Math.PI * 0.9;
+
+        this.graphics.flipHorizontal =
+            false;
+
+        // Match RemoteSword's initial position.
+        this.orbitAngle =
+            this.heavyAttackAimAngle +
+            this.swingStartOffset;
+
+        this.swingTracer?.start(
             this.player,
             this.swingStartOffset,
             this.swingEndOffset,
             this.HEAVY_ATTACK_DURATION,
             this.offset.x,
-            () => this.player.pos.clone()
-                .add(ex.vec(0, this.player.bobOffsetY))
-                .add(ex.vec(0, 5)),
-            () => this.getMouseAngle(),
+            () =>
+                this.player.pos
+                    .clone()
+                    .add(
+                        ex.vec(
+                            0,
+                            this.player.bobOffsetY
+                        )
+                    )
+                    .add(ex.vec(0, 5)),
+            // Use the same stored angle that controls the sword.
+            () => this.heavyAttackAimAngle
         );
+
+        multiplayer.sendWeaponAttack({
+            attackId:
+                this.currentAttackId,
+
+            weaponId:
+                this.weaponItem.id,
+
+            aimAngle:
+                this.heavyAttackAimAngle,
+
+            attackType: "heavy",
+        });
     }
 
-    private updateHeavyAttack(delta: number) {
+    private updateHeavyAttack(
+        delta: number
+    ): void {
         this.heavyAttackProgress += delta;
 
         const t = Math.min(
@@ -866,57 +841,63 @@ export class GreatSword extends ex.Actor {
             1
         );
 
-        const eased = this.heavySwingEase(t);
+        const eased =
+            this.heavySwingEase(t);
 
         /*
-         * Continuously follow the mouse during the heavy swing,
-         * just like the normal attack.
+         * Continue following the mouse, but store the angle first.
+         * The sword, tracer, and projectile now use the same value.
          */
-        const currentMouseAngle = this.getMouseAngle();
+        const currentMouseAngle =
+            this.getMouseAngle();
 
-        if (currentMouseAngle === null) {
-            return;
+        if (currentMouseAngle !== null) {
+            this.heavyAttackAimAngle =
+                currentMouseAngle;
         }
 
-        this.heavyAttackAimAngle = currentMouseAngle;
+        const startAngle =
+            this.heavyAttackAimAngle +
+            this.swingStartOffset;
 
-        const dynamicStartAngle =
-            currentMouseAngle + this.swingStartOffset;
-
-        const dynamicEndAngle =
-            currentMouseAngle + this.swingEndOffset;
+        const endAngle =
+            this.heavyAttackAimAngle +
+            this.swingEndOffset;
 
         this.orbitAngle =
-            dynamicStartAngle +
-            (dynamicEndAngle - dynamicStartAngle) *
+            startAngle +
+            (endAngle - startAngle) *
             eased;
 
-        if (!Number.isFinite(this.orbitAngle)) {
-            this.heavyAttacking = false;
-            this.heavyAttackProgress = 0;
-            return;
-        }
+        const rotatedOffset =
+            this.offset
+                .clone()
+                .rotate(this.orbitAngle)
+                .add(ex.vec(0, 5));
 
-        const rotatedOffset = this.offset
-            .clone()
-            .rotate(this.orbitAngle)
-            .add(ex.vec(0, 5));
-
-        const bobbedOffset = rotatedOffset.add(
-            ex.vec(0, this.player.bobOffsetY)
-        );
-
-        this.pos = this.player.pos
-            .clone()
-            .add(bobbedOffset);
+        this.pos =
+            this.player.pos
+                .clone()
+                .add(rotatedOffset)
+                .add(
+                    ex.vec(
+                        0,
+                        this.player.bobOffsetY
+                    )
+                );
 
         this.rotation =
-            this.orbitAngle + this.ROT_OFFSET;
+            this.orbitAngle +
+            this.ROT_OFFSET;
 
         if (this.shadow) {
-            this.shadow.pos = this.pos.add(
-                ex.vec(0, this.height / 2.5)
-            );
+            this.shadow.pos =
+                this.pos.add(
+                    ex.vec(
+                        0,
+                        this.height / 2.5
+                    )
+                );
         }
 
         if (
@@ -926,16 +907,9 @@ export class GreatSword extends ex.Actor {
         ) {
             this.heavySlashSpawned = true;
 
-            multiplayer.sendWeaponAttack({
-                attackId: this.currentAttackId,
-                weaponId: this.weaponItem.id,
-                aimAngle: this.heavyAttackAimAngle,
-                attackType: "heavy",
-            });
-
             /*
-             * heavyAttackAimAngle now contains the current
-             * mouse angle at the moment of release.
+             * Uses heavyAttackAimAngle from this exact
+             * release frame.
              */
             this.spawnHeavySlash();
         }
@@ -943,13 +917,15 @@ export class GreatSword extends ex.Actor {
         if (t >= 1) {
             this.heavyAttacking = false;
             this.heavyAttackProgress = 0;
+
             this.idleOrbitAngleOffset =
                 this.swingEndOffset;
 
             /*
-             * End at the current mouse-relative end offset.
+             * Do not separately recalculate or overwrite orbitAngle.
+             * At t === 1, the calculation above already placed it at
+             * endAngle, matching RemoteSword.
              */
-            this.orbitAngle = dynamicEndAngle;
         }
     }
 
@@ -1007,133 +983,66 @@ export class GreatSword extends ex.Actor {
         this.listenersAttached = false;
     }
 
-    cleanup() {
-        multiplayer.setLocalWeapon(null);
+    public cleanup(): void {
+        this.removeListeners();
 
-        const pointer = this.engine.input.pointers.primary;
+        const scene = this.scene;
 
-        pointer.off("down", this.pointerDownHandler);
-        pointer.off("up", this.pointerUpHandler);
+        if (scene) {
+            this.detachFromScene(scene);
+        }
 
-        this.isHolding = false;
-        this.heavyAttacking = false;
-        this.shadow.kill();
-        this.swingTracer.kill();
-        this.thrustTracer.kill();
+        this.shadow?.kill();
+        this.swingTracer?.kill();
+        this.thrustTracer?.kill();
+
+        this.shadow = undefined;
+        this.swingTracer = undefined;
+        this.thrustTracer = undefined;
+
+        if (!this.isKilled()) {
+            this.kill();
+        }
     }
 
     public attachToScene(scene: ex.Scene): void {
-        // -------------------------
-        // Weapon actor
-        // -------------------------
-        if (
-            this.scene &&
-            this.scene !== scene
-        ) {
-            this.scene.remove(this);
-        }
-
-        if (this.scene !== scene) {
-            scene.add(this);
-        }
-
-        // -------------------------
-        // Weapon shadow
-        // -------------------------
-        if (
-            !this.shadow ||
-            this.shadow.isKilled()
-        ) {
+        // Create helpers only if they do not exist or were permanently killed.
+        if (!this.shadow || this.shadow.isKilled()) {
             this.shadow = new Shadow(this);
         }
 
-        if (
-            this.shadow.scene &&
-            this.shadow.scene !== scene
-        ) {
-            this.shadow.scene.remove(
-                this.shadow
-            );
+        if (!this.swingTracer || this.swingTracer.isKilled()) {
+            this.swingTracer = new SwingTracer();
         }
 
-        if (this.shadow.scene !== scene) {
+        if (!this.thrustTracer || this.thrustTracer.isKilled()) {
+            this.thrustTracer = new ThrustTracer();
+        }
+
+        console.log("ATTACHING SCENE: ", scene);
+
+        // Add the existing weapon and helper instances to this scene.
+        if (!scene.contains(this)) {
+            scene.add(this);
+        }
+
+        if (!scene.contains(this.shadow)) {
             scene.add(this.shadow);
         }
 
-        // -------------------------
-        // Swing tracer
-        // -------------------------
-        if (
-            !this.swingTracer ||
-            this.swingTracer.isKilled()
-        ) {
-            this.swingTracer =
-                new SwingTracer();
-        }
-
-        if (
-            this.swingTracer.scene &&
-            this.swingTracer.scene !== scene
-        ) {
-            this.swingTracer.scene.remove(
-                this.swingTracer
-            );
-        }
-
-        if (
-            this.swingTracer.scene !== scene
-        ) {
+        if (!scene.contains(this.swingTracer)) {
             scene.add(this.swingTracer);
         }
 
-        // -------------------------
-        // Thrust tracer
-        // -------------------------
-        if (
-            !this.thrustTracer ||
-            this.thrustTracer.isKilled()
-        ) {
-            this.thrustTracer =
-                new ThrustTracer();
-        }
-
-        if (
-            this.thrustTracer.scene &&
-            this.thrustTracer.scene !== scene
-        ) {
-            this.thrustTracer.scene.remove(
-                this.thrustTracer
-            );
-        }
-
-        if (
-            this.thrustTracer.scene !== scene
-        ) {
+        if (!scene.contains(this.thrustTracer)) {
             scene.add(this.thrustTracer);
         }
 
-        multiplayer.setLocalWeapon(this);
-
         this.addListeners();
-
-        console.log("Weapon scene attachment:", {
-            weaponAttached:
-                this.scene === scene,
-            shadowAttached:
-                this.shadow.scene === scene,
-            swingTracerAttached:
-                this.swingTracer.scene === scene,
-            thrustTracerAttached:
-                this.thrustTracer.scene === scene,
-            weaponScene: this.scene,
-            shadowScene: this.shadow.scene,
-            targetScene: scene,
-        });
+        multiplayer.setLocalWeapon(this);
     }
 
-    public detachFromScene(
-        scene: ex.Scene
-    ): void {
+    public detachFromScene(scene: ex.Scene): void {
         this.removeListeners();
 
         this.isHolding = false;
@@ -1141,24 +1050,31 @@ export class GreatSword extends ex.Actor {
         this.thrusting = false;
         this.heavyAttacking = false;
 
-        // This was missing.
-        if (this.shadow?.scene === scene) {
+        console.log("DETACHING SCENE: ", scene);
+
+        // Only remove. Do not kill or clear these references.
+        if (
+            this.shadow &&
+            scene.contains(this.shadow)
+        ) {
             scene.remove(this.shadow);
         }
 
         if (
-            this.swingTracer?.scene === scene
+            this.swingTracer &&
+            scene.contains(this.swingTracer)
         ) {
             scene.remove(this.swingTracer);
         }
 
         if (
-            this.thrustTracer?.scene === scene
+            this.thrustTracer &&
+            scene.contains(this.thrustTracer)
         ) {
             scene.remove(this.thrustTracer);
         }
 
-        if (this.scene === scene) {
+        if (scene.contains(this)) {
             scene.remove(this);
         }
 

@@ -5,7 +5,9 @@ import { registerPlayerMessages } from "../game_systems/registerPlayerMessages.j
 import { runPlayerMovement } from "../game_systems/runPlayerMovement.js";
 import { spawnPlayer } from "../game_systems/spawnPlayer.js";
 import { registerInventoryMessages } from "../game_systems/registerInventoryMessages.js";
-import { deleteInventoryForSession, getInventoryForSession } from "../game_systems/inventory/testInventoryStore.js";
+import {
+  getInventoryForUser
+} from "../game_systems/inventory/testInventoryStore.js";
 import { verifySupabaseToken } from "../auth/verifySupabaseToken.js";
 import {
   getActivePlayer,
@@ -17,6 +19,12 @@ type ClientAuth = {
   userId: string;
   email?: string;
 };
+
+const ROOM_CODE_CHARACTERS =
+  "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+const ROOM_CODE_LENGTH = 6;
+const HUB_CODE_REGISTRY = "$moncra_hub_codes";
 
 export class HubRoom extends Room<{ state: GameState }> {
   maxClients = 4;
@@ -53,18 +61,31 @@ export class HubRoom extends Room<{ state: GameState }> {
     };
   }
 
-  onCreate() {
+  async onCreate(): Promise<void> {
+    this.roomId =
+      await this.generateUniqueRoomCode();
+
+    console.log(
+      `Created hub room with code: ${this.roomId}`
+    );
+
     registerPlayerMessages(this);
     registerInventoryMessages(this);
 
-    this.setSimulationInterval((deltaTime) => {
-      runPlayerMovement(
-        this.state.players,
-        deltaTime
-      );
-    });
+    this.setSimulationInterval(
+      deltaTime => {
+        runPlayerMovement(
+          this.state.players,
+          deltaTime
+        );
+      }
+    );
 
-    this.autoDispose = false;
+    /*
+     * Let the room disappear when nobody remains.
+     * Otherwise old room codes will remain forever.
+     */
+    this.autoDispose = true;
   }
 
   onJoin(
@@ -79,6 +100,8 @@ export class HubRoom extends Room<{ state: GameState }> {
         "Authenticated user ID was not attached to the client."
       );
     }
+
+    const ACCOUNT_LOGGED_IN_ELSEWHERE = 4101;
 
     const previousConnection =
       getActivePlayer(auth.userId);
@@ -96,7 +119,9 @@ export class HubRoom extends Room<{ state: GameState }> {
         }
       );
 
-      previousConnection.client.leave(4001);
+      previousConnection.client.leave(
+        ACCOUNT_LOGGED_IN_ELSEWHERE
+      );
     }
 
     setActivePlayer(auth.userId, {
@@ -121,7 +146,7 @@ export class HubRoom extends Room<{ state: GameState }> {
       player
     );
 
-    const inventory = getInventoryForSession(auth.userId, player);
+    const inventory = getInventoryForUser(auth.userId, player);
             
     if (inventory.weapon) {
         player.weapon.id = inventory.weapon.itemId;
@@ -170,7 +195,10 @@ export class HubRoom extends Room<{ state: GameState }> {
   }
 
   onLeave(client: Client) {
-    const userId = client.userData?.userId;
+    const userId =
+      this.userIds.get(
+        client.sessionId
+      );
 
     if (userId) {
       removeActivePlayer(
@@ -179,14 +207,32 @@ export class HubRoom extends Room<{ state: GameState }> {
       );
     }
 
-    this.state.players.delete(client.sessionId);
+    this.state.players.delete(
+      client.sessionId
+    );
 
     this.userIds.delete(
       client.sessionId
     );
 
+    /*
+     * Do not delete the user's inventory.
+     * It must survive room changes.
+     */
+
     console.log(
-      `${client.sessionId} left hub`
+      `${client.sessionId} ${userId ?? "unknown-user"} left hub`
+    );
+  }
+
+  async onDispose(): Promise<void> {
+    await this.presence.srem(
+      HUB_CODE_REGISTRY,
+      this.roomId
+    );
+
+    console.log(
+      `Disposed hub room: ${this.roomId}`
     );
   }
 
@@ -202,5 +248,50 @@ export class HubRoom extends Room<{ state: GameState }> {
     }
 
     return userId;
+  }
+
+  private generateRoomCodeCandidate(): string {
+    let code = "";
+
+    for (
+      let index = 0;
+      index < ROOM_CODE_LENGTH;
+      index++
+    ) {
+      const randomIndex = Math.floor(
+        Math.random() *
+        ROOM_CODE_CHARACTERS.length
+      );
+
+      code +=
+        ROOM_CODE_CHARACTERS[
+        randomIndex
+        ];
+    }
+
+    return code;
+  }
+
+  private async generateUniqueRoomCode(): Promise<string> {
+    const existingCodes =
+      await this.presence.smembers(
+        HUB_CODE_REGISTRY
+      );
+
+    let code: string;
+
+    do {
+      code =
+        this.generateRoomCodeCandidate();
+    } while (
+      existingCodes.includes(code)
+    );
+
+    await this.presence.sadd(
+      HUB_CODE_REGISTRY,
+      code
+    );
+
+    return code;
   }
 }

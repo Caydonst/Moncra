@@ -46,7 +46,7 @@ export class HPBar extends ex.Actor {
         const x = -barWidth / 2;
         const y = this.actorType === "player" ? 24 : 25;
 
-        const borderSize = 0;
+        const borderSize = 2;
 
         // Outer border
         ctx.drawRectangle(

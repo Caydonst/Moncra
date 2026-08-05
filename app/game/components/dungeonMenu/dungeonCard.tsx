@@ -1,4 +1,4 @@
-import styles from "./dungeon.module.css"
+import styles from "./dungeonMenu/dungeonMenu.module.css"
 import { changeScene } from "../../utils/sceneChanges"
 import DungeonImg from "../../assets/misc/dungeon_level5.png"
 import { colors, type Dungeon } from "./dungeonInfo";

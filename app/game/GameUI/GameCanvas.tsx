@@ -9,7 +9,7 @@ import type { DungeonScene } from "../scenes/DungeonScene";
 import {Inventory} from "@/app/game/inventory/inventory";
 import styles from "../page.module.css"
 import InventoryUI from "@/app/game/components/inventoryUI/newInventoryUI";
-import DungeonMenu from "../components/dungeonMenu/dungeonMenu";
+import DungeonMenu from "../components/dungeonMenu/gameplayMenu";
 import LandingPage from "../components/landingPage/landingPage";
 import { gameState } from "../gameState/gameState";
 import StorageUI from "../components/StorageUI/StorageUI";
@@ -21,6 +21,7 @@ import ClassResourceUI from "../components/ClassResourceUI/classResource";
 import SocialIcon from "@/app/game/assets/icons/social_icon.png"
 import SocialUI from "../components/socialUI/socialUI";
 import { gameInputDisabled } from "../utils/inputUtils";
+import GameplayMenu from "../components/dungeonMenu/gameplayMenu";
 
 type Scenes = GameScene | HubScene | MenuScene | TestScene | DungeonScene
 type SceneKey = "menu" | "hub" | "game" | "dungeon" | "test";
@@ -167,7 +168,6 @@ export default function GameCanvas() {
         setSceneName(newSceneName);
 
         if (gameState.player) {
-            console.log("Player stats: ", gameState.player.getStats())
             setCharacterHp((gameState.player.getStats().hp / gameState.player.getStats().maxHp) * 100);
         } else {
             setCharacterHp(0);
@@ -308,7 +308,6 @@ export default function GameCanvas() {
             const event = e as CustomEvent;
 
             setPlayerStats(event.detail);
-            console.log("CANVAS PLAYER STATS: ", event.detail);
         }
 
         window.addEventListener("player_stats_updated", handlePlayerStatsUpdated);
@@ -366,7 +365,7 @@ export default function GameCanvas() {
                         <div className={styles.lanternContainer}><img src={LanternImg.src} /></div>
                         <ClassResourceUI />
                     </div>
-                    <DungeonMenu scene={scene} />
+                    <GameplayMenu scene={scene} />
                 </>
             )}
 

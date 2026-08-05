@@ -4,7 +4,7 @@ import { EnemyState, GameState, PlayerState } from "../schemas/GameState.js";
 import { generateDungeonFloor } from "../shared/dungeon/mapGenerator.js";
 
 import { registerPlayerMessages } from "../game_systems/registerPlayerMessages.js";
-import { registerCombatMessages } from "../game_systems/registerCombatMessages.js";
+import { registerDungeonCombatMessages, registerPlayerCombatMessages } from "../game_systems/registerCombatMessages.js";
 import { runPlayerMovement } from "../game_systems/runPlayerMovement.js";
 import { runEnemySimulation } from "../game_systems/runEnemySimulation.js";
 import { spawnPlayer } from "../game_systems/spawnPlayer.js";
@@ -13,7 +13,7 @@ import { generateDungeon } from "../shared/dungeon/dungeonGenerator.js";
 import { registerDungeonMessages } from "../game_systems/registerDungeonMessages.js";
 import { registerInventoryMessages } from "../game_systems/registerInventoryMessages.js";
 import { clearEnemyContributors, getEnemyContributors } from "../game_systems/combat/enemyContributors.js";
-import { getInventoryForSession } from "../game_systems/inventory/testInventoryStore.js";
+import { applyInventoryStatsToPlayer, getInventoryForUser } from "../game_systems/inventory/testInventoryStore.js";
 import { addXpToEquippedGear } from "../game_systems/items/itemXp.js";
 import { hydrateInventory } from "../game_systems/inventory/hydrateInventory.js";
 import { verifySupabaseToken } from "../auth/verifySupabaseToken.js";
@@ -75,7 +75,8 @@ export class DungeonRoom extends Room<{ state: GameState }> {
 
     onCreate() {
         registerPlayerMessages(this);
-        registerCombatMessages(this);
+        registerPlayerCombatMessages(this);
+        registerDungeonCombatMessages(this);
         registerDungeonMessages(this);
         registerInventoryMessages(this);
 
@@ -148,6 +149,8 @@ export class DungeonRoom extends Room<{ state: GameState }> {
             );
         }
 
+        const ACCOUNT_LOGGED_IN_ELSEWHERE = 4101;
+
         const previousConnection =
             getActivePlayer(auth.userId);
 
@@ -164,7 +167,9 @@ export class DungeonRoom extends Room<{ state: GameState }> {
                 }
             );
 
-            previousConnection.client.leave(4001);
+            previousConnection.client.leave(
+                ACCOUNT_LOGGED_IN_ELSEWHERE
+            );
         }
 
         setActivePlayer(auth.userId, {
@@ -208,7 +213,9 @@ export class DungeonRoom extends Room<{ state: GameState }> {
         player.currentFloor =
             startingFloorNumber;
 
-        const inventory = getInventoryForSession(auth.userId, player);
+        const inventory = getInventoryForUser(auth.userId, player);
+
+        applyInventoryStatsToPlayer(player, inventory);
 
         if (inventory.weapon) {
             player.weapon.id = inventory.weapon.itemId;
@@ -467,7 +474,7 @@ export class DungeonRoom extends Room<{ state: GameState }> {
 
             const userId = this.getUserId(client);
 
-            const inventory = getInventoryForSession(userId, player);
+            const inventory = getInventoryForUser(userId, player);
 
             addXpToEquippedGear(
                 inventory,

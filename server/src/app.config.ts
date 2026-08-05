@@ -9,6 +9,7 @@ import {
 
 import { HubRoom } from "./rooms/HubRoom.js";
 import { DungeonRoom } from "./rooms/DungeonRoom.js";
+import { PartyRoom } from "./rooms/PartyRoom.js";
 import playerRoutes from "./routes/playerRoutes.js";
 
 const defaultClientOrigins = [
@@ -66,6 +67,7 @@ const server = defineServer({
     rooms: {
         hub_room: defineRoom(HubRoom),
         dungeon_room: defineRoom(DungeonRoom),
+        party_room: defineRoom(PartyRoom),
     },
 
     express: (app) => {

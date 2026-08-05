@@ -23,11 +23,13 @@ body {
     box-sizing: border-box;
     font-family: "BoxFont", sans-serif;
 }
-
-body, canvas {
+body button {
+    cursor: pointer;
+}
+/*body, canvas {
     cursor: url('@/app/game/assets/misc/custom_cursor.png') 0 0, auto;
     
-}
+}*/
 /*body button {
     cursor: url('@/app/game/assets/misc/custom_pointer.png') 0 0, pointer;
 }*/

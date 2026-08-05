@@ -1,0 +1,353 @@
+
+.partyWrapper {
+width: 100%;
+height: 100%;
+display: flex;
+justify-content: center;
+align-items: center;
+position: relative;
+overflow: hidden;
+background: #080808;
+animation: slideRight 0.3s forwards;
+}
+
+@keyframes slideRight {
+from {
+opacity: 0;
+transform: translateX(200px);
+}
+to {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+}
+
+.noPartyContainer {
+width: min(700px, calc(100% - 80px));
+min-height: 420px;
+padding: 50px;
+display: flex;
+justify-content: center;
+align-items: center;
+flex-direction: column;
+gap: 28px;
+position: relative;
+z-index: 2;
+border: 3px solid #424242;
+background: #141414;
+box-shadow: 0 0 100px rgba(0, 0, 0, 0.85);
+}
+
+.header {
+width: 100%;
+min-height: 90px;
+padding: 22px 28px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+gap: 20px;
+border-bottom: 3px solid rgba(255, 255, 255, 0.1);
+background: #141414;
+}
+
+.header h3 {
+margin: 0;
+color: #fff;
+font-size: 20px;
+font-weight: 300;
+line-height: 1;
+letter-spacing: 3px;
+text-transform: uppercase;
+text-shadow: 5px 5px #000;
+}
+
+.header p {
+margin: 12px 0 0;
+color: #c9c9c9;
+font-size: 10px;
+letter-spacing: 2px;
+text-transform: uppercase;
+}
+
+.partyCode {
+color: #fff;
+font-weight: 700;
+letter-spacing: 4px;
+text-shadow: 2px 2px #000;
+}
+
+.createPartyButton,
+.joinPartyContainer button,
+.leaveButton {
+height: 45px;
+border: 3px solid #b1b1b1;
+background: #fff;
+color: #000;
+box-shadow: 0 5px 0 #424242;
+font-size: 9px;
+font-weight: 300;
+letter-spacing: 2px;
+text-transform: uppercase;
+transition:
+transform 0.1s ease,
+box-shadow 0.1s ease,
+background 0.1s ease;
+}
+
+.createPartyButton {
+width: 300px;
+}
+
+.createPartyButton:hover:not(:disabled),
+.joinPartyContainer button:hover:not(:disabled) {
+transform: translateY(4px);
+box-shadow: 0 1px 0 #424242;
+}
+
+.createPartyButton:disabled,
+.joinPartyContainer button:disabled,
+.leaveButton:disabled {
+cursor: not-allowed;
+opacity: 0.45;
+}
+
+.partyDivider {
+width: 300px;
+display: flex;
+justify-content: center;
+align-items: center;
+position: relative;
+}
+
+.partyDivider::before,
+.partyDivider::after {
+content: "";
+flex: 1;
+height: 2px;
+background: rgba(255, 255, 255, 0.1);
+}
+
+.partyDivider span {
+padding: 0 14px;
+color: #8d8d8d;
+font-size: 9px;
+letter-spacing: 2px;
+}
+
+.joinPartyContainer {
+width: min(500px, 100%);
+display: flex;
+justify-content: center;
+align-items: stretch;
+gap: 10px;
+}
+
+.joinPartyContainer input {
+flex: 1;
+min-width: 0;
+height: 45px;
+padding: 0 16px;
+border: 3px solid rgba(255, 255, 255, 0.1);
+outline: none;
+background: #080808;
+color: #fff;
+font-size: 11px;
+font-weight: 700;
+letter-spacing: 4px;
+text-transform: uppercase;
+}
+
+.joinPartyContainer input::placeholder {
+color: #666;
+letter-spacing: 2px;
+}
+
+.joinPartyContainer input:focus {
+border-color: #fff;
+}
+
+.joinPartyContainer button {
+width: 180px;
+}
+
+.playersContainer {
+width: 100%;
+height: calc(100% - 90px);
+padding: 50px;
+display: grid;
+grid-template-columns: repeat(2, minmax(220px, 1fr));
+grid-template-rows: repeat(2, minmax(120px, 1fr));
+gap: 20px;
+background: #080808;
+}
+
+.playerSlot {
+min-width: 0;
+min-height: 120px;
+display: flex;
+justify-content: center;
+align-items: center;
+position: relative;
+border: 3px solid rgba(255, 255, 255, 0.1);
+background: #141414;
+overflow: hidden;
+}
+
+.playerSlot::after {
+content: "";
+position: absolute;
+inset: 0;
+background: linear-gradient(
+135deg,
+rgba(255, 255, 255, 0.03),
+transparent 55%
+);
+pointer-events: none;
+}
+
+.occupiedPlayerSlot {
+border-color: #b1b1b1;
+box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.025);
+}
+
+.emptyPlayerSlot {
+border-style: dashed;
+background: #101010;
+}
+
+.playerInfo {
+width: 100%;
+padding: 22px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+gap: 20px;
+position: relative;
+z-index: 1;
+}
+
+.playerName {
+margin: 0;
+color: #fff;
+font-size: 12px;
+font-weight: 700;
+letter-spacing: 2px;
+text-transform: uppercase;
+text-shadow: 3px 3px #000;
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+}
+
+.playerStatuses {
+display: flex;
+justify-content: flex-end;
+align-items: center;
+flex-wrap: wrap;
+gap: 8px;
+}
+
+.leaderStatus,
+.readyStatus {
+padding: 6px 8px;
+border: 2px solid rgba(255, 255, 255, 0.15);
+font-size: 8px;
+font-weight: 700;
+letter-spacing: 1px;
+text-transform: uppercase;
+}
+
+.leaderStatus {
+border-color: #ffe032;
+background: rgba(255, 224, 50, 0.12);
+color: #ffe032;
+}
+
+.readyStatus {
+border-color: #76ff32;
+background: rgba(118, 255, 50, 0.1);
+color: #76ff32;
+}
+
+.emptySlotIcon {
+color: rgba(255, 255, 255, 0.2);
+font-size: 42px;
+font-weight: 300;
+line-height: 1;
+}
+
+.leaveButton {
+width: 140px;
+flex-shrink: 0;
+border-color: rgba(255, 255, 255, 0.1);
+background: #141414;
+color: #fff;
+box-shadow: 0 5px 0 #020202;
+}
+
+.leaveButton:hover {
+transform: translateY(4px);
+border-color: #ff5f57;
+background: rgba(255, 95, 87, 0.1);
+color: #ff7770;
+box-shadow: 0 1px 0 #020202;
+}
+
+.joinError {
+position: absolute;
+left: 50%;
+bottom: 18px;
+z-index: 20;
+transform: translateX(-50%);
+margin: 0;
+padding: 10px 16px;
+border: 2px solid #ff5f57;
+background: rgba(20, 8, 8, 0.95);
+color: #ff7770;
+font-size: 9px;
+font-weight: 700;
+letter-spacing: 1px;
+text-align: center;
+text-transform: uppercase;
+white-space: nowrap;
+}
+
+@media (max-width: 850px) {
+.noPartyContainer {
+width: calc(100% - 30px);
+min-height: 380px;
+padding: 28px;
+}
+
+.playersContainer {
+    padding: 25px;
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, minmax(90px, 1fr));
+    gap: 12px;
+}
+
+.playerSlot {
+    min-height: 90px;
+}
+
+.joinPartyContainer {
+    flex-direction: column;
+}
+
+.joinPartyContainer button,
+.createPartyButton,
+.partyDivider {
+    width: 100%;
+}
+
+.header {
+    min-height: 80px;
+    padding: 18px 20px;
+}
+
+.leaveButton {
+    width: 110px;
+}
+
+}

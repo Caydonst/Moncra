@@ -3,7 +3,10 @@ import { GameResources } from "@/app/game/resources";
 import { Shadow } from "../utils/shadow";
 import { GameScene } from "../scenes/GameScene";
 import { RemoteBow } from "./RemoteBow";
-import { RemoteSword } from "./RemoteSword";
+import {
+    RemoteSword,
+    type RemoteAttackData,
+} from "./RemoteSword";
 
 export class RemotePlayer extends ex.Actor {
     private walkAnim!: ex.Animation;
@@ -27,6 +30,8 @@ export class RemotePlayer extends ex.Actor {
 
     private aimAngle = 0
 
+    private spriteScale = 2.2;
+
   constructor(
     pos: ex.Vector,
     private resources: GameResources
@@ -35,8 +40,8 @@ export class RemotePlayer extends ex.Actor {
       name: "remote-player",
       pos,
       anchor: ex.vec(0.5, 0.5),
-      width: 15 * 2,
-      height: 20 * 2,
+        width: 12 * 2.2,
+      height: 17 * 2.2,
       z: 3,
       collisionType: ex.CollisionType.PreventCollision,
     });
@@ -47,15 +52,15 @@ export class RemotePlayer extends ex.Actor {
 
   onInitialize(engine: ex.Engine) {
     const walkFrames = this.resources.characterWalkSpritesheet.sprites.map(sprite => {
-      const s = sprite.clone();
-      s.scale = ex.vec(2, 2);
-      return { graphic: s, duration: 120 };
+        const s = sprite.clone();
+        s.scale = ex.vec(this.spriteScale, this.spriteScale);
+        return { graphic: s, duration: 120 };
     });
 
     const idleFrames = this.resources.characterIdleSpritesheet.sprites.map(sprite => {
-      const s = sprite.clone();
-      s.scale = ex.vec(2, 2);
-      return { graphic: s, duration: 180 };
+        const s = sprite.clone();
+        s.scale = ex.vec(this.spriteScale, this.spriteScale);
+        return { graphic: s, duration: 180 };
     });
 
     this.walkAnim = new ex.Animation({ frames: walkFrames });
@@ -163,29 +168,30 @@ export class RemotePlayer extends ex.Actor {
         }
     }
 
-    playWeaponAttack(data: any) {
-        if (this.weaponActor instanceof RemoteBow) {
-            this.weaponActor.setAimAngle(data.aimAngle ?? 0);
+    public playWeaponAttack(
+        data: RemoteAttackData
+    ): void {
+        if (
+            this.weaponActor instanceof
+            RemoteSword
+        ) {
+            this.weaponActor.playAttack(
+                data
+            );
 
-            this.weaponActor.playDrawAnimation(() => {
-            this.spawnRemoteArrow(data);
-            });
+            return;
         }
-        if (this.weaponActor instanceof RemoteSword) {
-            this.weaponActor.setAimAngle(data.aimAngle ?? 0);
-            this.weaponActor.playAttack();
-        }
+
+        console.warn(
+            "Remote player does not have a sword actor.",
+            this.weaponActor
+        );
     }
 
     playWeaponAttackStart(data: any) {
         if (this.weaponActor instanceof RemoteBow) {
             this.weaponActor.setAimAngle(data.aimAngle ?? 0);
             this.weaponActor.playDrawAnimation();
-        }
-
-        if (this.weaponActor instanceof RemoteSword) {
-            this.weaponActor.setAimAngle(data.aimAngle ?? 0);
-            this.weaponActor.playAttack();
         }
     }
 
@@ -224,7 +230,7 @@ export class RemotePlayer extends ex.Actor {
 
         this.graphics.use(this.moving ? "walk" : "idle");
 
-        const bobWalk = [0, 0, 0, 4];
+        const bobWalk = [-2, -4, -2, 0];
         const bobIdle = [0, 2, 4, 2];
 
         if (this.moving) {
@@ -236,7 +242,7 @@ export class RemotePlayer extends ex.Actor {
         }
 
         if (this.shadow) {
-            this.shadow.pos = this.pos.add(ex.vec(0, (this.height / 2) - 3));
+            this.shadow.pos = this.pos.add(ex.vec(0, (this.height / 2)));
         }
     }
 

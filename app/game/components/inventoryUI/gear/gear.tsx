@@ -54,6 +54,7 @@ export default function Gear({ inventoryOpen, setInventoryOpen, inventory, setIn
     const [hoveredFilter, setHoveredFilter] = useState<string | null>(null);
     
     const [hoveredItem, setHoveredItem] = useState<Weapon | Armor | null>(null);
+    const [hoveredItemEquipped, setHoveredItemEquipped] = useState<boolean>(false);
     const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
     const [selectedTab, setSelectedTab] = useState("gear");
     const [username, setUsername] = useState<string>("");
@@ -440,8 +441,8 @@ export default function Gear({ inventoryOpen, setInventoryOpen, inventory, setIn
                             <div className={styles.slotsContainer}>
                                 {weaponSlots.map((slot, index) => (
                                     <div key={index} className={styles.gearSlotWrapper} style={{ zIndex: `${3 - index}` }}>
-                                        <ExtraSlot key={index} slot={slot} equipItem={equipItem} type={"Weapon"} setSelectedItem={setSelectedItem} setItemInfoOpen={setItemInfoOpen} showItemTooltip={showItemTooltip} moveItemTooltip={moveItemTooltip} hideItemTooltip={hideItemTooltip} />
-                                        <GearSlot slotIndex={slot.slotIndex} item={slot.item} selectedSlot={selectedSlot} openItemPanel={openItemPanel} setSelectedSlot={setSelectedSlot} setSelectedItem={setSelectedItem} setItemInfoOpen={setItemInfoOpen} showItemTooltip={showItemTooltip} moveItemTooltip={moveItemTooltip} hideItemTooltip={hideItemTooltip} />
+                                        <ExtraSlot key={index} slot={slot} equipItem={equipItem} type={"Weapon"} setSelectedItem={setSelectedItem} setItemInfoOpen={setItemInfoOpen} showItemTooltip={showItemTooltip} moveItemTooltip={moveItemTooltip} hideItemTooltip={hideItemTooltip} setHoveredItemEquipped={setHoveredItemEquipped} />
+                                        <GearSlot slotIndex={slot.slotIndex} item={slot.item} selectedSlot={selectedSlot} openItemPanel={openItemPanel} setSelectedSlot={setSelectedSlot} setHoveredItemEquipped={setHoveredItemEquipped} setSelectedItem={setSelectedItem} setItemInfoOpen={setItemInfoOpen} showItemTooltip={showItemTooltip} moveItemTooltip={moveItemTooltip} hideItemTooltip={hideItemTooltip} />
                                     </div>
                                 ))}
                             </div>
@@ -472,8 +473,8 @@ export default function Gear({ inventoryOpen, setInventoryOpen, inventory, setIn
                             <div className={styles.slotsContainer}>
                                 {armorSlots.map((slot, index) => (
                                     <div key={index} className={styles.gearSlotWrapper}>
-                                        <GearSlot slotIndex={slot.slotIndex} item={slot.item} selectedSlot={selectedSlot} openItemPanel={openItemPanel} setSelectedSlot={setSelectedSlot} setSelectedItem={setSelectedItem} setItemInfoOpen={setItemInfoOpen} showItemTooltip={showItemTooltip} moveItemTooltip={moveItemTooltip} hideItemTooltip={hideItemTooltip} />
-                                        <ExtraSlot key={index} slot={slot} equipItem={equipItem} type={"Armor"} setSelectedItem={setSelectedItem} setItemInfoOpen={setItemInfoOpen} showItemTooltip={showItemTooltip} moveItemTooltip={moveItemTooltip} hideItemTooltip={hideItemTooltip} />
+                                        <GearSlot slotIndex={slot.slotIndex} item={slot.item} selectedSlot={selectedSlot} openItemPanel={openItemPanel} setSelectedSlot={setSelectedSlot} setHoveredItemEquipped={setHoveredItemEquipped} setSelectedItem={setSelectedItem} setItemInfoOpen={setItemInfoOpen} showItemTooltip={showItemTooltip} moveItemTooltip={moveItemTooltip} hideItemTooltip={hideItemTooltip} />
+                                        <ExtraSlot key={index} slot={slot} equipItem={equipItem} type={"Armor"} setSelectedItem={setSelectedItem} setItemInfoOpen={setItemInfoOpen} showItemTooltip={showItemTooltip} moveItemTooltip={moveItemTooltip} hideItemTooltip={hideItemTooltip} setHoveredItemEquipped={setHoveredItemEquipped} />
                                     </div>
                                 ))}
                             </div>
@@ -482,7 +483,7 @@ export default function Gear({ inventoryOpen, setInventoryOpen, inventory, setIn
                 </div>
             </div>
             {hoveredItem && (
-                <ItemToolTip tooltipRef={tooltipRef} tooltipPos={tooltipPos} hoveredItem={hoveredItem} />
+                <ItemToolTip tooltipRef={tooltipRef} tooltipPos={tooltipPos} hoveredItem={hoveredItem} hoveredItemEquipped={hoveredItemEquipped} />
             )}
         </div>
     )

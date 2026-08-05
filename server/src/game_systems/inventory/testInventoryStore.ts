@@ -6,24 +6,37 @@ import { itemDefinitions } from "../items/itemDefinitions.js";
 import { PlayerState } from "../../schemas/GameState.js";
 import { createStartingInventory } from "./createStartingInventory.js"
 
-const inventories = new Map<string, ServerInventory>();
+const inventoriesByUserId =
+    new Map<string, ServerInventory>();
 
-export function getInventoryForSession(userId: string, player: PlayerState): ServerInventory {
-    let inventory = inventories.get(userId);
+export function getInventoryForUser(
+    userId: string,
+    player?: PlayerState
+): ServerInventory {
+    let inventory =
+        inventoriesByUserId.get(userId);
 
     if (!inventory) {
-        inventory = createStartingInventory();
-        inventories.set(userId, inventory);
-    }
+        inventory =
+            createStartingInventory();
 
-    applyInventoryStatsToPlayer(player, inventory);
+        inventoriesByUserId.set(
+            userId,
+            inventory
+        );
+    }
 
     return inventory;
 }
 
-export function deleteInventoryForSession(sessionId: string) {
-    inventories.delete(sessionId);
+export function deleteInventoryForUser(
+    userId: string
+): void {
+    inventoriesByUserId.delete(
+        userId
+    );
 }
+
 
 export function equipItemInInventory(inventory: ServerInventory, uid: string) {
     return equipWeapon(inventory, uid) || equipArmor(inventory, uid);

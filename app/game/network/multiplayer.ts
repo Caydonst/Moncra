@@ -8,13 +8,34 @@ import type { DungeonFloor, ServerDungeonData } from "@/lib/shared/dungeon/dunge
 import { ServerPlayerDebug } from "../player/ServerPlayerDebug";
 import {gameState} from "../gameState/gameState"
 import { createClient } from "@/lib/supabase/client";
+import { Player } from "../player/player";
+import { HubScene } from "../scenes/HubScene";
 
 type RoomKind = "hub" | "party" | "dungeon";
+
+type PartyMember = {
+  sessionId: string;
+  userId?: string;
+  username: string;
+  isLeader?: boolean;
+  isReady?: boolean;
+};
+
+type PartyData = {
+  roomCode: string | null;
+  leaderSessionId: string | null;
+  members: PartyMember[];
+};
 
 class MultiplayerManager {
   client = new Client(process.env.NEXT_PUBLIC_COLYSEUS_URL!);
   room: Room | null = null;
   callbacks: any = null;
+
+  private hubEngine: ex.Engine | null = null;
+  private hubResources: GameResources | null = null;
+  private hubScene: HubScene | null = null;
+  private hubLocalPlayer: Player | null = null;
 
   currentRoomKind: RoomKind | null = null;
 
@@ -31,31 +52,76 @@ class MultiplayerManager {
   private dungeonListeners: ((dungeon: ServerDungeonData) => void)[] = [];
   private localWeapon: any = null;
 
+  private ACCOUNT_LOGGED_IN_ELSEWHERE = 4101;
+
   isInDungeon() {
     return this.currentRoomKind === "dungeon";
   }
 
-  canUseCombatMessages() {
-    return this.currentRoomKind === "dungeon" && !!this.room;
+  canUseCombatMessages(): boolean {
+    return (
+      (
+        this.currentRoomKind === "dungeon" ||
+        this.currentRoomKind === "party"
+      ) &&
+      !!this.room
+    );
   }
 
   setLocalWeapon(weapon: any | null) {
     this.localWeapon = weapon;
   }
 
-  onDungeonReady(callback: (dungeon: ServerDungeonData) => void) {
-    if (this.dungeon) {
-      callback(this.dungeon);
-      return;
+  onDungeonReady(
+    callback: (
+      dungeon: ServerDungeonData
+    ) => void
+  ): void {
+    /*
+     * DungeonScene registers this once in onInitialize,
+     * so keep it registered for every future dungeon.
+     */
+    if (
+      !this.dungeonListeners.includes(
+        callback
+      )
+    ) {
+      this.dungeonListeners.push(
+        callback
+      );
     }
 
-    this.dungeonListeners.push(callback);
+    /*
+     * Immediately provide the current dungeon when one
+     * already exists.
+     */
+    if (this.dungeon) {
+      callback(this.dungeon);
+    }
   }
 
-  private setDungeon(dungeon: ServerDungeonData) {
+  private clearRemotePlayers(): void {
+    for (const remotePlayer of this.remotePlayers.values()) {
+      remotePlayer.kill();
+    }
+
+    this.remotePlayers.clear();
+  }
+
+  private setDungeon(
+    dungeon: ServerDungeonData
+  ): void {
     this.dungeon = dungeon;
-    this.dungeonListeners.forEach(callback => callback(dungeon));
-    this.dungeonListeners = [];
+
+    this.dungeonListeners.forEach(
+      callback => {
+        callback(dungeon);
+      }
+    );
+
+    /*
+     * Do not clear dungeonListeners here.
+     */
   }
 
   async joinDungeon(options: {
@@ -98,20 +164,49 @@ class MultiplayerManager {
       this.dungeonResources = null;
       this.currentDungeonFloor = 1;
 
-      if (code === 4001) {
+      this.dungeon = null;
+
+      if (
+        code ===
+        this.ACCOUNT_LOGGED_IN_ELSEWHERE
+      ) {
         window.location.href =
           "/?reason=logged_in_elsewhere";
+
+        return;
       }
 
-      console.warn(
-        "Left dungeon room:",
-        code
-      );
+      if (code === 4001) {
+        console.warn(
+          "Disconnected because the server shut down."
+        );
+      } else if (code === 4002) {
+        console.error(
+          "Disconnected because of a server error."
+        );
+      } else {
+        console.warn(
+          "Left dungeon room:",
+          code
+        );
+      }
 
       this.room = null;
       this.callbacks = null;
       this.currentRoomKind = null;
     });
+
+    this.room.onError(
+      (code, message) => {
+        console.error(
+          "Dungeon room error:",
+          {
+            code,
+            message,
+          }
+        );
+      }
+    );
 
     console.log("Joined dungeon:", this.room.sessionId);
 
@@ -165,6 +260,8 @@ class MultiplayerManager {
     });
 
     this.room.onMessage("weapon_attack", (data: any) => {
+      console.log("RECEIVED WEAPON ATTACK:", data);
+
       if (data.sessionId === this.room?.sessionId) {
         this.localWeapon?.confirmServerAttack(data);
         return;
@@ -264,19 +361,63 @@ class MultiplayerManager {
   async joinHub(options: {
     engine: ex.Engine;
     resources: GameResources;
-  }) {
-    const { engine, resources } = options;
-    if (this.room?.name === "hub_room") return;
+    scene: HubScene;
+    localPlayer: Player;
+  }): Promise<void> {
+    const {
+      engine,
+      resources,
+      scene,
+      localPlayer,
+    } = options;
 
-    if (this.room) {
-      await this.room.leave();
+    this.hubEngine =
+      engine;
+
+    this.hubResources =
+      resources;
+
+    this.hubScene =
+      scene;
+
+    this.hubLocalPlayer =
+      localPlayer;
+
+    /*
+     * PartyRoom uses the same visible HubScene.
+     * Do not replace it with a new HubRoom when
+     * HubScene activates.
+     */
+    if (
+      this.currentRoomKind === "party" &&
+      this.room?.name === "party_room"
+    ) {
+      console.log(
+        "Already connected to PartyRoom; skipping HubRoom join."
+      );
+
+      return;
+    }
+
+    if (
+      this.currentRoomKind === "hub" &&
+      this.room?.name === "hub_room"
+    ) {
+      return;
     }
 
     const supabase = createClient();
 
     const {
       data: { session },
+      error,
     } = await supabase.auth.getSession();
+
+    if (error) {
+      throw new Error(
+        "Failed to read the Supabase session."
+      );
+    }
 
     if (!session?.access_token) {
       throw new Error(
@@ -284,44 +425,389 @@ class MultiplayerManager {
       );
     }
 
-    this.room = await this.client.joinOrCreate(
-      "hub_room",
+    if (this.room) {
+      await this.room.leave(true);
+    }
+
+    this.clearRemotePlayers();
+
+    const room =
+      await this.client.create(
+        "hub_room",
+        {
+          accessToken:
+            session.access_token,
+        }
+      );
+
+    this.setupHubConnection(
+      room,
       {
-        accessToken: session.access_token,
+        engine,
+        resources,
+        scene,
+        localPlayer,
       }
     );
 
-    this.currentRoomKind = "hub";
-    this.callbacks = Callbacks.get(this.room);
+    console.log(
+      "Created hub:",
+      {
+        roomId: room.roomId,
+        sessionId: room.sessionId,
+      }
+    );
+  }
 
-    this.room.onLeave((code) => {
-      if (code === 4001) {
-        window.location.href =
-          "/?reason=logged_in_elsewhere";
+  private setupHubRoomListeners(
+    room: Room,
+    engine: ex.Engine,
+    resources: GameResources,
+    scene: HubScene
+  ): void {
+    const callbacks = Callbacks.get(room);
+
+    this.callbacks = callbacks;
+
+    const addRemotePlayer = (
+      player: any,
+      sessionId: string
+    ): void => {
+      /*
+       * The local schema player controls the existing
+       * local Excalibur Player actor.
+       */
+      if (sessionId === room.sessionId) {
+        this.setupLocalPlayerCallbacks(player);
+        return;
       }
 
-      console.warn("Left hub room:", code);
+      /*
+       * Avoid creating the same remote actor twice.
+       */
+      if (this.remotePlayers.has(sessionId)) {
+        return;
+      }
+
+      const remotePlayer = new RemotePlayer(
+        ex.vec(player.x, player.y),
+        resources
+      );
+
+      this.remotePlayers.set(
+        sessionId,
+        remotePlayer
+      );
+
+      scene.add(remotePlayer);
+
+      /*
+       * Apply the initial state immediately instead of
+       * waiting for the first schema change.
+       */
+      remotePlayer.updateFromNetwork(
+        player,
+        engine
+      );
+
+      callbacks.onChange(
+        player,
+        () => {
+          remotePlayer.updateFromNetwork(
+            player,
+            engine
+          );
+        }
+      );
+
+      console.log(
+        "Added remote hub player:",
+        sessionId
+      );
+    };
+
+    callbacks.onAdd(
+      "players",
+      addRemotePlayer
+    );
+
+    callbacks.onRemove(
+      "players",
+      (
+        _player: any,
+        sessionId: string
+      ) => {
+        const remotePlayer =
+          this.remotePlayers.get(
+            sessionId
+          );
+
+        if (!remotePlayer) {
+          return;
+        }
+
+        remotePlayer.kill();
+
+        this.remotePlayers.delete(
+          sessionId
+        );
+
+        console.log(
+          "Removed remote hub player:",
+          sessionId
+        );
+      }
+    );
+  }
+
+  getCurrentPartyCode(): string | null {
+    if (
+      this.currentRoomKind !==
+      "party"
+    ) {
+      return null;
+    }
+
+    return this.room?.roomId ?? null;
+  }
+
+  async joinHubByCode(
+    roomCode: string
+  ): Promise<void> {
+    const normalizedCode =
+      roomCode
+        .trim()
+        .toUpperCase();
+
+    if (!normalizedCode) {
+      throw new Error(
+        "Enter a room code."
+      );
+    }
+
+    if (
+      normalizedCode ===
+      this.room?.roomId
+    ) {
+      throw new Error(
+        "You are already in this room."
+      );
+    }
+
+    /*
+     * PartyMenu only provides the code, so reuse the HubScene
+     * rendering context saved by joinHub().
+     */
+    const engine =
+      this.hubEngine;
+
+    const resources =
+      this.hubResources;
+
+    const scene =
+      this.hubScene;
+
+    const localPlayer =
+      this.hubLocalPlayer;
+
+    if (
+      !engine ||
+      !resources ||
+      !scene ||
+      !localPlayer
+    ) {
+      throw new Error(
+        "The hub scene is not ready."
+      );
+    }
+
+    const supabase =
+      createClient();
+
+    const {
+      data: { session },
+      error,
+    } =
+      await supabase.auth.getSession();
+
+    if (error) {
+      throw new Error(
+        "Failed to read login session."
+      );
+    }
+
+    const accessToken =
+      session?.access_token;
+
+    if (!accessToken) {
+      throw new Error(
+        "You are not logged in."
+      );
+    }
+
+    const previousRoom =
+      this.room;
+
+    /*
+     * Leave the current hub before joining the destination.
+     * This avoids triggering the duplicate-login check.
+     */
+    if (previousRoom) {
+      await previousRoom.leave(true);
+    }
+
+    /*
+     * Remove remote actors belonging to the previous hub.
+     */
+    this.clearRemotePlayers();
+
+    /*
+     * Do this only after the previous room has finished leaving.
+     */
+    this.room = null;
+    this.callbacks = null;
+    this.currentRoomKind = null;
+
+    try {
+      const newRoom =
+        await this.client.joinById(
+          normalizedCode,
+          {
+            accessToken,
+          }
+        );
+
+      this.setupHubConnection(
+        newRoom,
+        {
+          engine,
+          resources,
+          scene,
+          localPlayer,
+        }
+      );
+
+      console.log(
+        "Joined hub by code:",
+        {
+          roomId: newRoom.roomId,
+          sessionId: newRoom.sessionId,
+        }
+      );
+    } catch (error) {
+      console.error(
+        "Failed to join hub by code:",
+        error
+      );
+
+      throw new Error(
+        "That room code is invalid, full, or no longer active."
+      );
+    }
+  }
+
+  private setupHubConnection(
+    room: Room,
+    options: {
+      engine: ex.Engine;
+      resources: GameResources;
+      scene: HubScene;
+      localPlayer: Player;
+    }
+  ): void {
+    this.room = room;
+    this.currentRoomKind = "hub";
+
+    this.hubEngine = options.engine;
+    this.hubResources = options.resources;
+    this.hubScene = options.scene;
+    this.hubLocalPlayer = options.localPlayer;
+
+    this.callbacks = Callbacks.get(room);
+
+    this.setupHubRoomListeners(
+      room,
+      options.engine,
+      options.resources,
+      options.scene
+    );
+
+    this.setupInventoryListeners();
+    this.sendGetInventory();
+
+    this.setupHubLeaveHandler(room);
+
+    console.log(
+      "Hub connection configured:",
+      {
+        roomId: room.roomId,
+        sessionId: room.sessionId,
+      }
+    );
+  }
+
+  private setupHubLeaveHandler(
+    room: Room
+  ): void {
+    room.onLeave((code) => {
+      if (
+        code ===
+        this.ACCOUNT_LOGGED_IN_ELSEWHERE
+      ) {
+        window.location.href =
+          "/?reason=logged_in_elsewhere";
+
+        return;
+      }
+
+      if (code === 4000) {
+        console.log(
+          "Left hub room intentionally:",
+          room.roomId
+        );
+      } else if (code === 4001) {
+        console.warn(
+          "Disconnected because the server shut down."
+        );
+      } else if (code === 4002) {
+        console.error(
+          "Disconnected because of a server error."
+        );
+      } else {
+        console.warn(
+          "Left hub room:",
+          room.roomId,
+          code
+        );
+      }
+
+      /*
+       * This callback may belong to an older room.
+       * Do not clear a newer active connection.
+       */
+      if (this.room !== room) {
+        return;
+      }
+
+      this.clearRemotePlayers();
+
       this.room = null;
       this.callbacks = null;
       this.currentRoomKind = null;
     });
 
-    console.log("Joined hub:", this.room.sessionId);
-
-    this.setupHubRoomListeners();
-    this.setupInventoryListeners();
-    this.sendGetInventory();
-  }
-
-  private setupHubRoomListeners() {
-    if (!this.room || !this.callbacks) return;
-
-    this.callbacks.onAdd("players", (player: any, sessionId: string) => {
-      if (sessionId === this.room?.sessionId) {
-        this.setupLocalPlayerCallbacks(player);
-        return;
+    room.onError(
+      (code, message) => {
+        console.error(
+          "Hub room error:",
+          {
+            roomId: room.roomId,
+            code,
+            message,
+          }
+        );
       }
-    });
+    );
   }
 
   async joinPartyRoom(options: {
@@ -355,16 +841,47 @@ class MultiplayerManager {
     this.callbacks = Callbacks.get(this.room);
 
     this.room.onLeave((code) => {
-      if (code === 4001) {
+      if (
+        code ===
+        this.ACCOUNT_LOGGED_IN_ELSEWHERE
+      ) {
         window.location.href =
           "/?reason=logged_in_elsewhere";
+
+        return;
       }
 
-      console.warn("Left party room:", code);
+      if (code === 4001) {
+        console.warn(
+          "Disconnected because the server shut down."
+        );
+      } else if (code === 4002) {
+        console.error(
+          "Disconnected because of a server error."
+        );
+      } else {
+        console.warn(
+          "Left party room:",
+          code
+        );
+      }
+
       this.room = null;
       this.callbacks = null;
       this.currentRoomKind = null;
     });
+
+    this.room.onError(
+      (code, message) => {
+        console.error(
+          "Party room error:",
+          {
+            code,
+            message,
+          }
+        );
+      }
+    );
 
     console.log("Joined party:", this.room.sessionId);
 
@@ -373,43 +890,495 @@ class MultiplayerManager {
     this.sendGetInventory();
   }
 
+  async leaveParty(options: {
+    engine: ex.Engine;
+    resources: GameResources;
+    scene: ex.Scene;
+    username: string;
+    localPlayer: Player;
+  }) {
+    if (!this.room) {
+      return;
+    }
+
+    this.room.leave();
+
+    this.room = null;
+    this.callbacks = null;
+    this.currentRoomKind = null;
+    //this.currentPartyCode = null;
+
+    this.currentParty = {
+      roomCode: null,
+      leaderSessionId: null,
+      members: [],
+    };
+
+    window.dispatchEvent(
+      new CustomEvent("party_updated", {
+        detail: this.currentParty,
+      })
+    );
+
+    await this.joinHub(options);
+  }
+
+  async createParty(options: {
+    engine: ex.Engine;
+    resources: GameResources;
+    scene: ex.Scene;
+    username: string;
+    localPlayer: Player;
+  }): Promise<void> {
+    const {
+      engine,
+      resources,
+      scene,
+      username,
+    } = options;
+
+    const supabase =
+      createClient();
+
+    const {
+      data: { session },
+    } =
+      await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      throw new Error(
+        "You are not logged in."
+      );
+    }
+
+    if (this.room) {
+      await this.room.leave(true);
+    }
+
+    this.clearRemotePlayers();
+
+    const room =
+      await this.client.create(
+        "party_room",
+        {
+          accessToken:
+            session.access_token,
+
+          username,
+
+          spawnX:
+            options.localPlayer.pos.x,
+
+          spawnY:
+            options.localPlayer.pos.y,
+        }
+      );
+
+    console.log(
+      "CREATE PARTY RESULT:",
+      {
+        name:
+          room.name,
+        roomId:
+          room.roomId,
+        sessionId:
+          room.sessionId,
+      }
+    )
+
+    this.room = room;
+    this.currentRoomKind =
+      "party";
+
+    this.callbacks =
+      Callbacks.get(room);
+
+    this.setupPartyLeaveHandler(room);
+
+    this.setupPartyRoomListeners(
+      options.engine,
+      options.resources,
+      options.scene,
+      options.localPlayer
+    );
+
+    this.setupInventoryListeners();
+    this.sendGetInventory();
+
+    console.log(
+      "Created party:",
+      room.roomId
+    );
+  }
+
+  async joinPartyByCode(
+    roomCode: string,
+    options: {
+      engine: ex.Engine;
+      resources: GameResources;
+      scene: ex.Scene;
+      username: string;
+      localPlayer: Player;
+    }
+  ): Promise<void> {
+    const normalizedCode =
+      roomCode
+        .trim()
+        .toUpperCase();
+
+    if (!normalizedCode) {
+      throw new Error(
+        "Enter a party code."
+      );
+    }
+
+    const supabase =
+      createClient();
+
+    const {
+      data: { session },
+    } =
+      await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      throw new Error(
+        "You are not logged in."
+      );
+    }
+
+    if (this.room) {
+      await this.room.leave(true);
+    }
+
+    this.clearRemotePlayers();
+
+    try {
+      const room = await this.client.joinById(normalizedCode, {
+        accessToken: session.access_token,
+        username: options.username,
+        spawnX: options.localPlayer.pos.x,
+        spawnY: options.localPlayer.pos.y,
+      });
+
+      this.room = room;
+      this.currentRoomKind = "party";
+      this.callbacks = Callbacks.get(room);
+
+      this.setupPartyLeaveHandler(room);
+
+      this.setupPartyRoomListeners(
+        options.engine,
+        options.resources,
+        options.scene,
+        options.localPlayer
+      );
+
+      this.setupInventoryListeners();
+      this.sendGetInventory();
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message.toLowerCase()
+          : "";
+
+      if (message.includes("full")) {
+        throw new Error("That party is full.");
+      }
+
+      throw new Error("Incorrect party code.");
+    }
+  }
+
+  private currentParty: PartyData = {
+    roomCode: null,
+    leaderSessionId: null,
+    members: [],
+  };
+
+  getCurrentParty(): PartyData {
+    return {
+      ...this.currentParty,
+      members: [...this.currentParty.members],
+    };
+  }
+
   private setupPartyRoomListeners(
     engine: ex.Engine,
     resources: GameResources,
-    scene: ex.Scene
-  ) {
-    if (!this.room || !this.callbacks) return;
+    scene: ex.Scene,
+    localPlayer: Player
+  ): void {
+    if (
+      !this.room ||
+      !this.callbacks
+    ) {
+      return;
+    }
 
-    const addRemotePlayer = (player: any, sessionId: string) => {
-      if (sessionId === this.room?.sessionId) {
-        this.setupLocalPlayerCallbacks(player);
+    const room =
+      this.room;
+
+    const callbacks =
+      this.callbacks;
+
+    const addRemotePlayer = (
+      player: any,
+      sessionId: string
+    ): void => {
+      if (
+        sessionId === room.sessionId
+      ) {
+        this.setupLocalPlayerCallbacks(
+          player
+        );
+
+        /*
+         * Ensure the persistent client actor matches the
+         * PartyRoom server state.
+         */
+        localPlayer.pos = ex.vec(
+          player.x,
+          player.y
+        );
+
+        callbacks.onChange(
+          player,
+          () => {
+            localPlayer
+              .reconcileServerPosition?.(
+                player.x,
+                player.y
+              );
+          }
+        );
+
         return;
       }
 
-      if (this.remotePlayers.has(sessionId)) return;
+      if (
+        this.remotePlayers.has(
+          sessionId
+        )
+      ) {
+        return;
+      }
 
-      const remotePlayer = new RemotePlayer(
-        ex.vec(player.x, player.y),
-        resources
+      const remotePlayer =
+        new RemotePlayer(
+          ex.vec(
+            player.x,
+            player.y
+          ),
+          resources
+        );
+
+      scene.add(
+        remotePlayer
       );
 
-      scene.add(remotePlayer);
-      this.remotePlayers.set(sessionId, remotePlayer);
+      this.remotePlayers.set(
+        sessionId,
+        remotePlayer
+      );
 
-      this.callbacks!.onChange(player, () => {
-        remotePlayer.updateFromNetwork(player, engine);
-      });
+      remotePlayer.updateFromNetwork(
+        player,
+        engine
+      );
+
+      callbacks.onChange(
+        player,
+        () => {
+          remotePlayer.updateFromNetwork(
+            player,
+            engine
+          );
+        }
+      );
     };
 
-    this.callbacks.onAdd("players", addRemotePlayer);
+    callbacks.onAdd(
+      "players",
+      addRemotePlayer
+    );
 
-    this.callbacks.onRemove("players", (_player: any, sessionId: string) => {
-      const remotePlayer = this.remotePlayers.get(sessionId);
-      if (!remotePlayer) return;
+    callbacks.onRemove(
+      "players",
+      (
+        _player: any,
+        sessionId: string
+      ) => {
+        const remotePlayer =
+          this.remotePlayers.get(
+            sessionId
+          );
 
-      remotePlayer.kill();
-      this.remotePlayers.delete(sessionId);
+        if (!remotePlayer) {
+          return;
+        }
+
+        remotePlayer.kill();
+
+        this.remotePlayers.delete(
+          sessionId
+        );
+      }
+    );
+
+    room.onMessage(
+      "weapon_attack",
+      (data: any) => {
+        console.log(
+          "PARTY RECEIVED WEAPON ATTACK:",
+          data
+        );
+
+        if (
+          data.sessionId ===
+          room.sessionId
+        ) {
+          this.localWeapon
+            ?.confirmServerAttack?.(
+              data
+            );
+
+          return;
+        }
+
+        const remotePlayer =
+          this.remotePlayers.get(
+            data.sessionId
+          );
+
+        if (!remotePlayer) {
+          console.warn(
+            "No remote player for party attack:",
+            data.sessionId
+          );
+
+          return;
+        }
+
+        remotePlayer.playWeaponAttack(
+          data
+        );
+      }
+    );
+
+    room.onMessage(
+      "weapon_attack_start",
+      (data: any) => {
+        if (
+          data.sessionId ===
+          room.sessionId
+        ) {
+          return;
+        }
+
+        const remotePlayer =
+          this.remotePlayers.get(
+            data.sessionId
+          );
+
+        remotePlayer
+          ?.playWeaponAttackStart(
+            data
+          );
+      }
+    );
+
+    room.onMessage(
+      "weapon_attack_release",
+      (data: any) => {
+        if (
+          data.sessionId ===
+          room.sessionId
+        ) {
+          return;
+        }
+
+        const remotePlayer =
+          this.remotePlayers.get(
+            data.sessionId
+          );
+
+        remotePlayer
+          ?.playWeaponAttackRelease(
+            data
+          );
+      }
+    );
+
+    room.onMessage("party_updated", (data: PartyData) => {
+      this.currentParty = {
+        roomCode: data.roomCode,
+        leaderSessionId: data.leaderSessionId ?? null,
+        members: data.members ?? [],
+      };
+
+      window.dispatchEvent(
+        new CustomEvent("party_updated", {
+          detail: this.currentParty,
+        })
+      );
     });
+  }
+
+  private setupPartyLeaveHandler(
+    room: Room
+  ): void {
+    room.onLeave(code => {
+      console.log(
+        "Left PartyRoom:",
+        {
+          roomId:
+            room.roomId,
+          code,
+        }
+      );
+
+      if (
+        this.room !== room
+      ) {
+        return;
+      }
+
+      this.clearRemotePlayers();
+
+      this.room = null;
+      this.callbacks = null;
+      this.currentRoomKind = null;
+
+      window.dispatchEvent(
+        new CustomEvent(
+          "party_updated",
+          {
+            detail: {
+              roomCode:
+                null,
+              leaderSessionId:
+                null,
+              members:
+                [],
+            },
+          }
+        )
+      );
+    });
+
+    room.onError(
+      (code, message) => {
+        console.error(
+          "PartyRoom error:",
+          {
+            roomId:
+              room.roomId,
+            code,
+            message,
+          }
+        );
+      }
+    );
   }
 
   sendPlayerMove(data: {
@@ -437,6 +1406,8 @@ class MultiplayerManager {
   }) {
     if (!this.room) return;
     if (!this.canUseCombatMessages()) return;
+
+    console.log("SENDING WEAPON ATTACK:", data);
 
     this.room.send("weapon_attack", data);
   }
@@ -526,10 +1497,21 @@ class MultiplayerManager {
     attackType: "normal" | "heavy";
   }) {
     if (!this.room) return;
-    if (!this.canUseCombatMessages()) return;
-    if (data.aimAngle === null) return;
 
-    this.room.send("sword_hit", data);
+    if (
+      this.currentRoomKind !== "dungeon"
+    ) {
+      return;
+    }
+
+    if (data.aimAngle === null) {
+      return;
+    }
+
+    this.room.send(
+      "sword_hit",
+      data
+    );
   }
 
   sendEquipWeapon(weaponId: string) {
@@ -556,6 +1538,30 @@ class MultiplayerManager {
 
   sendUpgradeItem(uid: string, statPoints: {damage: number, crit: number, hp: number, armor: number}) {
     this.room?.send("upgrade_item", { uid, statPoints });
+  }
+
+  sendDismantleItem(
+    uid: string
+  ): void {
+    if (!this.room) {
+      console.warn(
+        "Cannot dismantle without a room."
+      );
+
+      return;
+    }
+
+    console.log(
+      "SENDING DISMANTLE:",
+      uid
+    );
+
+    this.room.send(
+      "dismantle_item",
+      {
+        uid,
+      }
+    );
   }
 
   sendFloorChange(targetFloor: number) {
@@ -604,6 +1610,7 @@ class MultiplayerManager {
       maxHp: enemyState.maxHp,
       isDead: enemyState.isDead,
       isAggro: enemyState.isAggro,
+      isLarge: enemyState.isLarge,
       state: enemyState.state,
     });
   }

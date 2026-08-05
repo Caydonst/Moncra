@@ -141,18 +141,18 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
     }, []);
 
     useEffect(() => {
-            if (!inventoryOpen) return;
-    
-            async function refreshStats() {
-                const { multiplayer } = await import(
-                    "../../network/multiplayer"
-                );
-    
-                multiplayer.refreshLocalPlayerStats();
-            }
-    
-            refreshStats();
-        }, [inventoryOpen]);
+        if (!inventoryOpen) return;
+
+        async function refreshStats() {
+            const { multiplayer } = await import(
+                "../../network/multiplayer"
+            );
+
+            multiplayer.refreshLocalPlayerStats();
+        }
+
+        refreshStats();
+    }, [inventoryOpen]);
 
 
     useEffect(() => {

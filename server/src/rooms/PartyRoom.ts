@@ -1,110 +1,317 @@
-import { Room } from "@colyseus/core";
+import { Room, CloseCode } from "@colyseus/core";
 import type { Client } from "@colyseus/core";
 import { GameState } from "../schemas/GameState.js";
 import { registerPlayerMessages } from "../game_systems/registerPlayerMessages.js";
 import { runPlayerMovement } from "../game_systems/runPlayerMovement.js";
 import { spawnPlayer } from "../game_systems/spawnPlayer.js";
 import { registerInventoryMessages } from "../game_systems/registerInventoryMessages.js";
-import { deleteInventoryForSession, getInventoryForSession } from "../game_systems/inventory/testInventoryStore.js";
-import { verifySupabaseToken } from "../auth/verifySupabaseToken.js";
 import {
-  getActivePlayer,
-  removeActivePlayer,
-  setActivePlayer,
-} from "../auth/activePlayers.js";
+  applyInventoryStatsToPlayer,
+  getInventoryForUser
+} from "../game_systems/inventory/testInventoryStore.js";
+import { verifySupabaseToken } from "../auth/verifySupabaseToken.js";
+
+import {
+  registerPlayerCombatMessages,
+} from "../game_systems/registerCombatMessages.js";
 
 type ClientAuth = {
   userId: string;
   email?: string;
 };
 
-export class PartyRoom extends Room<{ state: GameState }> {
+type PartyMemberInfo = {
+  userId: string;
+  username: string;
+  isLeader: boolean;
+  isReady: boolean;
+};
+
+const PARTY_CODE_CHARACTERS =
+  "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+const PARTY_CODE_LENGTH = 6;
+
+function generatePartyCode(): string {
+  let code = "";
+
+  for (
+    let index = 0;
+    index < PARTY_CODE_LENGTH;
+    index++
+  ) {
+    const randomIndex =
+      Math.floor(
+        Math.random() *
+        PARTY_CODE_CHARACTERS.length
+      );
+
+    code +=
+      PARTY_CODE_CHARACTERS[
+      randomIndex
+      ];
+  }
+
+  return code;
+}
+
+export class PartyRoom extends Room<{
+  state: GameState;
+}> {
   maxClients = 4;
   patchRate = 20;
+
   state = new GameState();
 
-  private userIds = new Map<string, string>();
+  private userIds =
+    new Map<string, string>();
 
-  onCreate() {
+  private partyMembers =
+    new Map<string, PartyMemberInfo>();
+
+  private leaderSessionId:
+    string | null = null;
+
+  async onAuth(
+    _client: Client,
+    options: {
+      accessToken?: string;
+    }
+  ): Promise<ClientAuth> {
+    if (!options.accessToken) {
+      throw new Error(
+        "Missing authentication token."
+      );
+    }
+
+    const user =
+      await verifySupabaseToken(
+        options.accessToken
+      );
+
+    if (!user?.id) {
+      throw new Error(
+        "Invalid authentication token."
+      );
+    }
+
+    return {
+      userId: user.id,
+      email: user.email,
+    };
+  }
+
+  onCreate(): void {
+    console.log(
+      "PARTY ROOM onCreate fired"
+    );
+
+    this.roomId =
+      generatePartyCode();
+
+    console.log(
+      "Created party room:",
+      this.roomId
+    );
+
     registerPlayerMessages(this);
     registerInventoryMessages(this);
+    registerPlayerCombatMessages(this);
 
-    this.setSimulationInterval((deltaTime) => {
-      runPlayerMovement(this.state.players, deltaTime);
-    });
+    this.setSimulationInterval(
+      deltaTime => {
+        runPlayerMovement(
+          this.state.players,
+          deltaTime
+        );
+      }
+    );
+
+    this.onMessage(
+      "party_set_ready",
+      (
+        client,
+        message: {
+          ready: boolean;
+        }
+      ) => {
+        const member =
+          this.partyMembers.get(
+            client.sessionId
+          );
+
+        if (!member) return;
+
+        member.isReady =
+          Boolean(message.ready);
+
+        this.broadcastPartyState();
+      }
+    );
+
+    this.autoDispose = true;
   }
 
   onJoin(
-      client: Client,
-      options: unknown
-    ) {
-      const auth =
-        client.auth as ClientAuth | undefined;
-  
-      if (!auth?.userId) {
-        throw new Error(
-          "Authenticated user ID was not attached to the client."
-        );
+    client: Client,
+    options: {
+      username?: string;
+      spawnX?: number;
+      spawnY?: number;
+    }
+  ): void {
+
+    console.log(
+      "PARTY ROOM onJoin fired:",
+      {
+        sessionId:
+          client.sessionId,
+        roomId:
+          this.roomId,
+        auth:
+          client.auth,
       }
-  
-      const previousConnection =
-        getActivePlayer(auth.userId);
-  
-      if (
-        previousConnection &&
-        previousConnection.client.sessionId !==
-        client.sessionId
-      ) {
-        previousConnection.client.send(
-          "account_logged_in_elsewhere",
-          {
-            message:
-              "This account was logged in from another device.",
-          }
-        );
-  
-        previousConnection.client.leave(4001);
-      }
-  
-      setActivePlayer(auth.userId, {
-        client,
-        roomId: this.roomId,
-      });
-  
-      console.log(
-        "client.auth in onJoin:",
-        client.auth
-      );
-  
-      this.userIds.set(
-        client.sessionId,
-        auth.userId
-      );
-  
-      const player = spawnPlayer(400, 400);
-  
-      this.state.players.set(
-        client.sessionId,
-        player
-      );
-  
-      const inventory = getInventoryForSession(auth.userId, player);
-              
-      if (inventory.weapon) {
-          player.weapon.id = inventory.weapon.itemId;
-          player.weapon.damage = inventory.weapon.upgradedStats.damage.value;
-          //player.weapon.icon = inventory.weapon.icon;
-      }
-  
-      console.log(
-        `${client.sessionId} ${auth.userId} joined hub`
+    );
+    
+    const auth =
+      client.auth as
+      | ClientAuth
+      | undefined;
+
+    if (!auth?.userId) {
+      throw new Error(
+        "Missing authenticated user."
       );
     }
-  
-  getUserId(client: Client): string {
-    const userId = this.userIds.get(
+
+    this.userIds.set(
+      client.sessionId,
+      auth.userId
+    );
+
+    const spawnX =
+      Number.isFinite(options.spawnX)
+        ? options.spawnX!
+        : 400;
+
+    const spawnY =
+      Number.isFinite(options.spawnY)
+        ? options.spawnY!
+        : 400;
+
+    const player =
+      spawnPlayer(
+        spawnX,
+        spawnY
+      );
+
+    const inventory =
+      getInventoryForUser(
+        auth.userId,
+        player
+      );
+
+    applyInventoryStatsToPlayer(
+      player,
+      inventory
+    );
+
+    if (inventory.weapon) {
+      player.weapon.id =
+        inventory.weapon.itemId;
+
+      player.weapon.damage =
+        inventory.weapon
+          .upgradedStats
+          .damage
+          .value;
+    }
+
+    this.state.players.set(
+      client.sessionId,
+      player
+    );
+
+    const isLeader =
+      this.leaderSessionId === null;
+
+    if (isLeader) {
+      this.leaderSessionId =
+        client.sessionId;
+    }
+
+    this.partyMembers.set(
+      client.sessionId,
+      {
+        userId:
+          auth.userId,
+
+        username:
+          options.username ??
+          auth.email ??
+          "Player",
+
+        isLeader,
+
+        isReady:
+          false,
+      }
+    );
+
+    this.broadcastPartyState();
+  }
+
+  onLeave(client: Client): void {
+    const wasLeader =
+      this.leaderSessionId ===
+      client.sessionId;
+
+    this.state.players.delete(
       client.sessionId
     );
+
+    this.userIds.delete(
+      client.sessionId
+    );
+
+    this.partyMembers.delete(
+      client.sessionId
+    );
+
+    if (wasLeader) {
+      const nextSessionId =
+        this.partyMembers.keys()
+          .next()
+          .value as
+        | string
+        | undefined;
+
+      this.leaderSessionId =
+        nextSessionId ?? null;
+
+      if (nextSessionId) {
+        const nextLeader =
+          this.partyMembers.get(
+            nextSessionId
+          );
+
+        if (nextLeader) {
+          nextLeader.isLeader =
+            true;
+        }
+      }
+    }
+
+    this.broadcastPartyState();
+  }
+
+  getUserId(
+    client: Client
+  ): string {
+    const userId =
+      this.userIds.get(
+        client.sessionId
+      );
 
     if (!userId) {
       throw new Error(
@@ -115,24 +322,31 @@ export class PartyRoom extends Room<{ state: GameState }> {
     return userId;
   }
 
-  onLeave(client: Client) {
-    const userId = client.userData?.userId;
+  private broadcastPartyState(): void {
+    this.broadcast(
+      "party_updated",
+      {
+        roomCode:
+          this.roomId,
 
-    if (userId) {
-      removeActivePlayer(
-        userId,
-        client.sessionId
-      );
-    }
+        leaderSessionId:
+          this.leaderSessionId,
 
-    this.state.players.delete(client.sessionId);
-
-    this.userIds.delete(
-      client.sessionId
-    );
-
-    console.log(
-      `${client.sessionId} left hub`
+        members:
+          Array.from(
+            this.partyMembers.entries()
+          ).map(
+            (
+              [
+                sessionId,
+                member,
+              ]
+            ) => ({
+              sessionId,
+              ...member,
+            })
+          ),
+      }
     );
   }
 }
