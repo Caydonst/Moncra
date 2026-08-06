@@ -31,6 +31,12 @@ import ItemToolTip from "./ItemToolTip";
 import { createClient } from "@/lib/supabase/client";
 import Settings from "./settings/settings";
 import Gear from "./gear/gear";
+import {
+    disableGameKeyboard,
+    enableGameKeyboard,
+    getInputMode,
+    setInputMode,
+} from "../../utils/inputUtils";
 
 type Props = {
     inventoryOpen: boolean;
@@ -154,14 +160,6 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
         refreshStats();
     }, [inventoryOpen]);
 
-
-    useEffect(() => {
-        if (!inventoryOpen) {
-            setItemInfoOpen(false);
-            setSelectedTab("gear");
-        }
-    }, [inventoryOpen])
-
     useEffect(() => {
         if (!inventoryOpen) return;
 
@@ -197,8 +195,19 @@ export default function InventoryUI({ inventoryOpen, setInventoryOpen, inventory
                 realIndex: -1,
                 itemId: null,
             });
+            setItemInfoOpen(false);
+            setSelectedTab("gear");
+        } else {
         }
     }, [inventoryOpen])
+
+    useEffect(() => {
+        if (inventoryOpen) {
+            setInputMode("inventory");
+        } else if (getInputMode() === "inventory") {
+            setInputMode("gameplay");
+        }
+    }, [inventoryOpen]);
 
     
 

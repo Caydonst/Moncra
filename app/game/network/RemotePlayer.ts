@@ -30,7 +30,7 @@ export class RemotePlayer extends ex.Actor {
 
     private aimAngle = 0
 
-    private spriteScale = 2.2;
+    private spriteScale = 2;
 
   constructor(
     pos: ex.Vector,
@@ -40,8 +40,8 @@ export class RemotePlayer extends ex.Actor {
       name: "remote-player",
       pos,
       anchor: ex.vec(0.5, 0.5),
-        width: 12 * 2.2,
-      height: 17 * 2.2,
+        width: 12 * 2,
+      height: 17 * 2,
       z: 3,
       collisionType: ex.CollisionType.PreventCollision,
     });

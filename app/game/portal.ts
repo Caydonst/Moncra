@@ -164,7 +164,11 @@ export class Portal extends ex.Actor {
 
         if (this.type === "hub") {
             window.dispatchEvent(
-                new Event("dungeon-menu-open")
+                new CustomEvent("dungeon-menu-open", {
+                    detail: {
+                        open: true,
+                    },
+                })
             );
 
             return;

@@ -7,9 +7,11 @@ export class GameState {
     engine?: any;
     resources?: any;
     playerStats?: any;
+    username?: string;
 
     constructor() {
         this.inventory = new Inventory();
+        this.username = "";
     }
 }
 

@@ -1,5 +1,40 @@
 import { gameState } from "../gameState/gameState";
 
+export type InputMode =
+    | "gameplay"
+    | "inventory"
+    | "dungeon-menu"
+    | "typing";
+
+let currentInputMode: InputMode = "gameplay";
+let modeBeforeTyping: InputMode = "gameplay";
+
+export function setInputMode(mode: InputMode): void {
+    currentInputMode = mode;
+
+    const keyboard = gameState.engine?.input.keyboard;
+
+    keyboard?.clear();
+    keyboard?.toggleEnabled(mode === "gameplay");
+}
+
+export function getInputMode(): InputMode {
+    return currentInputMode;
+}
+
+export function beginTyping(): void {
+    if (currentInputMode === "typing") return;
+
+    modeBeforeTyping = currentInputMode;
+    setInputMode("typing");
+}
+
+export function endTyping(): void {
+    if (currentInputMode !== "typing") return;
+
+    setInputMode(modeBeforeTyping);
+}
+
 export function isTypingInInput(): boolean {
     const activeElement = document.activeElement;
 
@@ -10,24 +45,4 @@ export function isTypingInInput(): boolean {
         (activeElement instanceof HTMLElement &&
             activeElement.isContentEditable)
     );
-}
-
-export let gameInputDisabled = false;
-
-export function disableGameKeyboard() {
-    const keyboard = gameState.engine?.input.keyboard;
-
-    keyboard?.clear();
-    keyboard?.toggleEnabled(false);
-
-    gameInputDisabled = true;
-}
-
-export function enableGameKeyboard() {
-    const keyboard = gameState.engine?.input.keyboard;
-
-    keyboard?.clear();
-    keyboard?.toggleEnabled(true);
-
-    gameInputDisabled = false;
 }

@@ -32,8 +32,7 @@
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    background: #141414;
-    border-right: 3px solid rgba(255, 255, 255, 0.1);
+    border-right: 3px solid #424242;
 }
 .selectorBtn {
     display: flex;
@@ -41,11 +40,10 @@
     align-items: center;
     width: 350px;
     height: 100px;
-    gap: 14px;
+    gap: 20px;
     padding: 20px;
     background: transparent;
-    border: none;
-    border-left: 3px solid transparent;
+    border: 3px solid transparent;
     font-size: 12px;
     letter-spacing: 2;
     transition: 0.2s;
@@ -62,6 +60,7 @@
     width: 100%;
     height: 100%;
     image-rendering: pixelated;
+    filter: drop-shadow(0 0 10px #000);
 }
 .selected {
     background: rgba(255, 255, 255, 0.05);
@@ -178,11 +177,11 @@
     box-shadow: 0 5px 0 #424242;
     font-size: 8px;
     letter-spacing: 2;
-    transition: 0.2s;
+    transition: 0.1s;
 }
 .enterBtn:hover {
     transform: translateY(4px);
-    box-shadow: 0 1px 0 #721714;
+    box-shadow: 0 1px 0 #424242;
 }
 .cancelBtn:hover {
     transform: translateY(4px);
@@ -197,7 +196,7 @@
     box-shadow: 0 5px 0 #020202;
     font-size: 8px;
     letter-spacing: 2;
-    transition: 0.2s;
+    transition: 0.1s;
 }
 .dungeonMenuBackground {
     position: absolute;

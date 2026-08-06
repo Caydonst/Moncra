@@ -34,6 +34,7 @@ export class PlayerState extends Schema {
   @type("number") lastMoveTime: number = Date.now();
 
   // stats
+  @type("string") username: string = "";
   @type("number") damage: number = 0;
   @type("number") crit: number = 0;
   @type("number") hp: number = 100;

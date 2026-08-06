@@ -1,8 +1,4 @@
 import { useEffect, useState } from "react";
-import {
-    disableGameKeyboard,
-    enableGameKeyboard,
-} from "../../utils/inputUtils";
 import styles from "./social.module.css";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import FriendsIcon from "@/app/game/assets/icons/friends_icon.png"
@@ -535,8 +531,8 @@ export default function SocialUI({
                             void addFriend();
                         }
                     }}
-                    onFocus={disableGameKeyboard}
-                    onBlur={enableGameKeyboard}
+                    //onFocus={disableGameKeyboard}
+                    //onBlur={enableGameKeyboard}
                 />
 
                 <button

@@ -32,7 +32,7 @@ export default function PartyMenu() {
     /*
      * Replace this with the player's actual username when available.
      */
-    const username = "Player";
+    const username = gameState.username || "Player";
 
     useEffect(() => {
         let mounted = true;
@@ -273,25 +273,22 @@ export default function PartyMenu() {
                 </div>
             ) : (
                 <>
-                        <div className={styles.header}>
-                            <div>
-                                <h3>Party</h3>
+                    <div className={styles.header}>
+                        <h3>Party</h3>
+                        <h2>
+                            Code:{" "}
+                            <span className={styles.partyCode}>
+                                {party.roomCode}
+                            </span>
+                        </h2>
 
-                                <p>
-                                    Code:{" "}
-                                    <span className={styles.partyCode}>
-                                        {party.roomCode}
-                                    </span>
-                                </p>
-                            </div>
-
-                            <button
-                                className={styles.leaveButton}
-                                onClick={() => void leaveParty()}
-                            >
-                                Leave
-                            </button>
-                        </div>
+                        <button
+                            className={styles.leaveButton}
+                            onClick={() => void leaveParty()}
+                        >
+                            Leave
+                        </button>
+                    </div>
 
                     <div className={styles.playersContainer}>
                         {partySlots.map((_, index) => {
@@ -327,7 +324,7 @@ export default function PartyMenu() {
                                         </div>
                                     ) : (
                                         <span className={styles.emptySlotIcon}>
-                                            +
+                                            -
                                         </span>
                                     )}
                                 </div>

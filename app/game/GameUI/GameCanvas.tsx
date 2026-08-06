@@ -20,13 +20,17 @@ import { createClientInventory } from "../inventory/createClientInventory";
 import ClassResourceUI from "../components/ClassResourceUI/classResource";
 import SocialIcon from "@/app/game/assets/icons/social_icon.png"
 import SocialUI from "../components/socialUI/socialUI";
-import { gameInputDisabled } from "../utils/inputUtils";
+import { getInputMode, beginTyping, endTyping } from "../utils/inputUtils";
 import GameplayMenu from "../components/dungeonMenu/gameplayMenu";
 
 type Scenes = GameScene | HubScene | MenuScene | TestScene | DungeonScene
 type SceneKey = "menu" | "hub" | "game" | "dungeon" | "test";
 
-export default function GameCanvas() {
+type Props = {
+    username: string;
+}
+
+export default function GameCanvas({ username }: Props) {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [game, setGame] = useState(null);
     const [scene, setScene] = useState<Scenes | null>(null);
@@ -89,6 +93,8 @@ export default function GameCanvas() {
         let cancelled = false;
 
         async function init() {
+            gameState.username = username;
+
             const canvas = canvasRef.current;
 
             if (!canvas) return;
@@ -181,21 +187,107 @@ export default function GameCanvas() {
     useEffect(() => {
         if (!gameLoaded) return;
 
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (gameInputDisabled) return;
-            
-            if (e.key.toLowerCase() === "i") {
-                setInventoryOpen(prev => !prev); // toggle
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.repeat) return;
+
+            const key = event.key.toLowerCase();
+            const inputMode = getInputMode();
+
+            /*
+             * While typing, all browser game hotkeys are ignored.
+             * Normal input behavior, including Enter and Backspace,
+             * still works.
+             */
+            if (inputMode === "typing") {
+                return;
+            }
+
+            if (inputMode === "inventory") {
+                if (key === "i") {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    setInventoryOpen(false);
+                    setItemPanelOpen(false);
+                }
+
+                return;
+            }
+
+            if (inputMode === "dungeon-menu") {
+                if (key === "f") {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    window.dispatchEvent(
+                        new CustomEvent("dungeon-menu-open", {
+                            detail: {
+                                open: false,
+                            },
+                        })
+                    );
+                }
+
+                return;
+            }
+
+            if (key === "i") {
+                event.preventDefault();
+
+                setInventoryOpen(true);
                 setItemPanelOpen(false);
             }
         };
 
-        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("keydown", handleKeyDown, true);
 
         return () => {
-            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("keydown", handleKeyDown, true);
         };
     }, [gameLoaded]);
+
+    useEffect(() => {
+        const isTextInput = (
+            target: EventTarget | null
+        ): target is HTMLElement => {
+            return (
+                target instanceof HTMLInputElement ||
+                target instanceof HTMLTextAreaElement ||
+                target instanceof HTMLSelectElement ||
+                (target instanceof HTMLElement &&
+                    target.isContentEditable)
+            );
+        };
+
+        const handleFocusIn = (event: FocusEvent) => {
+            if (!isTextInput(event.target)) return;
+
+            beginTyping();
+        };
+
+        const handleFocusOut = (event: FocusEvent) => {
+            if (!isTextInput(event.target)) return;
+
+            /*
+             * Wait until the browser has assigned the next
+             * focused element. This prevents flickering back to
+             * gameplay when switching directly between inputs.
+             */
+            queueMicrotask(() => {
+                if (!isTextInput(document.activeElement)) {
+                    endTyping();
+                }
+            });
+        };
+
+        document.addEventListener("focusin", handleFocusIn);
+        document.addEventListener("focusout", handleFocusOut);
+
+        return () => {
+            document.removeEventListener("focusin", handleFocusIn);
+            document.removeEventListener("focusout", handleFocusOut);
+        };
+    }, []);
 
     useEffect(() => {
         const handler = () => {

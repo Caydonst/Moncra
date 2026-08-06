@@ -7,6 +7,10 @@ import DungeonCard from "./dungeonCard";
 import DungeonList, { colors } from "./dungeonInfo"
 import DungeonMenu from "./DungeonMenu/dungeonMenu";
 import PartyMenu from "./PartyMenu/partyMenu";
+import {
+    getInputMode,
+    setInputMode,
+} from "../../utils/inputUtils";
 
 export default function GameplayMenu(scene: ex.Scene | null) {
     const [dungeonMenuOpen, setDungeonMenuOpen] = useState(false);
@@ -15,8 +19,17 @@ export default function GameplayMenu(scene: ex.Scene | null) {
     const [tabSelected, setTabSelected] = useState("dungeon");
 
     useEffect(() => {
-        const handler = () => {
-            setDungeonMenuOpen(prev => !prev);
+        const handler = (event: Event) => {
+            const customEvent = event as CustomEvent<{
+                open?: boolean;
+            }>;
+
+            if (typeof customEvent.detail?.open === "boolean") {
+                setDungeonMenuOpen(customEvent.detail.open);
+                return;
+            }
+
+            setDungeonMenuOpen(previous => !previous);
         };
 
         window.addEventListener("dungeon-menu-open", handler);
@@ -24,7 +37,15 @@ export default function GameplayMenu(scene: ex.Scene | null) {
         return () => {
             window.removeEventListener("dungeon-menu-open", handler);
         };
-    }, [scene]);
+    }, []);
+
+    useEffect(() => {
+        if (dungeonMenuOpen) {
+            setInputMode("dungeon-menu");
+        } else if (getInputMode() === "dungeon-menu") {
+            setInputMode("gameplay");
+        }
+    }, [dungeonMenuOpen]);
 
     return (
         <div className={dungeonMenuOpen ? `${styles.dungeonMenuWrapper} ${styles.open}` : styles.dungeonMenuWrapper}>
@@ -35,6 +56,7 @@ export default function GameplayMenu(scene: ex.Scene | null) {
                         <button className={tabSelected === "dungeon" ? styles.tabSelected : ""} onClick={() => setTabSelected("dungeon")}>DUNGEON</button>
                         <button className={tabSelected === "party" ? styles.tabSelected : ""} onClick={() => setTabSelected("party")}>PARTY</button>
                     </div>
+                    <button className={styles.closeBtn} onClick={() => setDungeonMenuOpen(false)}>CLOSE</button>
                 </div>
                 <div className={styles.main}>
                     {tabSelected === "dungeon" && (

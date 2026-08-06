@@ -205,6 +205,8 @@ export class PartyRoom extends Room<{
         spawnY
       );
 
+    player.username = options.username;
+
     const inventory =
       getInventoryForUser(
         auth.userId,
@@ -257,6 +259,45 @@ export class PartyRoom extends Room<{
           false,
       }
     );
+
+    this.broadcastPartyState();
+  }
+
+  onDrop(client: Client, code?: number): void {
+    console.warn("Party player connection dropped:", {
+      sessionId: client.sessionId,
+      roomId: this.roomId,
+      code,
+    });
+
+    const player = this.state.players.get(client.sessionId);
+
+    if (player) {
+      player.connected = false;
+      player.moveX = 0;
+      player.moveY = 0;
+    }
+
+    /*
+     * Reserve this player's seat for 30 seconds.
+     *
+     * Do not await this here unless you specifically want
+     * onDrop() to stay pending for the entire timeout.
+     */
+    void this.allowReconnection(client, 30);
+  }
+
+  onReconnect(client: Client): void {
+    console.log("Party player reconnected:", {
+      sessionId: client.sessionId,
+      roomId: this.roomId,
+    });
+
+    const player = this.state.players.get(client.sessionId);
+
+    if (player) {
+      player.connected = true;
+    }
 
     this.broadcastPartyState();
   }

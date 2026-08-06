@@ -1,4 +1,4 @@
-import styles from "./dungeonMenu/dungeonMenu.module.css"
+import styles from "./DungeonMenu/dungeonMenu.module.css"
 import { changeScene } from "../../utils/sceneChanges"
 import DungeonImg from "../../assets/misc/dungeon_level5.png"
 import { colors, type Dungeon } from "./dungeonInfo";
@@ -29,7 +29,6 @@ export default function DungeonCard({ scene, setDungeonMenuOpen, dungeon }: Prop
                         await enterDungeon(dungeon);
                         setDungeonMenuOpen(false);
                         }}>ENTER DUNGEON</button>
-                    <button className={styles.cancelBtn} onClick={() => setDungeonMenuOpen(false)}>CANCEL</button>
                 </div>
             </div>
             {/*<div className={styles.dungeonMenuBackground}></div>*/}

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import GameCanvas from "./GameUI/GameCanvas"
+import GameCanvas from "./GameUI/GameCanvas";
 import { redirect } from "next/navigation";
 
 export default async function Page() {
@@ -7,18 +7,31 @@ export default async function Page() {
 
     const {
         data: { user },
-        error,
+        error: authError,
     } = await supabase.auth.getUser();
 
-    console.log("Game page server user:", user?.id);
-    console.log("Game page auth error:", error?.message);
-
-    
-
-    if (!user) {
+    if (authError || !user) {
         redirect("/");
     }
+
+    const { data: profile, error: profileError } = await supabase
+        .from("users")
+        .select("username")
+        .eq("uid", user.id)
+        .single();
+
+    if (profileError || !profile) {
+        console.error(
+            "Failed to load game profile:",
+            profileError?.message
+        );
+
+        redirect("/");
+    }
+
     return (
-        <GameCanvas />
-    )
+        <GameCanvas
+            username={profile.username}
+        />
+    );
 }

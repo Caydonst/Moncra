@@ -894,19 +894,15 @@ class MultiplayerManager {
     engine: ex.Engine;
     resources: GameResources;
     scene: ex.Scene;
-    username: string;
     localPlayer: Player;
-  }) {
-    if (!this.room) {
-      return;
-    }
+  }): Promise<void> {
+    const partyRoom = this.room;
 
-    this.room.leave();
-
-    this.room = null;
-    this.callbacks = null;
-    this.currentRoomKind = null;
-    //this.currentPartyCode = null;
+    /*
+     * Clear before leaving so a refresh cannot restore
+     * a party the user deliberately left.
+     */
+    this.clearPartyReconnection();
 
     this.currentParty = {
       roomCode: null,
@@ -914,13 +910,24 @@ class MultiplayerManager {
       members: [],
     };
 
-    window.dispatchEvent(
-      new CustomEvent("party_updated", {
-        detail: this.currentParty,
-      })
-    );
+    if (partyRoom) {
+      await partyRoom.leave(true);
+    }
 
-    await this.joinHub(options);
+    if (this.room === partyRoom) {
+      this.room = null;
+      this.callbacks = null;
+      this.currentRoomKind = null;
+    }
+
+    this.clearRemotePlayers();
+
+    await this.joinHub({
+      engine: options.engine,
+      resources: options.resources,
+      scene: options.scene,
+      localPlayer: options.localPlayer,
+    });
   }
 
   async createParty(options: {
@@ -993,6 +1000,8 @@ class MultiplayerManager {
     this.callbacks =
       Callbacks.get(room);
 
+    this.savePartyReconnection(room);
+
     this.setupPartyLeaveHandler(room);
 
     this.setupPartyRoomListeners(
@@ -1064,6 +1073,8 @@ class MultiplayerManager {
       this.currentRoomKind = "party";
       this.callbacks = Callbacks.get(room);
 
+      this.savePartyReconnection(room);
+
       this.setupPartyLeaveHandler(room);
 
       this.setupPartyRoomListeners(
@@ -1100,6 +1111,86 @@ class MultiplayerManager {
       ...this.currentParty,
       members: [...this.currentParty.members],
     };
+  }
+
+  async reconnectToParty(options: {
+    engine: ex.Engine;
+    resources: GameResources;
+    scene: ex.Scene;
+    localPlayer: Player;
+  }): Promise<boolean> {
+    const reconnectionToken = sessionStorage.getItem(
+      "moncra-party-reconnection-token"
+    );
+
+    if (!reconnectionToken) {
+      return false;
+    }
+
+    try {
+      const room = await this.client.reconnect(
+        reconnectionToken
+      );
+
+      this.room = room;
+      this.currentRoomKind = "party";
+      this.callbacks = Callbacks.get(room);
+
+      /*
+       * The successful reconnection produces a new token.
+       */
+      this.savePartyReconnection(room);
+
+      this.setupPartyLeaveHandler(room);
+
+      this.setupPartyRoomListeners(
+        options.engine,
+        options.resources,
+        options.scene,
+        options.localPlayer
+      );
+
+      this.setupInventoryListeners();
+      this.sendGetInventory();
+
+      console.log("Reconnected to PartyRoom:", {
+        roomId: room.roomId,
+        sessionId: room.sessionId,
+      });
+
+      return true;
+    } catch (error) {
+      console.warn(
+        "Could not reconnect to the previous PartyRoom:",
+        error
+      );
+
+      this.clearPartyReconnection();
+
+      return false;
+    }
+  }
+
+  private clearPartyReconnection(): void {
+    sessionStorage.removeItem(
+      "moncra-party-reconnection-token"
+    );
+
+    sessionStorage.removeItem(
+      "moncra-party-room-code"
+    );
+  }
+
+  private savePartyReconnection(room: Room): void {
+    sessionStorage.setItem(
+      "moncra-party-reconnection-token",
+      room.reconnectionToken
+    );
+
+    sessionStorage.setItem(
+      "moncra-party-room-code",
+      room.roomId
+    );
   }
 
   private setupPartyRoomListeners(
@@ -1324,61 +1415,62 @@ class MultiplayerManager {
     });
   }
 
-  private setupPartyLeaveHandler(
-    room: Room
-  ): void {
-    room.onLeave(code => {
-      console.log(
-        "Left PartyRoom:",
-        {
-          roomId:
-            room.roomId,
-          code,
-        }
-      );
+  private setupPartyLeaveHandler(room: Room): void {
+    room.onDrop((code, reason) => {
+      console.warn("Party connection dropped:", {
+        code,
+        reason,
+      });
 
-      if (
-        this.room !== room
-      ) {
+      window.dispatchEvent(
+        new CustomEvent("party_connection_status", {
+          detail: {
+            reconnecting: true,
+          },
+        })
+      );
+    });
+
+    room.onReconnect(() => {
+      console.log("Party connection restored.");
+
+      this.savePartyReconnection(room);
+
+      window.dispatchEvent(
+        new CustomEvent("party_connection_status", {
+          detail: {
+            reconnecting: false,
+          },
+        })
+      );
+    });
+
+    room.onLeave((code) => {
+      console.log("Permanently left PartyRoom:", code);
+
+      if (this.room !== room) {
         return;
       }
 
+      this.clearPartyReconnection();
       this.clearRemotePlayers();
 
       this.room = null;
       this.callbacks = null;
       this.currentRoomKind = null;
 
+      this.currentParty = {
+        roomCode: null,
+        leaderSessionId: null,
+        members: [],
+      };
+
       window.dispatchEvent(
-        new CustomEvent(
-          "party_updated",
-          {
-            detail: {
-              roomCode:
-                null,
-              leaderSessionId:
-                null,
-              members:
-                [],
-            },
-          }
-        )
+        new CustomEvent("party_updated", {
+          detail: this.currentParty,
+        })
       );
     });
-
-    room.onError(
-      (code, message) => {
-        console.error(
-          "PartyRoom error:",
-          {
-            roomId:
-              room.roomId,
-            code,
-            message,
-          }
-        );
-      }
-    );
   }
 
   sendPlayerMove(data: {

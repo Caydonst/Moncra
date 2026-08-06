@@ -45,7 +45,7 @@ export const itemDefinitions = {
         name: "Sword",
         type: "Weapon",
         kind: "Great Sword",
-        icon: "/weapons/great_sword/tidal2.png",
+        icon: "/weapons/great_sword/knight_sword.png",
         rarity: "exalted",
         attackStyle: "Melee",
 

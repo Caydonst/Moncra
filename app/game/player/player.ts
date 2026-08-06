@@ -53,15 +53,15 @@ export class Player extends ex.Actor {
 
     private hpUiUpdateQueued = false;
 
-    private spriteScale = 2.2;
+    private spriteScale = 2;
 
     constructor(pos: ex.Vector, worldWidth: number, worldHeight: number, private resources: GameResources, private collisionGroups: any, private gameState: GameState) {
         super({
             name: "player",
             pos: pos,
             anchor: ex.vec(0.5, 0.5),
-            width: 12 * 2.2,    // set desired width
-            height: 17 * 2.2,   // set desired height
+            width: 12 * 2,    // set desired width
+            height: 17 * 2,   // set desired height
             color: ex.Color.Yellow,  // optional, for debugging
             collisionType: ex.CollisionType.Active,
             z: 3,

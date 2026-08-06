@@ -127,8 +127,6 @@
     margin: 10px 16px 0;
     padding: 10px 12px;
 
-    border-radius: 5px;
-
     font-size: 13px;
     line-height: 1.4;
 }
@@ -143,8 +141,9 @@
 .errorMessage {
     color: #ffb7b7;
 
-    background: rgba(160, 35, 35, 0.18);
-    border: 1px solid rgba(230, 70, 70, 0.4);
+    border: 2px solid #ff5f57;
+    background: rgba(20, 8, 8, 0.95);
+    color: #ff7770;
 }
 .friendsHeaderButtons {
     display: flex;

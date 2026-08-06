@@ -9,7 +9,6 @@ import { GameScene } from '../scenes/GameScene';
 import { multiplayer } from '../network/multiplayer';
 import { damageEnemy } from '../combat/CombatSystem';
 import type { Weapon } from '../items/ItemTypes';
-import { isTypingInInput } from '../utils/inputUtils';
 
 export type AttackType = "slash" | "thrust";
 
@@ -161,7 +160,6 @@ export class GreatSword extends ex.Actor {
     }
 
     private pointerDownHandler = (evt: ex.PointerEvent) => {
-        if (isTypingInInput()) return;
         if (this.isPointerOverUI()) return;
 
         if (evt.button === ex.PointerButton.Left) {
@@ -198,8 +196,8 @@ export class GreatSword extends ex.Actor {
         super({
             pos: player.pos.clone(),
             anchor: ex.vec(0.5, 0.5), // exvec(0.5, 0.7)
-            width: image.width * 2.7,
-            height: image.height * 2.7,
+            width: image.width * 2.6,
+            height: image.height * 2.6,
             z: 4,
         });
 
@@ -218,8 +216,8 @@ export class GreatSword extends ex.Actor {
 
         this.graphics.use(sprite);
 
-        //const effect = new EnchantedGlowEffect(engine);
-        //this.graphics.material = effect.material;
+        const effect = new EnchantedGlowEffect(engine);
+        this.graphics.material = effect.material;
     }
 
     private lastSwingEndPos: ex.Vector | null = null;

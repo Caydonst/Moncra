@@ -261,15 +261,25 @@ export class HubScene extends ex.Scene {
         this.portal
             ?.setInteractionEnabled(true);
 
-        try {
-            await multiplayer.joinHub({
+        const reconnectedToParty =
+            await multiplayer.reconnectToParty({
                 engine: this.engine,
                 resources: this.resources,
-                localPlayer: this.player,
                 scene: this,
+                localPlayer: this.player,
             });
-        } catch (error) {
-            console.error("joinHub failed:", error);
+
+        if (!reconnectedToParty) {
+            try {
+                await multiplayer.joinHub({
+                    engine: this.engine,
+                    resources: this.resources,
+                    localPlayer: this.player,
+                    scene: this,
+                });
+            } catch (error) {
+                console.error("joinHub failed:", error);
+            }
         }
 
         this.restorePlayerToHub();
