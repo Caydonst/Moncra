@@ -27,7 +27,7 @@ type PartyData = {
   members: PartyMember[];
 };
 
-class MultiplayerManager {
+export class MultiplayerManager {
   client = new Client(process.env.NEXT_PUBLIC_COLYSEUS_URL!);
   room: Room | null = null;
   callbacks: any = null;
